@@ -34,10 +34,13 @@ class ActivityController extends Controller
         $activity->users()->attach($request->user_id);
         return redirect()->route('activities.index')->with('success', 'Actividad creada con éxito.');
     }
+    
     public function edit(Activity $activity)
     {
-        return view('activities.edit', compact('activity'));
+        $users = User::all(); // Obtener todos los usuarios
+        return view('activities.edit', compact('activity', 'users')); // Pasar tanto la actividad como los usuarios
     }
+
     public function update(Request $request, Activity $activity)
     {
         $request->validate([
