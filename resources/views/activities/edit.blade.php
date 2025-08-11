@@ -25,10 +25,10 @@
             <div class="form-group">
                 <label for="status">Estado</label>
                 <select class="form-control" id="status" name="status" required>
-                    <option value="En ejecución" {{ $activity->status == 'En ejecución' ? 'selected' : '' }}>En ejecución
+                    <option value="en_ejecucion" {{ $activity->status == 'En ejecución' ? 'selected' : '' }}>En ejecución
                     </option>
-                    <option value="Culminada" {{ $activity->status == 'Culminada' ? 'selected' : '' }}>Culminada</option>
-                    <option value="En espera de insumos"
+                    <option value="culminada" {{ $activity->status == 'Culminada' ? 'selected' : '' }}>Culminada</option>
+                    <option value="en_espera_de_insumos"
                         {{ $activity->status == 'En espera de insumos' ? 'selected' : '' }}>En espera de insumos</option>
                 </select>
             </div>
@@ -42,6 +42,28 @@
                     @endforeach
                 </select>
             </div>
+            <div class="form-group">
+                <label for="requirements">Requerimientos</label>
+                <div id="requirements-container">
+                    @foreach ($activity->requirements as $requirement)
+                        <div class="requirement">
+                            <input type="text" class="form-control" name="requirements[]"
+                                value="{{ $requirement->description }}">
+                        </div>
+                    @endforeach
+                </div>
+                <button type="button" class="btn btn-secondary" id="add-requirement">Agregar Requerimiento</button>
+            </div>
+            <script>
+                document.getElementById('add-requirement').addEventListener('click', function() {
+                    var container = document.getElementById('requirements-container');
+                    var newRequirement = document.createElement('div');
+                    newRequirement.classList.add('requirement');
+                    newRequirement.innerHTML =
+                        '<input type="text" class="form-control" name="requirements[]" placeholder="Descripción del requerimiento" required>';
+                    container.appendChild(newRequirement);
+                });
+            </script>
             <button type="submit" class="btn btn-primary">Actualizar Actividad</button>
         </form>
     </div>
