@@ -64,6 +64,11 @@
                     container.appendChild(newRequirement);
                 });
             </script>
+            <div class="form-group">
+                <label for="fecha_recepcion">Fecha de Recepción</label>
+                <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion"
+                    value="{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('Y-m-d') : '' }}">
+            </div>
             <button type="submit" class="btn btn-primary">Actualizar Actividad</button>
         </form>
     </div>

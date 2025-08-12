@@ -31,9 +31,10 @@ class ActivityController extends Controller
             'user_id.*' => 'exists:users,id', // Validar que cada ID de usuario exista
             'requirements' => 'nullable|array', // Solo array, permitiendo que esté vacío
             //'requirements.*' => 'string', // Validar que cada requerimiento sea una cadena si se proporciona
+            'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
         ]);
         // Crear la actividad
-        $activity = Activity::create($request->only(['name', 'description', 'status']));
+        $activity = Activity::create($request->only(['name', 'description', 'status', 'fecha_recepcion']));
         // Asignar usuarios a la actividad
         $activity->users()->attach($request->user_id);
         // Agregar los requerimientos solo si existen
@@ -61,9 +62,11 @@ class ActivityController extends Controller
             'user_id.*' => 'exists:users,id', // Validar que cada ID de usuario exista
             'requirements' => 'nullable|array', // Permitir que sea un array, permitiendo que esté vacío
             // 'requirements.*' => 'string', // CValidar que cada requerimiento sea una cadena si se proporciona
+            'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
+
         ]);
         // Actualizar la actividad
-        $activity->update($request->only(['name', 'description', 'status']));
+        $activity->update($request->only(['name', 'description', 'status', 'fecha_recepcion']));
 
         // Asignar usuarios a la actividad
         $activity->users()->sync($request->user_id); // Usar sync para actualizar la relación

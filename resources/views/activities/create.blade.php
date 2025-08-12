@@ -42,6 +42,10 @@
                 <textarea class="form-control" id="requirements" name="requirements[]"
                     placeholder="Agrega los requerimientos (deja vacío si no hay)"></textarea>
             </div>
+            <div class="form-group">
+                <label for="fecha_recepcion">Fecha de Recepción</label>
+                <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion">
+            </div>
             <button type="button" class="btn btn-secondary" id="add-requirement">Agregar Requerimiento</button>
     </div>
     <script>

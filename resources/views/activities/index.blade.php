@@ -16,6 +16,7 @@
                     <th>Descripción</th>
                     <th>Estado</th>
                     <th>Usuarios Asignados</th>
+                    <th>Fecha de Recepción</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -38,6 +39,8 @@
                                     <!-- Muestra los nombres de los usuarios asignados, separados por comas -->
                                 @endforeach
                             @endif
+                        </td>
+                        <td>{{ $activity->fecha_recepcion  ? $activity->fecha_recepcion->format('d-m-Y') : 'No asignada' }}
                         </td>
                         <td>
                             <a href="{{ route('activities.edit', $activity) }}" class="btn btn-warning">Editar</a>
