@@ -25,11 +25,11 @@
             <div class="form-group">
                 <label for="status">Estado</label>
                 <select class="form-control" id="status" name="status" required>
-                    <option value="en_ejecucion" {{ $activity->status == 'En ejecución' ? 'selected' : '' }}>En ejecución
+                    <option value="en_ejecucion" {{ $activity->status == 'en_ejecucion' ? 'selected' : '' }}>En ejecución
                     </option>
-                    <option value="culminada" {{ $activity->status == 'Culminada' ? 'selected' : '' }}>Culminada</option>
+                    <option value="culminada" {{ $activity->status == 'culminada' ? 'selected' : '' }}>Culminada</option>
                     <option value="en_espera_de_insumos"
-                        {{ $activity->status == 'En espera de insumos' ? 'selected' : '' }}>En espera de insumos</option>
+                        {{ $activity->status == 'en_espera_de_insumos' ? 'selected' : '' }}>En espera de insumos</option>
                 </select>
             </div>
             <div class="form-group">
