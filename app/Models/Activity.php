@@ -25,4 +25,14 @@ class Activity extends Model
     {
         return $this->hasMany(Requirement::class);
     }
+
+    public function getStatusLabelAttribute()
+    {
+        $labels = [
+            'en_ejecucion' => 'En ejecución',
+            'culminada' => 'Culminada',
+            'en_espera_de_insumos' => 'En espera de insumos',
+        ];
+        return $labels[$this->status] ?? $this->status; // Devuelve el estado legible o el original si no se encuentra
+    }
 }
