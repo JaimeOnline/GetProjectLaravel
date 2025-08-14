@@ -1,10 +1,7 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
 class Activity extends Model
 {
     use HasFactory;
@@ -15,6 +12,7 @@ class Activity extends Model
         'status',
         'fecha_recepcion',
         'caso',
+        'parent_id',
     ];
     // Campos que deben ser tratados como fechas
     protected $casts = [
@@ -33,6 +31,20 @@ class Activity extends Model
     public function requirements()
     {
         return $this->hasMany(Requirement::class);
+    }
+    /**
+     * Subactividades (relación uno a muchos)
+     */
+    public function subactivities()
+    {
+        return $this->hasMany(Activity::class, 'parent_id');
+    }
+    /**
+     * Actividad padre (si existe)
+     */
+    public function parent()
+    {
+        return $this->belongsTo(Activity::class, 'parent_id');
     }
     /**
      * Obtener la etiqueta legible del estado
