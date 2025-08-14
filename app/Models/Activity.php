@@ -14,6 +14,7 @@ class Activity extends Model
         'description',
         'status',
         'fecha_recepcion',
+        'caso',
     ];
     // Campos que deben ser tratados como fechas
     protected $casts = [

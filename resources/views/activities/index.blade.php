@@ -11,7 +11,7 @@
         <table class="table mt-3">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Caso</th>
                     <th>Nombre</th>
                     <th>Descripción</th>
                     <th>Estado</th>
@@ -23,7 +23,7 @@
             <tbody>
                 @foreach ($activities as $activity)
                     <tr>
-                        <td>{{ $activity->id }}</td>
+                        <td>{{ $activity->caso }}</td>
                         <td>{{ $activity->name }}</td>
                         <td>{{ $activity->description }}</td>
                         <td>{{ $activity->status_label }}</td>

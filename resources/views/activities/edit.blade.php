@@ -15,8 +15,14 @@
             @csrf
             @method('PUT')
             <div class="form-group">
+                <label for="caso">Caso</label>
+                <input type="text" class="form-control" id="caso" name="caso" value="{{ $activity->caso }}"
+                    required>
+            </div>
+            <div class="form-group">
                 <label for="name">Nombre</label>
-                <input type="text" class="form-control" id="name" name="name" value="{{ $activity->name }}" required>
+                <input type="text" class="form-control" id="name" name="name" value="{{ $activity->name }}"
+                    required>
             </div>
             <div class="form-group">
                 <label for="description">Descripción</label>

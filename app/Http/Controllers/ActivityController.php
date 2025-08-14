@@ -32,9 +32,10 @@ class ActivityController extends Controller
             'requirements' => 'nullable|array', // Solo array, permitiendo que esté vacío
             //'requirements.*' => 'string', // Validar que cada requerimiento sea una cadena si se proporciona
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
+            'caso' => 'required|unique:activities,caso', // Validar que el campo 'caso' sea único en la tabla 'activities'
         ]);
         // Crear la actividad
-        $activity = Activity::create($request->only(['name', 'description', 'status', 'fecha_recepcion']));
+        $activity = Activity::create($request->only(['caso','name', 'description', 'status', 'fecha_recepcion']));
         // Asignar usuarios a la actividad
         $activity->users()->attach($request->user_id);
         // Agregar los requerimientos solo si existen
@@ -63,10 +64,12 @@ class ActivityController extends Controller
             'requirements' => 'nullable|array', // Permitir que sea un array, permitiendo que esté vacío
             // 'requirements.*' => 'string', // CValidar que cada requerimiento sea una cadena si se proporciona
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
+            'caso' => 'required|unique:activities,caso', // Validar que el campo 'caso' sea único en la tabla 'activities'
+
 
         ]);
         // Actualizar la actividad
-        $activity->update($request->only(['name', 'description', 'status', 'fecha_recepcion']));
+        $activity->update($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion']));
 
         // Asignar usuarios a la actividad
         $activity->users()->sync($request->user_id); // Usar sync para actualizar la relación
