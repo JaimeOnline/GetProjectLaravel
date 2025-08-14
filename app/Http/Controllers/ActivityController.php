@@ -11,31 +11,34 @@ class ActivityController extends Controller
 {
     public function index()
     {
-        // Obtener todas las actividades con sus usuarios y requerimientos
-        $activities = Activity::with('users', 'requirements')->get();
+        // Obtener todas las actividades con sus usuarios y subactividades
+        $activities = Activity::with('users', 'subactivities')->get();
         return view('activities.index', compact('activities'));
     }
     public function create()
     {
         // Obtener todos los usuarios
         $users = User::all();
-        // Pasar la variable $users a la vista
-        return view('activities.create', compact('users'));
+
+        // Obtener todas las actividades para el campo de actividad padre
+        $activities = Activity::all();
+        // Pasar las variables a la vista
+        return view('activities.create', compact('users', 'activities'));
     }
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
             'status' => 'required',
-            'user_id' => 'required|array', // Asegúrate de que sea un array
+            'user_id' => 'required|array',
             'user_id.*' => 'exists:users,id', // Validar que cada ID de usuario exista
             'requirements' => 'nullable|array', // Solo array, permitiendo que esté vacío
-            //'requirements.*' => 'string', // Validar que cada requerimiento sea una cadena si se proporciona
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
             'caso' => 'required|unique:activities,caso', // Validar que el campo 'caso' sea único en la tabla 'activities'
+            'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
         ]);
         // Crear la actividad
-        $activity = Activity::create($request->only(['caso','name', 'description', 'status', 'fecha_recepcion']));
+        $activity = Activity::create($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion', 'parent_id']));
         // Asignar usuarios a la actividad
         $activity->users()->attach($request->user_id);
         // Agregar los requerimientos solo si existen
@@ -51,34 +54,33 @@ class ActivityController extends Controller
     }
     public function edit(Activity $activity)
     {
-        $users = User::all(); // Obtener todos los usuarios
-        return view('activities.edit', compact('activity', 'users')); // Pasar tanto la actividad como los usuarios
+        // Obtener todos los usuarios
+        $users = User::all();
+        // Obtener todas las actividades para el campo de actividad padre
+        $activities = Activity::all();
+        // Pasar las variables a la vista
+        return view('activities.edit', compact('activity', 'users', 'activities'));
     }
     public function update(Request $request, Activity $activity)
     {
         $request->validate([
             'name' => 'required',
             'status' => 'required',
-            'user_id' => 'required|array', // Asegúrate de que sea un array
-            'user_id.*' => 'exists:users,id', // Validar que cada ID de usuario exista
-            'requirements' => 'nullable|array', // Permitir que sea un array, permitiendo que esté vacío
-            // 'requirements.*' => 'string', // CValidar que cada requerimiento sea una cadena si se proporciona
-            'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
-            'caso' => 'required|unique:activities,caso', // Validar que el campo 'caso' sea único en la tabla 'activities'
-
-
+            'user_id' => 'required|array',
+            'user_id.*' => 'exists:users,id',
+            'requirements' => 'nullable|array',
+            'fecha_recepcion' => 'nullable|date',
+            'caso' => 'required|unique:activities,caso,' . $activity->id,
+            'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
         ]);
         // Actualizar la actividad
-        $activity->update($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion']));
-
+        $activity->update($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion', 'parent_id']));
         // Asignar usuarios a la actividad
         $activity->users()->sync($request->user_id); // Usar sync para actualizar la relación
-
         // Limpiar los requerimientos existentes y agregar los nuevos solo si existen
         $activity->requirements()->delete(); // Eliminar los requerimientos existentes
         if ($request->has('requirements')) {
             foreach ($request->requirements as $requirementDescription) {
-                // Solo agregar si el requerimiento no está vacío
                 if (!empty($requirementDescription)) {
                     Requirement::create([
                         'activity_id' => $activity->id,
