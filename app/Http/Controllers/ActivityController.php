@@ -15,15 +15,22 @@ class ActivityController extends Controller
         $activities = Activity::with('users', 'subactivities')->get();
         return view('activities.index', compact('activities'));
     }
-    public function create()
+    public function create(Request $request)
     {
         // Obtener todos los usuarios
         $users = User::all();
 
         // Obtener todas las actividades para el campo de actividad padre
         $activities = Activity::all();
+        
+        // Obtener el parentId desde la query string
+        $parentId = $request->query('parentId');
+        
+        // Si se pasa un parentId, lo usamos como padre predeterminado
+        $parentActivity = $parentId ? Activity::findOrFail($parentId) : null;
+        
         // Pasar las variables a la vista
-        return view('activities.create', compact('users', 'activities'));
+        return view('activities.create', compact('users', 'activities', 'parentActivity'));
     }
     public function store(Request $request)
     {

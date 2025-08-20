@@ -1,9 +1,10 @@
+blade
+{{-- resources/views/activities/index.blade.php --}}
 @extends('layouts.app')
 @section('content')
 <div class="container">
     <h1>Actividades</h1>
     <a href="{{ route('activities.create') }}" class="btn btn-primary">Crear Nueva Actividad</a>
-    
     @if (session('success'))
         <div class="alert alert-success mt-3">
             {{ session('success') }}
@@ -48,6 +49,7 @@
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">Eliminar</button>
                         </form>
+                        <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}" class="btn btn-secondary">Crear Subactividad</a>
                     </td>
                 </tr>
                 {{-- Mostrar subactividades --}}
@@ -71,6 +73,7 @@
                         </td>
                         <td>{{ $subactivity->fecha_recepcion ? $subactivity->fecha_recepcion->format('d-m-Y') : 'No asignada' }}</td>
                         <td>
+                            <a href="{{ route('activities.create', ['parentId' => $subactivity->id]) }}" class="btn btn-secondary">Crear Subactividad</a>
                             <a href="{{ route('activities.edit', $subactivity) }}" class="btn btn-warning">Editar</a>
                             <form action="{{ route('activities.destroy', $subactivity) }}" method="POST" style="display:inline;">
                                 @csrf

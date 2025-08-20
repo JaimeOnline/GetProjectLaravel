@@ -1,7 +1,8 @@
 @extends('layouts.app')
 @section('content')
     <div class="container">
-        <h1>Crear Nueva Actividad</h1>
+        <h1>{{ isset($parentActivity) ? 'Crear Subactividad para: ' . $parentActivity->name : 'Crear Nueva Actividad' }}
+        </h1>
         @if ($errors->any())
             <div class="alert alert-danger">
                 <ul>
@@ -13,6 +14,12 @@
         @endif
         <form action="{{ route('activities.store') }}" method="POST">
             @csrf
+            @if (isset($parentActivity))
+                <input type="hidden" name="parent_id" value="{{ $parentActivity->id }}">
+                <div class="alert alert-info">
+                    <strong>Actividad Padre:</strong> {{ $parentActivity->name }}
+                </div>
+            @endif
             <div class="form-group">
                 <label for="caso">Caso</label>
                 <input type="text" class="form-control" id="caso" name="caso" required>
@@ -41,18 +48,17 @@
                     @endforeach
                 </select>
             </div>
-            blade
-            <div class="form-group">
-                <label for="parent_id">Actividad Padre</label>
-                <select class="form-control" id="parent_id" name="parent_id">
-                    <option value="">Ninguna</option>
-                    @foreach ($activities as $parentActivity)
-                        <option value="{{ $parentActivity->id }}"
-                            {{ $activity->parent_id == $parentActivity->id ? 'selected' : '' }}>{{ $parentActivity->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+            @if (!isset($parentActivity))
+                <div class="form-group">
+                    <label for="parent_id">Actividad Padre</label>
+                    <select class="form-control" id="parent_id" name="parent_id">
+                        <option value="">-- Seleccionar Actividad Padre (Opcional) --</option>
+                        @foreach ($activities as $activity)
+                            <option value="{{ $activity->id }}">{{ $activity->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             <div class="form-group">
                 <label for="requirements">Requerimientos</label>
                 <div id="requirements-container">
