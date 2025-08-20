@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Activity;
 use App\Models\User;
 use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
+use App\Models\Comment;
 use Illuminate\Http\Request;
 
 class ActivityController extends Controller
@@ -13,7 +14,7 @@ class ActivityController extends Controller
     {
         // Obtener solo las actividades padre (sin parent_id) con sus usuarios y subactividades anidadas
         $activities = Activity::whereNull('parent_id')
-            ->with(['users', 'subactivities.users', 'subactivities.subactivities.users'])
+            ->with(['users', 'comments', 'subactivities.users', 'subactivities.comments', 'subactivities.subactivities.users', 'subactivities.subactivities.comments'])
             ->get();
         return view('activities.index', compact('activities'));
     }
@@ -42,6 +43,7 @@ class ActivityController extends Controller
             'user_id' => 'required|array',
             'user_id.*' => 'exists:users,id', // Validar que cada ID de usuario exista
             'requirements' => 'nullable|array', // Solo array, permitiendo que esté vacío
+            'comments' => 'nullable|array', // Validar comentarios como array
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
             'caso' => 'required|unique:activities,caso', // Validar que el campo 'caso' sea único en la tabla 'activities'
             'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
@@ -53,12 +55,27 @@ class ActivityController extends Controller
         // Agregar los requerimientos solo si existen
         if ($request->has('requirements')) {
             foreach ($request->requirements as $requirementDescription) {
-                Requirement::create([
-                    'activity_id' => $activity->id,
-                    'description' => $requirementDescription,
-                ]);
+                if (!empty($requirementDescription)) {
+                    Requirement::create([
+                        'activity_id' => $activity->id,
+                        'description' => $requirementDescription,
+                    ]);
+                }
             }
         }
+
+        // Agregar los comentarios solo si existen
+        if ($request->has('comments')) {
+            foreach ($request->comments as $commentText) {
+                if (!empty($commentText)) {
+                    Comment::create([
+                        'activity_id' => $activity->id,
+                        'comment' => $commentText,
+                    ]);
+                }
+            }
+        }
+
         return redirect()->route('activities.index')->with('success', 'Actividad creada con éxito.');
     }
     public function edit(Activity $activity)
@@ -67,6 +84,8 @@ class ActivityController extends Controller
         $users = User::all();
         // Obtener todas las actividades para el campo de actividad padre
         $activities = Activity::all();
+        // Cargar los comentarios de la actividad
+        $activity->load('comments');
         // Pasar las variables a la vista
         return view('activities.edit', compact('activity', 'users', 'activities'));
     }
@@ -78,6 +97,7 @@ class ActivityController extends Controller
             'user_id' => 'required|array',
             'user_id.*' => 'exists:users,id',
             'requirements' => 'nullable|array',
+            'comments' => 'nullable|array', // Validar comentarios como array
             'fecha_recepcion' => 'nullable|date',
             'caso' => 'required|unique:activities,caso,' . $activity->id,
             'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
@@ -98,6 +118,19 @@ class ActivityController extends Controller
                 }
             }
         }
+
+        // Agregar nuevos comentarios (no eliminar los existentes para mantener el historial)
+        if ($request->has('comments')) {
+            foreach ($request->comments as $commentText) {
+                if (!empty($commentText)) {
+                    Comment::create([
+                        'activity_id' => $activity->id,
+                        'comment' => $commentText,
+                    ]);
+                }
+            }
+        }
+
         return redirect()->route('activities.index')->with('success', 'Actividad actualizada con éxito.');
     }
 
@@ -105,5 +138,11 @@ class ActivityController extends Controller
     {
         $activity->delete();
         return redirect()->route('activities.index')->with('success', 'Actividad eliminada con éxito.');
+    }
+
+    public function showComments(Activity $activity)
+    {
+        $activity->load('comments');
+        return view('activities.comments', compact('activity'));
     }
 }

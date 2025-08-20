@@ -8,4 +8,5 @@ Route::get('/', function () {
 });
 
 Route::resource('activities', ActivityController::class);
+Route::get('activities/{activity}/comments', [ActivityController::class, 'showComments'])->name('activities.comments');
 

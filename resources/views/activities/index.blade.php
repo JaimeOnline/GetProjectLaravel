@@ -16,6 +16,7 @@
                 <th>Descripción</th>
                 <th>Estado</th>
                 <th>Usuarios Asignados</th>
+                <th>Comentarios</th>
                 <th>Fecha de Recepción</th>
                 <th>Acciones</th>
             </tr>
@@ -47,6 +48,20 @@
                                     ,
                                 @endif
                             @endforeach
+                        @endif
+                    </td>
+                    <td>
+                        @if ($activity->comments->count() > 0)
+                            <a href="{{ route('activities.comments', $activity) }}" class="text-decoration-none">
+                                <span class="badge badge-info">{{ $activity->comments->count() }} comentario(s)</span>
+                            </a>
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    Último: {{ $activity->comments->last()->created_at->format('d/m/Y H:i') }}
+                                </small>
+                            </div>
+                        @else
+                            <span class="text-muted">Sin comentarios</span>
                         @endif
                     </td>
                     <td>{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('d-m-Y') : 'No asignada' }}</td>

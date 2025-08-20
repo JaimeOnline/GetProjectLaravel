@@ -47,6 +47,14 @@ class Activity extends Model
         return $this->belongsTo(Activity::class, 'parent_id');
     }
     /**
+     * Comentarios asociados a la actividad (relación uno a muchos)
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
      * Obtener la etiqueta legible del estado
      */
     public function getStatusLabelAttribute()

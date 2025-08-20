@@ -67,6 +67,13 @@
                 <button type="button" class="btn btn-secondary" id="add-requirement">Agregar Requerimiento</button>
             </div>
             <div class="form-group">
+                <label for="comments">Comentarios</label>
+                <div id="comments-container">
+                    <textarea class="form-control" name="comments[]" placeholder="Agrega comentarios (deja vacío si no hay)"></textarea>
+                </div>
+                <button type="button" class="btn btn-secondary" id="add-comment">Agregar Comentario</button>
+            </div>
+            <div class="form-group">
                 <label for="fecha_recepcion">Fecha de Recepción</label>
                 <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ date('Y-m-d') }}">
             </div>
@@ -81,6 +88,15 @@
             newRequirement.innerHTML =
                 '<textarea class="form-control" name="requirements[]" placeholder="Descripción del requerimiento" required></textarea>';
             container.appendChild(newRequirement);
+        });
+
+        document.getElementById('add-comment').addEventListener('click', function() {
+            var container = document.getElementById('comments-container');
+            var newComment = document.createElement('div');
+            newComment.classList.add('comment');
+            newComment.innerHTML =
+                '<textarea class="form-control" name="comments[]" placeholder="Descripción del comentario" required></textarea>';
+            container.appendChild(newComment);
         });
     </script>
 @endsection

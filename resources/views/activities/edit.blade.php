@@ -60,6 +60,34 @@
             </div>
             <button type="button" class="btn btn-secondary" id="add-requirement">Agregar Requerimiento</button>
         </div>
+        
+        {{-- Mostrar comentarios existentes --}}
+        @if ($activity->comments->count() > 0)
+            <div class="form-group">
+                <label>Comentarios Existentes</label>
+                <div class="card">
+                    <div class="card-body">
+                        @foreach ($activity->comments as $comment)
+                            <div class="border-bottom pb-2 mb-2">
+                                <p class="mb-1">{{ $comment->comment }}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> 
+                                    {{ $comment->created_at->format('d/m/Y H:i:s') }}
+                                </small>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <div class="form-group">
+            <label for="comments">Agregar Nuevos Comentarios</label>
+            <div id="comments-container">
+                <textarea class="form-control" name="comments[]" placeholder="Agrega nuevos comentarios (deja vacío si no hay)"></textarea>
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-comment">Agregar Comentario</button>
+        </div>
         <div class="form-group">
             <label for="fecha_recepcion">Fecha de Recepción</label>
             <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('Y-m-d') : '' }}">
@@ -75,6 +103,15 @@
         newRequirement.innerHTML =
             '<input type="text" class="form-control" name="requirements[]" placeholder="Descripción del requerimiento" required>';
         container.appendChild(newRequirement);
+    });
+
+    document.getElementById('add-comment').addEventListener('click', function() {
+        var container = document.getElementById('comments-container');
+        var newComment = document.createElement('div');
+        newComment.classList.add('comment');
+        newComment.innerHTML =
+            '<textarea class="form-control" name="comments[]" placeholder="Descripción del comentario" required></textarea>';
+        container.appendChild(newComment);
     });
 </script>
 @endsection

@@ -29,6 +29,20 @@
                 @endforeach
             @endif
         </td>
+        <td>
+            @if ($subactivity->comments->count() > 0)
+                <a href="{{ route('activities.comments', $subactivity) }}" class="text-decoration-none">
+                    <span class="badge badge-secondary">{{ $subactivity->comments->count() }} comentario(s)</span>
+                </a>
+                <div class="mt-1">
+                    <small class="text-muted">
+                        Último: {{ $subactivity->comments->last()->created_at->format('d/m/Y H:i') }}
+                    </small>
+                </div>
+            @else
+                <span class="text-muted">Sin comentarios</span>
+            @endif
+        </td>
         <td>{{ $subactivity->fecha_recepcion ? $subactivity->fecha_recepcion->format('d-m-Y') : 'No asignada' }}</td>
         <td>
             <a href="{{ route('activities.create', ['parentId' => $subactivity->id]) }}" class="btn btn-secondary btn-sm">Crear Subactividad</a>
