@@ -68,7 +68,7 @@
             </div>
             <div class="form-group">
                 <label for="fecha_recepcion">Fecha de Recepción</label>
-                <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion">
+                <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ date('Y-m-d') }}">
             </div>
             <button type="submit" class="btn btn-primary">Crear Actividad</button>
         </form>
