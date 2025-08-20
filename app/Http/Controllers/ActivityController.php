@@ -11,8 +11,10 @@ class ActivityController extends Controller
 {
     public function index()
     {
-        // Obtener todas las actividades con sus usuarios y subactividades
-        $activities = Activity::with('users', 'subactivities')->get();
+        // Obtener solo las actividades padre (sin parent_id) con sus usuarios y subactividades anidadas
+        $activities = Activity::whereNull('parent_id')
+            ->with(['users', 'subactivities.users', 'subactivities.subactivities.users'])
+            ->get();
         return view('activities.index', compact('activities'));
     }
     public function create(Request $request)
