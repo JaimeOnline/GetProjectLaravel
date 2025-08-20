@@ -92,46 +92,59 @@ class ActivityController extends Controller
     public function update(Request $request, Activity $activity)
     {
         $request->validate([
-            'name' => 'required',
-            'status' => 'required',
-            'user_id' => 'required|array',
+            'name' => 'required|string|max:255',
+            'status' => 'required|in:en_ejecucion,culminada,en_espera_de_insumos',
+            'user_id' => 'required|array|min:1',
             'user_id.*' => 'exists:users,id',
             'requirements' => 'nullable|array',
-            'comments' => 'nullable|array', // Validar comentarios como array
+            'requirements.*' => 'nullable|string|max:1000',
+            'comments' => 'nullable|array',
+            'comments.*' => 'nullable|string|max:1000',
             'fecha_recepcion' => 'nullable|date',
-            'caso' => 'required|unique:activities,caso,' . $activity->id,
-            'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
+            'caso' => 'required|string|max:255|unique:activities,caso,' . $activity->id,
+            'parent_id' => 'nullable|exists:activities,id',
+            'description' => 'nullable|string|max:1000',
         ]);
-        // Actualizar la actividad
-        $activity->update($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion', 'parent_id']));
-        // Asignar usuarios a la actividad
-        $activity->users()->sync($request->user_id); // Usar sync para actualizar la relación
-        // Limpiar los requerimientos existentes y agregar los nuevos solo si existen
-        $activity->requirements()->delete(); // Eliminar los requerimientos existentes
-        if ($request->has('requirements')) {
-            foreach ($request->requirements as $requirementDescription) {
-                if (!empty($requirementDescription)) {
-                    Requirement::create([
-                        'activity_id' => $activity->id,
-                        'description' => $requirementDescription,
-                    ]);
+
+        try {
+            // Actualizar la actividad
+            $activity->update($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion', 'parent_id']));
+            
+            // Asignar usuarios a la actividad
+            $activity->users()->sync($request->user_id);
+            
+            // Limpiar los requerimientos existentes y agregar los nuevos solo si existen
+            $activity->requirements()->delete();
+            if ($request->has('requirements')) {
+                foreach ($request->requirements as $requirementDescription) {
+                    if (!empty($requirementDescription)) {
+                        Requirement::create([
+                            'activity_id' => $activity->id,
+                            'description' => $requirementDescription,
+                        ]);
+                    }
                 }
             }
-        }
 
-        // Agregar nuevos comentarios (no eliminar los existentes para mantener el historial)
-        if ($request->has('comments')) {
-            foreach ($request->comments as $commentText) {
-                if (!empty($commentText)) {
-                    Comment::create([
-                        'activity_id' => $activity->id,
-                        'comment' => $commentText,
-                    ]);
+            // Agregar nuevos comentarios (no eliminar los existentes para mantener el historial)
+            if ($request->has('comments')) {
+                foreach ($request->comments as $commentText) {
+                    if (!empty($commentText)) {
+                        Comment::create([
+                            'activity_id' => $activity->id,
+                            'comment' => $commentText,
+                        ]);
+                    }
                 }
             }
-        }
 
-        return redirect()->route('activities.index')->with('success', 'Actividad actualizada con éxito.');
+            return redirect()->route('activities.index')->with('success', 'Actividad actualizada con éxito.');
+            
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withErrors(['error' => 'Error al actualizar la actividad: ' . $e->getMessage()])
+                ->withInput();
+        }
     }
 
     public function destroy(Activity $activity)
@@ -144,5 +157,45 @@ class ActivityController extends Controller
     {
         $activity->load('comments');
         return view('activities.comments', compact('activity'));
+    }
+
+    public function storeComment(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:1000',
+        ]);
+
+        Comment::create([
+            'activity_id' => $activity->id,
+            'comment' => $request->comment,
+        ]);
+
+        return redirect()->route('activities.comments', $activity)
+            ->with('success', 'Comentario agregado exitosamente.');
+    }
+
+    public function destroyComment(Comment $comment)
+    {
+        $activity = $comment->activity;
+        $comment->delete();
+        
+        // Verificar de dónde viene la petición para redirigir apropiadamente
+        $referer = request()->headers->get('referer');
+        if (strpos($referer, '/edit') !== false) {
+            return redirect()->route('activities.edit', $activity)
+                ->with('success', 'Comentario eliminado exitosamente.');
+        }
+        
+        return redirect()->route('activities.comments', $activity)
+            ->with('success', 'Comentario eliminado exitosamente.');
+    }
+
+    public function destroyRequirement(Requirement $requirement)
+    {
+        $activity = $requirement->activity;
+        $requirement->delete();
+        
+        return redirect()->route('activities.edit', $activity)
+            ->with('success', 'Requerimiento eliminado exitosamente.');
     }
 }
