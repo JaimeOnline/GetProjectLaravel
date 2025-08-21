@@ -64,6 +64,14 @@ class Activity extends Model
     }
 
     /**
+     * Correos asociados a la actividad (relación uno a muchos)
+     */
+    public function emails()
+    {
+        return $this->hasMany(Email::class);
+    }
+
+    /**
      * Obtener la etiqueta legible del estado
      */
     public function getStatusLabelAttribute()

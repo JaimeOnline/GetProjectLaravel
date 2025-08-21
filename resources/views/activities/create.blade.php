@@ -95,6 +95,16 @@
                     <i class="fas fa-plus"></i> Agregar Comentario
                 </button>
             </div>
+            
+            {{-- Sección de Correos --}}
+            <div class="form-group">
+                <label>Correos</label>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Nota:</strong> Los correos se pueden agregar después de crear la actividad desde la página de edición.
+                    Una vez creada la actividad, podrás gestionar todos los correos enviados y recibidos relacionados.
+                </div>
+            </div>
             <div class="form-group">
                 <label for="fecha_recepcion">Fecha de Recepción</label>
                 <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ date('Y-m-d') }}">

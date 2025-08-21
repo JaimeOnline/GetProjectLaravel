@@ -17,6 +17,7 @@
                 <th>Estado</th>
                 <th>Analistas</th>
                 <th>Comentarios</th>
+                <th>Correos</th>
                 <th>Fecha de Recepción</th>
                 <th>Acciones</th>
             </tr>
@@ -64,15 +65,49 @@
                             <span class="text-muted">Sin comentarios</span>
                         @endif
                     </td>
+                    <td>
+                        @if ($activity->emails->count() > 0)
+                            <a href="{{ route('activities.emails', $activity) }}" class="text-decoration-none">
+                                <span class="badge badge-success">{{ $activity->emails->count() }} correo(s)</span>
+                            </a>
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    @php
+                                        $lastEmail = $activity->emails->sortByDesc('created_at')->first();
+                                        $sentCount = $activity->emails->where('type', 'sent')->count();
+                                        $receivedCount = $activity->emails->where('type', 'received')->count();
+                                    @endphp
+                                    <i class="fas fa-paper-plane text-primary"></i> {{ $sentCount }} 
+                                    <i class="fas fa-inbox text-success ml-1"></i> {{ $receivedCount }}
+                                    @if($lastEmail)
+                                        <br>Último: {{ $lastEmail->created_at->format('d/m/Y H:i') }}
+                                    @endif
+                                </small>
+                            </div>
+                        @else
+                            <span class="text-muted">Sin correos</span>
+                        @endif
+                    </td>
                     <td>{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('d-m-Y') : 'No asignada' }}</td>
                     <td>
-                        <a href="{{ route('activities.edit', $activity) }}" class="btn btn-warning btn-sm">Editar</a>
-                        <form action="{{ route('activities.destroy', $activity) }}" method="POST" style="display:inline;">
+                        <div class="btn-group-vertical btn-group-sm" role="group">
+                            <a href="{{ route('activities.edit', $activity) }}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <a href="{{ route('activities.emails', $activity) }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-envelope"></i> Correos
+                            </a>
+                            <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-plus"></i> Subactividad
+                            </a>
+                        </div>
+                        <form action="{{ route('activities.destroy', $activity) }}" method="POST" style="display:inline;" class="mt-1">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar esta actividad?')">Eliminar</button>
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar esta actividad?')">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
                         </form>
-                        <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}" class="btn btn-secondary btn-sm">Crear Subactividad</a>
                     </td>
                 </tr>
                 {{-- Mostrar subactividades (inicialmente ocultas) --}}

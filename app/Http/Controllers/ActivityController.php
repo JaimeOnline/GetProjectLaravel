@@ -7,15 +7,16 @@ use App\Models\User;
 use App\Models\Analista;
 use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
 use App\Models\Comment;
+use App\Models\Email;
 use Illuminate\Http\Request;
 
 class ActivityController extends Controller
 {
     public function index()
     {
-        // Obtener solo las actividades padre (sin parent_id) con sus analistas y subactividades anidadas
+        // Obtener solo las actividades padre (sin parent_id) con sus analistas, correos y subactividades anidadas
         $activities = Activity::whereNull('parent_id')
-            ->with(['analistas', 'comments', 'subactivities.analistas', 'subactivities.comments', 'subactivities.subactivities.analistas', 'subactivities.subactivities.comments'])
+            ->with(['analistas', 'comments', 'emails', 'subactivities.analistas', 'subactivities.comments', 'subactivities.emails', 'subactivities.subactivities.analistas', 'subactivities.subactivities.comments', 'subactivities.subactivities.emails'])
             ->get();
         return view('activities.index', compact('activities'));
     }
@@ -85,8 +86,8 @@ class ActivityController extends Controller
         $analistas = Analista::all();
         // Obtener todas las actividades para el campo de actividad padre
         $activities = Activity::all();
-        // Cargar los comentarios de la actividad
-        $activity->load('comments');
+        // Cargar los comentarios y correos de la actividad
+        $activity->load(['comments', 'emails']);
         // Pasar las variables a la vista
         return view('activities.edit', compact('activity', 'analistas', 'activities'));
     }
@@ -198,5 +199,140 @@ class ActivityController extends Controller
         
         return redirect()->route('activities.edit', $activity)
             ->with('success', 'Requerimiento eliminado exitosamente.');
+    }
+
+    /**
+     * Almacenar un nuevo correo para una actividad
+     */
+    public function storeEmail(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'type' => 'required|in:sent,received',
+            'subject' => 'required|string|max:255',
+            'sender_recipient' => 'nullable|string|max:255',
+            'content' => 'required|string',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,txt,jpg,jpeg,png,gif,zip,rar',
+        ]);
+
+        $attachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                if ($file && $file->isValid()) {
+                    // Generar nombre único para el archivo
+                    $originalName = $file->getClientOriginalName();
+                    $extension = $file->getClientOriginalExtension();
+                    $fileName = time() . '_' . uniqid() . '.' . $extension;
+                    
+                    // Guardar el archivo
+                    $path = $file->storeAs('email_attachments', $fileName, 'public');
+                    
+                    // Guardar información del archivo
+                    $attachments[] = [
+                        'original_name' => $originalName,
+                        'file_name' => $fileName,
+                        'file_path' => $path,
+                        'file_size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                    ];
+                }
+            }
+        }
+
+        $email = Email::create([
+            'activity_id' => $activity->id,
+            'type' => $request->type,
+            'subject' => $request->subject,
+            'sender_recipient' => $request->sender_recipient,
+            'content' => $request->content,
+            'attachments' => $attachments,
+        ]);
+
+        $typeLabel = $request->type === 'sent' ? 'enviado' : 'recibido';
+        $successMessage = "Correo {$typeLabel} agregado exitosamente: \"{$email->subject}\"";
+        
+        return redirect()->route('activities.edit', $activity)
+            ->with('success', $successMessage);
+    }
+
+    /**
+     * Eliminar un correo
+     */
+    public function destroyEmail(Email $email)
+    {
+        $activity = $email->activity;
+        $email->delete();
+        
+        // Verificar de dónde viene la petición para redirigir apropiadamente
+        $referer = request()->headers->get('referer');
+        if (strpos($referer, '/emails') !== false) {
+            return redirect()->route('activities.emails', $activity)
+                ->with('success', 'Correo eliminado exitosamente.');
+        }
+        
+        return redirect()->route('activities.edit', $activity)
+            ->with('success', 'Correo eliminado exitosamente.');
+    }
+
+    /**
+     * Descargar archivo adjunto de correo
+     */
+    public function downloadAttachment(Email $email, $fileIndex)
+    {
+        if (!$email->attachments || !isset($email->attachments[$fileIndex])) {
+            abort(404, 'Archivo no encontrado');
+        }
+
+        $attachment = $email->attachments[$fileIndex];
+        $filePath = storage_path('app/public/' . $attachment['file_path']);
+
+        if (!file_exists($filePath)) {
+            abort(404, 'Archivo no encontrado en el servidor');
+        }
+
+        return response()->download($filePath, $attachment['original_name']);
+    }
+
+    /**
+     * Mostrar todos los correos de una actividad padre y sus subactividades
+     */
+    public function showEmails(Activity $activity)
+    {
+        // Obtener todos los IDs de actividades relacionadas (padre + subactividades)
+        $activityIds = [$activity->id];
+        
+        // Si es una actividad padre, agregar todas sus subactividades recursivamente
+        if ($activity->subactivities->count() > 0) {
+            $this->addSubactivityIds($activity, $activityIds);
+        }
+        
+        // Si es una subactividad, obtener la actividad padre y todas sus subactividades
+        if ($activity->parent_id) {
+            $parentActivity = $activity->parent;
+            $activityIds = [$parentActivity->id];
+            $this->addSubactivityIds($parentActivity, $activityIds);
+            $activity = $parentActivity; // Para mostrar el nombre correcto en la vista
+        }
+
+        // Obtener todos los correos de las actividades relacionadas, ordenados por fecha
+        $emails = Email::whereIn('activity_id', $activityIds)
+            ->with('activity')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('activities.emails', compact('activity', 'emails'));
+    }
+
+    /**
+     * Método auxiliar para agregar IDs de subactividades recursivamente
+     */
+    private function addSubactivityIds(Activity $activity, &$activityIds)
+    {
+        foreach ($activity->subactivities as $subactivity) {
+            $activityIds[] = $subactivity->id;
+            if ($subactivity->subactivities->count() > 0) {
+                $this->addSubactivityIds($subactivity, $activityIds);
+            }
+        }
     }
 }
