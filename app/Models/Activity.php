@@ -20,10 +20,19 @@ class Activity extends Model
     ];
     /**
      * Usuarios asignados a la actividad (relación muchos a muchos)
+     * DEPRECATED: Mantener para compatibilidad, usar analistas() en su lugar
      */
     public function users()
     {
         return $this->belongsToMany(User::class, 'activity_user');
+    }
+
+    /**
+     * Analistas asignados a la actividad (relación muchos a muchos)
+     */
+    public function analistas()
+    {
+        return $this->belongsToMany(Analista::class, 'activity_analista');
     }
     /**
      * Requerimientos asociados a la actividad (relación uno a muchos)

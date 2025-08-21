@@ -41,10 +41,10 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="user_id">Usuario Asignado</label>
-                <select class="form-control" id="user_id" name="user_id[]" multiple required>
-                    @foreach ($users as $user)
-                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                <label for="analista_id">Analistas</label>
+                <select class="form-control" id="analista_id" name="analista_id[]" multiple required>
+                    @foreach ($analistas as $analista)
+                        <option value="{{ $analista->id }}">{{ $analista->name }}</option>
                     @endforeach
                 </select>
             </div>

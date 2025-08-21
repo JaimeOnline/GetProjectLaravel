@@ -18,11 +18,11 @@
         <td>{{ $subactivity->description }}</td>
         <td>{{ $subactivity->status_label }}</td>
         <td>
-            @if ($subactivity->users->isEmpty())
-                Sin usuarios asignados
+            @if ($subactivity->analistas->isEmpty())
+                Sin analistas asignados
             @else
-                @foreach ($subactivity->users as $user)
-                    <span>{{ $user->name }}</span>
+                @foreach ($subactivity->analistas as $analista)
+                    <span>{{ $analista->name }}</span>
                     @if (!$loop->last)
                         ,
                     @endif

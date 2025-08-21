@@ -15,7 +15,7 @@
                 <th>Nombre</th>
                 <th>Descripción</th>
                 <th>Estado</th>
-                <th>Usuarios Asignados</th>
+                <th>Analistas</th>
                 <th>Comentarios</th>
                 <th>Fecha de Recepción</th>
                 <th>Acciones</th>
@@ -39,11 +39,11 @@
                     <td>{{ $activity->description }}</td>
                     <td>{{ $activity->status_label }}</td>
                     <td>
-                        @if ($activity->users->isEmpty())
-                            Sin usuarios asignados
+                        @if ($activity->analistas->isEmpty())
+                            Sin analistas asignados
                         @else
-                            @foreach ($activity->users as $user)
-                                <span>{{ $user->name }}</span>
+                            @foreach ($activity->analistas as $analista)
+                                <span>{{ $analista->name }}</span>
                                 @if (!$loop->last)
                                     ,
                                 @endif

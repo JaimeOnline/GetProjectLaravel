@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use App\Models\User;
+use App\Models\Analista;
 use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
 use App\Models\Comment;
 use Illuminate\Http\Request;
@@ -12,16 +13,16 @@ class ActivityController extends Controller
 {
     public function index()
     {
-        // Obtener solo las actividades padre (sin parent_id) con sus usuarios y subactividades anidadas
+        // Obtener solo las actividades padre (sin parent_id) con sus analistas y subactividades anidadas
         $activities = Activity::whereNull('parent_id')
-            ->with(['users', 'comments', 'subactivities.users', 'subactivities.comments', 'subactivities.subactivities.users', 'subactivities.subactivities.comments'])
+            ->with(['analistas', 'comments', 'subactivities.analistas', 'subactivities.comments', 'subactivities.subactivities.analistas', 'subactivities.subactivities.comments'])
             ->get();
         return view('activities.index', compact('activities'));
     }
     public function create(Request $request)
     {
-        // Obtener todos los usuarios
-        $users = User::all();
+        // Obtener todos los analistas
+        $analistas = Analista::all();
 
         // Obtener todas las actividades para el campo de actividad padre
         $activities = Activity::all();
@@ -33,15 +34,15 @@ class ActivityController extends Controller
         $parentActivity = $parentId ? Activity::findOrFail($parentId) : null;
         
         // Pasar las variables a la vista
-        return view('activities.create', compact('users', 'activities', 'parentActivity'));
+        return view('activities.create', compact('analistas', 'activities', 'parentActivity'));
     }
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
             'status' => 'required',
-            'user_id' => 'required|array',
-            'user_id.*' => 'exists:users,id', // Validar que cada ID de usuario exista
+            'analista_id' => 'required|array',
+            'analista_id.*' => 'exists:analistas,id', // Validar que cada ID de analista exista
             'requirements' => 'nullable|array', // Solo array, permitiendo que esté vacío
             'comments' => 'nullable|array', // Validar comentarios como array
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
@@ -50,8 +51,8 @@ class ActivityController extends Controller
         ]);
         // Crear la actividad
         $activity = Activity::create($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion', 'parent_id']));
-        // Asignar usuarios a la actividad
-        $activity->users()->attach($request->user_id);
+        // Asignar analistas a la actividad
+        $activity->analistas()->attach($request->analista_id);
         // Agregar los requerimientos solo si existen
         if ($request->has('requirements')) {
             foreach ($request->requirements as $requirementDescription) {
@@ -80,22 +81,22 @@ class ActivityController extends Controller
     }
     public function edit(Activity $activity)
     {
-        // Obtener todos los usuarios
-        $users = User::all();
+        // Obtener todos los analistas
+        $analistas = Analista::all();
         // Obtener todas las actividades para el campo de actividad padre
         $activities = Activity::all();
         // Cargar los comentarios de la actividad
         $activity->load('comments');
         // Pasar las variables a la vista
-        return view('activities.edit', compact('activity', 'users', 'activities'));
+        return view('activities.edit', compact('activity', 'analistas', 'activities'));
     }
     public function update(Request $request, Activity $activity)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'status' => 'required|in:en_ejecucion,culminada,en_espera_de_insumos',
-            'user_id' => 'required|array|min:1',
-            'user_id.*' => 'exists:users,id',
+            'analista_id' => 'required|array|min:1',
+            'analista_id.*' => 'exists:analistas,id',
             'requirements' => 'nullable|array',
             'requirements.*' => 'nullable|string|max:1000',
             'comments' => 'nullable|array',
@@ -110,8 +111,8 @@ class ActivityController extends Controller
             // Actualizar la actividad
             $activity->update($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion', 'parent_id']));
             
-            // Asignar usuarios a la actividad
-            $activity->users()->sync($request->user_id);
+            // Asignar analistas a la actividad
+            $activity->analistas()->sync($request->analista_id);
             
             // Limpiar los requerimientos existentes y agregar los nuevos solo si existen
             $activity->requirements()->delete();

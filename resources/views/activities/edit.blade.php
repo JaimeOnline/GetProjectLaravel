@@ -35,19 +35,19 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="user_id">Usuario Asignado</label>
-            <select class="form-control" id="user_id" name="user_id[]" multiple required>
-                @foreach ($users as $user)
-                    <option value="{{ $user->id }}" 
-                        {{ $activity->users && in_array($user->id, $activity->users->pluck('id')->toArray()) ? 'selected' : '' }}>
-                        {{ $user->name }}
+            <label for="analista_id">Analistas</label>
+            <select class="form-control" id="analista_id" name="analista_id[]" multiple required>
+                @foreach ($analistas as $analista)
+                    <option value="{{ $analista->id }}" 
+                        {{ $activity->analistas && in_array($analista->id, $activity->analistas->pluck('id')->toArray()) ? 'selected' : '' }}>
+                        {{ $analista->name }}
                     </option>
                 @endforeach
             </select>
             <small class="form-text text-muted">
-                Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples usuarios.
-                @if($activity->users && $activity->users->count() == 0)
-                    <span class="text-warning">⚠️ Esta actividad no tiene usuarios asignados. Debes seleccionar al menos uno.</span>
+                Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples analistas.
+                @if($activity->analistas && $activity->analistas->count() == 0)
+                    <span class="text-warning">⚠️ Esta actividad no tiene analistas asignados. Debes seleccionar al menos uno.</span>
                 @endif
             </small>
         </div>
