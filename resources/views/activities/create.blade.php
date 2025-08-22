@@ -1,194 +1,259 @@
 @extends('layouts.app')
+
+@section('styles')
+<link href="{{ asset('css/custom-styles.css') }}" rel="stylesheet">
+@endsection
+
 @section('content')
-    <div class="container">
-        <h1>{{ isset($parentActivity) ? 'Crear Subactividad para: ' . $parentActivity->name : 'Crear Nueva Actividad' }}
-        </h1>
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-        <form action="{{ route('activities.store') }}" method="POST">
-            @csrf
-            @if (isset($parentActivity))
-                <input type="hidden" name="parent_id" value="{{ $parentActivity->id }}">
-                <div class="alert alert-info">
-                    <strong>Actividad Padre:</strong> {{ $parentActivity->name }}
-                </div>
-            @endif
-            <div class="form-group">
-                <label for="caso">Caso</label>
-                <input type="text" class="form-control" id="caso" name="caso" required>
-            </div>
-            <div class="form-group">
-                <label for="name">Nombre</label>
-                <input type="text" class="form-control" id="name" name="name" required>
-            </div>
-            <div class="form-group">
-                <label for="description">Descripción</label>
-                <textarea class="form-control" id="description" name="description"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="status">Estado</label>
-                <select class="form-control" id="status" name="status" required>
-                    <option value="en_ejecucion">En ejecución</option>
-                    <option value="culminada">Culminada</option>
-                    <option value="en_espera_de_insumos">En espera de insumos</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="analista_id">Analistas</label>
-                <select class="form-control" id="analista_id" name="analista_id[]" multiple required>
-                    @foreach ($analistas as $analista)
-                        <option value="{{ $analista->id }}">{{ $analista->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if (!isset($parentActivity))
-                <div class="form-group">
-                    <label for="parent_id">Actividad Padre</label>
-                    <select class="form-control" id="parent_id" name="parent_id">
-                        <option value="">-- Seleccionar Actividad Padre (Opcional) --</option>
-                        @foreach ($activities as $activity)
-                            <option value="{{ $activity->id }}">{{ $activity->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            @endif
-            <div class="form-group">
-                <label for="requirements">Requerimientos</label>
-                <div id="requirements-container">
-                    <div class="requirement-item mb-2">
-                        <div class="input-group">
-                            <textarea class="form-control" name="requirements[]" placeholder="Agrega los requerimientos (deja vacío si no hay)"></textarea>
-                            <div class="input-group-append">
-                                <button type="button" class="btn btn-danger remove-requirement" title="Eliminar requerimiento">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-secondary" id="add-requirement">
-                    <i class="fas fa-plus"></i> Agregar Requerimiento
-                </button>
-            </div>
-            <div class="form-group">
-                <label for="comments">Comentarios</label>
-                <div id="comments-container">
-                    <div class="comment-item mb-2">
-                        <div class="input-group">
-                            <textarea class="form-control" name="comments[]" placeholder="Agrega comentarios (deja vacío si no hay)"></textarea>
-                            <div class="input-group-append">
-                                <button type="button" class="btn btn-danger remove-comment" title="Eliminar comentario">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-secondary" id="add-comment">
-                    <i class="fas fa-plus"></i> Agregar Comentario
-                </button>
-            </div>
-            
-            {{-- Sección de Correos --}}
-            <div class="form-group">
-                <label>Correos</label>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Nota:</strong> Los correos se pueden agregar después de crear la actividad desde la página de edición.
-                    Una vez creada la actividad, podrás gestionar todos los correos enviados y recibidos relacionados.
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="fecha_recepcion">Fecha de Recepción</label>
-                <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ date('Y-m-d') }}">
-            </div>
-            <button type="submit" class="btn btn-primary">Crear Actividad</button>
-        </form>
+<div class="container">
+    <!-- Breadcrumbs -->
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('activities.index') }}">Actividades</a></li>
+                @if(isset($parentActivity))
+                    <li class="breadcrumb-item"><a href="{{ route('activities.edit', $parentActivity) }}">{{ $parentActivity->name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Crear Subactividad</li>
+                @else
+                    <li class="breadcrumb-item active" aria-current="page">Crear Nueva Actividad</li>
+                @endif
+            </ol>
+        </nav>
     </div>
+
+    <!-- Barra de Acciones -->
+    <div class="action-bar">
+        <div class="action-group">
+            <h1 class="text-gradient mb-0">
+                {{ isset($parentActivity) ? 'Crear Subactividad' : 'Crear Nueva Actividad' }}
+            </h1>
+        </div>
+        <div class="action-group">
+            <div class="quick-nav">
+                <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                @if(isset($parentActivity))
+                    <a href="{{ route('activities.edit', $parentActivity) }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-eye"></i> Ver Actividad Padre
+                    </a>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    @if ($errors->any())
+        <div class="alert alert-danger fade-in">
+            <h6><i class="fas fa-exclamation-triangle"></i> Por favor corrige los siguientes errores:</h6>
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    <form action="{{ route('activities.store') }}" method="POST">
+        @csrf
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Información de la Nueva Actividad</h5>
+            </div>
+            <div class="card-body">
+                @if (isset($parentActivity))
+                    <input type="hidden" name="parent_id" value="{{ $parentActivity->id }}">
+                    <div class="alert alert-info fade-in">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Actividad Padre:</strong> {{ $parentActivity->name }}
+                    </div>
+                @endif
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label" for="caso">
+                                <i class="fas fa-hashtag text-primary"></i> Caso
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="caso" name="caso" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label" for="status">
+                                <i class="fas fa-flag text-primary"></i> Estado
+                                <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-control" id="status" name="status" required>
+                                <option value="en_ejecucion">En ejecución</option>
+                                <option value="culminada">Culminada</option>
+                                <option value="en_espera_de_insumos">En espera de insumos</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="name">
+                        <i class="fas fa-tag text-primary"></i> Nombre de la Actividad
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="description">
+                        <i class="fas fa-align-left text-primary"></i> Descripción
+                    </label>
+                    <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe los detalles de la actividad..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-users text-primary"></i> Seleccionar Analistas
+                        <span class="text-danger">*</span>
+                    </label>
+                    
+                    <div class="analysts-selector" id="analysts-selector">
+                        <div class="text-center mb-2">
+                            <i class="fas fa-user-friends fa-2x text-muted"></i>
+                            <p class="mb-1 font-weight-bold">Selecciona los analistas para esta actividad</p>
+                            <p class="text-muted mb-0">Haz clic en las tarjetas para seleccionar/deseleccionar</p>
+                        </div>
+                        
+                        <div class="analysts-grid">
+                            @foreach ($analistas as $analista)
+                                <div class="analyst-card" 
+                                     data-analyst-id="{{ $analista->id }}"
+                                     data-analyst-name="{{ $analista->name }}">
+                                    <div class="analyst-avatar">
+                                        {{ strtoupper(substr($analista->name, 0, 2)) }}
+                                    </div>
+                                    <p class="analyst-name">{{ $analista->name }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                        <!-- Inputs ocultos para enviar los datos -->
+                        <div id="selected-analysts-inputs">
+                        </div>
+                    </div>
+                    
+                    <div id="selected-analysts-summary" class="mt-2" style="display: none;">
+                        <small class="text-success">
+                            <i class="fas fa-check-circle"></i>
+                            <span id="selected-count">0</span> analista(s) seleccionado(s):
+                            <span id="selected-names" class="font-weight-bold"></span>
+                        </small>
+                    </div>
+                    
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Debes seleccionar al menos un analista para la actividad.
+                    </small>
+                </div>
+                
+                @if (!isset($parentActivity))
+                    <div class="form-group">
+                        <label class="form-label" for="parent_id">
+                            <i class="fas fa-sitemap text-primary"></i> Actividad Padre
+                        </label>
+                        <select class="form-control" id="parent_id" name="parent_id">
+                            <option value="">-- Seleccionar Actividad Padre (Opcional) --</option>
+                            @foreach ($activities as $activity)
+                                <option value="{{ $activity->id }}">{{ $activity->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+                
+                <div class="form-group">
+                    <label class="form-label" for="fecha_recepcion">
+                        <i class="fas fa-calendar text-primary"></i> Fecha de Recepción
+                    </label>
+                    <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ date('Y-m-d') }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="action-group">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-save"></i> Crear Actividad
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-lg ml-2" onclick="window.history.back()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                    <div class="action-group">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Todos los campos marcados con * son obligatorios
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
     <script>
-        // Agregar requerimiento
-        document.getElementById('add-requirement').addEventListener('click', function() {
-            var container = document.getElementById('requirements-container');
-            var newRequirement = document.createElement('div');
-            newRequirement.classList.add('requirement-item', 'mb-2');
-            newRequirement.innerHTML = `
-                <div class="input-group">
-                    <textarea class="form-control" name="requirements[]" placeholder="Descripción del requerimiento"></textarea>
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-danger remove-requirement" title="Eliminar requerimiento">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            container.appendChild(newRequirement);
-            attachRemoveHandlers();
+        // ===== FUNCIONALIDAD DE SELECCIÓN DE ANALISTAS =====
+        let selectedAnalysts = [];
+        
+        // Manejar clicks en las tarjetas de analistas
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.analyst-card')) {
+                const card = e.target.closest('.analyst-card');
+                const analystId = card.dataset.analystId;
+                const analystName = card.dataset.analystName;
+                
+                if (card.classList.contains('selected')) {
+                    // Deseleccionar
+                    card.classList.remove('selected');
+                    selectedAnalysts = selectedAnalysts.filter(a => a.id !== analystId);
+                } else {
+                    // Seleccionar
+                    card.classList.add('selected');
+                    selectedAnalysts.push({ id: analystId, name: analystName });
+                }
+                
+                updateAnalystsDisplay();
+            }
         });
-
-        // Agregar comentario
-        document.getElementById('add-comment').addEventListener('click', function() {
-            var container = document.getElementById('comments-container');
-            var newComment = document.createElement('div');
-            newComment.classList.add('comment-item', 'mb-2');
-            newComment.innerHTML = `
-                <div class="input-group">
-                    <textarea class="form-control" name="comments[]" placeholder="Descripción del comentario"></textarea>
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-danger remove-comment" title="Eliminar comentario">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            container.appendChild(newComment);
-            attachRemoveHandlers();
-        });
-
-        // Función para adjuntar manejadores de eliminación
-        function attachRemoveHandlers() {
-            // Eliminar requerimientos
-            document.querySelectorAll('.remove-requirement').forEach(function(button) {
-                button.removeEventListener('click', removeRequirement);
-                button.addEventListener('click', removeRequirement);
+        
+        // Actualizar la visualización y los inputs ocultos
+        function updateAnalystsDisplay() {
+            const container = document.getElementById('selected-analysts-inputs');
+            const summary = document.getElementById('selected-analysts-summary');
+            const selector = document.getElementById('analysts-selector');
+            const countSpan = document.getElementById('selected-count');
+            const namesSpan = document.getElementById('selected-names');
+            
+            // Limpiar inputs existentes
+            container.innerHTML = '';
+            
+            // Crear nuevos inputs
+            selectedAnalysts.forEach(analyst => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'analista_id[]';
+                input.value = analyst.id;
+                container.appendChild(input);
             });
-
-            // Eliminar comentarios
-            document.querySelectorAll('.remove-comment').forEach(function(button) {
-                button.removeEventListener('click', removeComment);
-                button.addEventListener('click', removeComment);
-            });
-        }
-
-        function removeRequirement(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            var container = document.getElementById('requirements-container');
-            if (container.children.length > 1) {
-                e.target.closest('.requirement-item').remove();
+            
+            // Actualizar visualización
+            if (selectedAnalysts.length > 0) {
+                selector.classList.add('has-selection');
+                summary.style.display = 'block';
+                countSpan.textContent = selectedAnalysts.length;
+                namesSpan.textContent = selectedAnalysts.map(a => a.name).join(', ');
             } else {
-                alert('Debe mantener al menos un campo de requerimiento.');
+                selector.classList.remove('has-selection');
+                summary.style.display = 'none';
             }
         }
-
-        function removeComment(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            var container = document.getElementById('comments-container');
-            if (container.children.length > 1) {
-                e.target.closest('.comment-item').remove();
-            } else {
-                alert('Debe mantener al menos un campo de comentario.');
-            }
-        }
-
-        // Inicializar manejadores
-        attachRemoveHandlers();
     </script>
 @endsection

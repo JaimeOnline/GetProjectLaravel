@@ -1,382 +1,650 @@
 @extends('layouts.app')
+
+@section('styles')
+<link href="{{ asset('css/custom-styles.css') }}" rel="stylesheet">
+@endsection
+
 @section('content')
 <div class="container">
-    <h1>Editar Actividad</h1>
+    <!-- Breadcrumbs -->
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('activities.index') }}">Actividades</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Ver: {{ $activity->name }}</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Barra de Acciones -->
+    <div class="action-bar">
+        <div class="action-group">
+            <h1 class="text-gradient mb-0">Ver Actividad</h1>
+        </div>
+        <div class="action-group">
+            <div class="quick-nav">
+                <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-plus"></i> Crear Sub Actividad
+                </a>
+                <a href="{{ route('activities.comments', $activity) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-comments"></i> Comentarios
+                </a>
+                <a href="{{ route('activities.emails', $activity) }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-envelope"></i> Correos
+                </a>
+            </div>
+        </div>
+    </div>
+    
     @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul>
+        <div class="alert alert-danger fade-in">
+            <h6><i class="fas fa-exclamation-triangle"></i> Por favor corrige los siguientes errores:</h6>
+            <ul class="mb-0">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
         </div>
     @endif
-    <form action="{{ route('activities.update', $activity) }}" method="POST">
-        @csrf
-        @method('PUT')
-        <div class="form-group">
-            <label for="caso">Caso</label>
-            <input type="text" class="form-control" id="caso" name="caso" value="{{ $activity->caso }}" required>
-        </div>
-        <div class="form-group">
-            <label for="name">Nombre</label>
-            <input type="text" class="form-control" id="name" name="name" value="{{ $activity->name }}" required>
-        </div>
-        <div class="form-group">
-            <label for="description">Descripción</label>
-            <textarea class="form-control" id="description" name="description">{{ $activity->description }}</textarea>
-        </div>
-        <div class="form-group">
-            <label for="status">Estado</label>
-            <select class="form-control" id="status" name="status" required>
-                <option value="en_ejecucion" {{ $activity->status == 'en_ejecucion' ? 'selected' : '' }}>En ejecución</option>
-                <option value="culminada" {{ $activity->status == 'culminada' ? 'selected' : '' }}>Culminada</option>
-                <option value="en_espera_de_insumos" {{ $activity->status == 'en_espera_de_insumos' ? 'selected' : '' }}>En espera de insumos</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="analista_id">Analistas</label>
-            <select class="form-control" id="analista_id" name="analista_id[]" multiple required>
-                @foreach ($analistas as $analista)
-                    <option value="{{ $analista->id }}" 
-                        {{ $activity->analistas && in_array($analista->id, $activity->analistas->pluck('id')->toArray()) ? 'selected' : '' }}>
-                        {{ $analista->name }}
-                    </option>
-                @endforeach
-            </select>
-            <small class="form-text text-muted">
-                Mantén presionado Ctrl (o Cmd en Mac) para seleccionar múltiples analistas.
-                @if($activity->analistas && $activity->analistas->count() == 0)
-                    <span class="text-warning">⚠️ Esta actividad no tiene analistas asignados. Debes seleccionar al menos uno.</span>
-                @endif
-            </small>
-        </div>
-        <div class="form-group">
-            <label for="parent_id">Actividad Padre</label>
-            <select class="form-control" id="parent_id" name="parent_id">
-                <option value="">Ninguna</option>
-                @foreach ($activities as $parentActivity)
-                    <option value="{{ $parentActivity->id }}" {{ $activity->parent_id == $parentActivity->id ? 'selected' : '' }}>{{ $parentActivity->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        {{-- Mostrar requerimientos existentes --}}
-        @if ($activity->requirements->count() > 0)
-            <div class="form-group">
-                <label>Requerimientos Existentes</label>
-                <div class="card">
-                    <div class="card-body">
-                        @foreach ($activity->requirements as $requirement)
-                            <div class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1">
-                                    <p class="mb-1">{{ $requirement->description }}</p>
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock"></i> 
-                                        {{ $requirement->created_at->format('d/m/Y H:i:s') }}
-                                        <span class="ml-2">
-                                            ({{ $requirement->created_at->diffForHumans() }})
-                                        </span>
-                                    </small>
-                                </div>
-                                <div class="ml-2">
-                                    <form action="{{ route('requirements.destroy', $requirement) }}" method="POST" 
-                                          style="display: inline;" 
-                                          onsubmit="return confirm('¿Estás seguro de eliminar este requerimiento?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar requerimiento">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        @endif
 
-        <div class="form-group">
-            <label for="requirements">Agregar Nuevos Requerimientos</label>
-            <div id="requirements-container">
-                <div class="requirement-item mb-2">
-                    <div class="input-group">
-                        <input type="text" class="form-control" name="requirements[]" placeholder="Agrega nuevos requerimientos (deja vacío si no hay)">
-                        <div class="input-group-append">
-                            <button type="button" class="btn btn-danger remove-requirement" title="Eliminar requerimiento">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button type="button" class="btn btn-secondary" id="add-requirement">
-                <i class="fas fa-plus"></i> Agregar Requerimiento
-            </button>
-        </div>
-        
-        {{-- Mostrar comentarios existentes --}}
-        @if ($activity->comments->count() > 0)
-            <div class="form-group">
-                <label>Comentarios Existentes</label>
-                <div class="card">
-                    <div class="card-body">
-                        @foreach ($activity->comments as $comment)
-                            <div class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1">
-                                    <p class="mb-1">{{ $comment->comment }}</p>
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock"></i> 
-                                        {{ $comment->created_at->format('d/m/Y H:i:s') }}
-                                        <span class="ml-2">
-                                            ({{ $comment->created_at->diffForHumans() }})
-                                        </span>
-                                    </small>
-                                </div>
-                                <div class="ml-2">
-                                    <form action="{{ route('comments.destroy', $comment) }}" method="POST" 
-                                          style="display: inline;" 
-                                          onsubmit="return confirm('¿Estás seguro de eliminar este comentario?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar comentario">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <a href="{{ route('activities.comments', $activity) }}" class="btn btn-info btn-sm">
-                        <i class="fas fa-eye"></i> Ver todos los comentarios
-                    </a>
-                </div>
-            </div>
-        @endif
-
-        <div class="form-group">
-            <label for="comments">Agregar Nuevos Comentarios</label>
-            <div id="comments-container">
-                <div class="comment-item mb-2">
-                    <div class="input-group">
-                        <textarea class="form-control" name="comments[]" placeholder="Agrega nuevos comentarios (deja vacío si no hay)"></textarea>
-                        <div class="input-group-append">
-                            <button type="button" class="btn btn-danger remove-comment" title="Eliminar comentario">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button type="button" class="btn btn-secondary" id="add-comment">
-                <i class="fas fa-plus"></i> Agregar Comentario
-            </button>
-        </div>
-        <div class="form-group">
-            <label for="fecha_recepcion">Fecha de Recepción</label>
-            <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('Y-m-d') : '' }}">
-        </div>
-        <button type="submit" class="btn btn-primary">Actualizar Actividad</button>
-    </form>
-
-    {{-- Sección de Correos --}}
-    <div class="mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>Gestión de Correos</h3>
-            <a href="{{ route('activities.emails', $activity) }}" class="btn btn-info">
-                <i class="fas fa-eye"></i> Ver Todos los Correos
+    <!-- Pestañas de Navegación -->
+    <ul class="nav nav-tabs section-tabs" id="activityTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab">
+                <i class="fas fa-info-circle"></i> Información Básica
             </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="requirements-tab" data-toggle="tab" href="#requirements" role="tab">
+                <i class="fas fa-list-check"></i> Requerimientos
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="comments-tab" data-toggle="tab" href="#comments" role="tab">
+                <i class="fas fa-comments"></i> Comentarios
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="emails-tab" data-toggle="tab" href="#emails" role="tab">
+                <i class="fas fa-envelope"></i> Correos
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="activityTabsContent">
+        <!-- Pestaña: Información Básica -->
+        <div class="tab-pane fade show active" id="basic" role="tabpanel">
+            <form action="{{ route('activities.update', $activity) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información Básica de la Actividad</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="caso">
+                                        <i class="fas fa-hashtag text-primary"></i> Caso
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="caso" name="caso" value="{{ $activity->caso }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="status">
+                                        <i class="fas fa-flag text-primary"></i> Estado
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control" id="status" name="status" required>
+                                        <option value="en_ejecucion" {{ $activity->status == 'en_ejecucion' ? 'selected' : '' }}>En ejecución</option>
+                                        <option value="culminada" {{ $activity->status == 'culminada' ? 'selected' : '' }}>Culminada</option>
+                                        <option value="en_espera_de_insumos" {{ $activity->status == 'en_espera_de_insumos' ? 'selected' : '' }}>En espera de insumos</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="name">
+                                <i class="fas fa-tag text-primary"></i> Nombre de la Actividad
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ $activity->name }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="description">
+                                <i class="fas fa-align-left text-primary"></i> Descripción
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe los detalles de la actividad...">{{ $activity->description }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-users text-primary"></i> Seleccionar Analistas
+                                <span class="text-danger">*</span>
+                            </label>
+                            
+                            <div class="analysts-selector" id="analysts-selector">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-user-friends fa-2x text-muted"></i>
+                                    <p class="mb-1 font-weight-bold">Selecciona los analistas para esta actividad</p>
+                                    <p class="text-muted mb-0">Haz clic en las tarjetas para seleccionar/deseleccionar</p>
+                                </div>
+                                
+                                <div class="analysts-grid">
+                                    @foreach ($analistas as $analista)
+                                        <div class="analyst-card" 
+                                             data-analyst-id="{{ $analista->id }}"
+                                             data-analyst-name="{{ $analista->name }}">
+                                            <div class="analyst-avatar">
+                                                {{ strtoupper(substr($analista->name, 0, 2)) }}
+                                            </div>
+                                            <p class="analyst-name">{{ $analista->name }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                
+                                <!-- Inputs ocultos para enviar los datos -->
+                                <div id="selected-analysts-inputs">
+                                    @if($activity->analistas)
+                                        @foreach($activity->analistas as $analista)
+                                            <input type="hidden" name="analista_id[]" value="{{ $analista->id }}">
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            <div id="selected-analysts-summary" class="mt-2" style="display: none;">
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span id="selected-count">0</span> analista(s) seleccionado(s):
+                                    <span id="selected-names" class="font-weight-bold"></span>
+                                </small>
+                            </div>
+                            
+                            @if($activity->analistas && $activity->analistas->count() == 0)
+                                <small class="form-text text-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Esta actividad no tiene analistas asignados. Debes seleccionar al menos uno.
+                                </small>
+                            @endif
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="parent_id">
+                                        <i class="fas fa-sitemap text-primary"></i> Actividad Padre
+                                    </label>
+                                    <select class="form-control" id="parent_id" name="parent_id">
+                                        <option value="">Ninguna</option>
+                                        @foreach ($activities as $parentActivity)
+                                            <option value="{{ $parentActivity->id }}" {{ $activity->parent_id == $parentActivity->id ? 'selected' : '' }}>{{ $parentActivity->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="fecha_recepcion">
+                                        <i class="fas fa-calendar text-primary"></i> Fecha de Recepción
+                                    </label>
+                                    <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('Y-m-d') : '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botón de Actualizar para Información Básica -->
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save"></i> Actualizar Información Básica
+                                    </button>
+                                </div>
+                                <div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        Los cambios se guardarán al hacer clic en "Actualizar"
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
 
-        {{-- Mostrar correos existentes --}}
-        @if ($activity->emails->count() > 0)
-            <div class="card mb-4">
+        <!-- Pestaña: Requerimientos -->
+        <div class="tab-pane fade" id="requirements" role="tabpanel">
+            <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Correos Existentes ({{ $activity->emails->count() }})</h5>
+                    <h5 class="mb-0"><i class="fas fa-list-check"></i> Gestión de Requerimientos</h5>
                 </div>
                 <div class="card-body">
-                    @foreach ($activity->emails->sortByDesc('created_at')->take(3) as $email)
-                        <div class="border-bottom pb-3 mb-3 {{ $loop->last ? 'border-bottom-0 mb-0 pb-0' : '' }}">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <span class="badge badge-{{ $email->type == 'sent' ? 'primary' : 'success' }} mr-2">
-                                            <i class="fas fa-{{ $email->type == 'sent' ? 'paper-plane' : 'inbox' }}"></i>
-                                            {{ $email->type_label }}
-                                        </span>
-                                        <h6 class="mb-0">{{ $email->subject }}</h6>
+                    {{-- Mostrar requerimientos existentes --}}
+                    @if ($activity->requirements->count() > 0)
+                        <div class="form-group">
+                            <label>Requerimientos Existentes</label>
+                            <div class="card">
+                                <div class="card-body">
+                                    @foreach ($activity->requirements as $requirement)
+                                        <div class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <p class="mb-1">{{ $requirement->description }}</p>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock"></i> 
+                                                    {{ $requirement->created_at->format('d/m/Y H:i:s') }}
+                                                    <span class="ml-2">
+                                                        ({{ $requirement->created_at->diffForHumans() }})
+                                                    </span>
+                                                </small>
+                                            </div>
+                                            <div class="ml-2">
+                                                <form action="{{ route('requirements.destroy', $requirement) }}" method="POST" 
+                                                      style="display: inline;" 
+                                                      onsubmit="return confirm('¿Estás seguro de eliminar este requerimiento?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar requerimiento">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('activities.requirements.store', $activity) }}" method="POST">
+                        @csrf
+                        <div class="form-group">
+                            <label for="requirements">Agregar Nuevos Requerimientos</label>
+                            <div id="requirements-container">
+                                <div class="requirement-item mb-2">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="requirements[]" placeholder="Agrega nuevos requerimientos (deja vacío si no hay)">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-danger remove-requirement" title="Eliminar requerimiento">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="mb-1">
-                                        <strong>{{ $email->type == 'sent' ? 'Para:' : 'De:' }}</strong> {{ $email->sender_recipient ?: 'No especificado' }}
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="add-requirement">
+                                <i class="fas fa-plus"></i> Agregar Requerimiento
+                            </button>
+                            
+                            <!-- Botón de Actualizar para Requerimientos -->
+                            <div class="mt-4 pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-save"></i> Actualizar Requerimientos
+                                        </button>
                                     </div>
-                                    <div class="mb-1">
-                                        <small class="text-muted">{{ Str::limit($email->content, 100) }}</small>
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            Los cambios se guardarán al hacer clic en "Actualizar"
+                                        </small>
                                     </div>
-                                    @if($email->attachments && count($email->attachments) > 0)
-                                        <div class="mb-1">
-                                            <small class="text-muted">
-                                                <i class="fas fa-paperclip"></i> {{ count($email->attachments) }} archivo(s) adjunto(s)
-                                                @foreach($email->attachments as $index => $attachment)
-                                                    @if(is_array($attachment))
-                                                        <br>
-                                                        <a href="{{ route('emails.download', [$email, $index]) }}" 
-                                                           class="text-decoration-none text-primary" target="_blank">
-                                                            <i class="fas fa-download"></i> {{ $attachment['original_name'] }}
-                                                        </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña: Comentarios -->
+        <div class="tab-pane fade" id="comments" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-comments"></i> Gestión de Comentarios</h5>
+                </div>
+                <div class="card-body">
+                    {{-- Mostrar comentarios existentes --}}
+                    @if ($activity->comments->count() > 0)
+                        <div class="form-group">
+                            <label>Comentarios Existentes</label>
+                            <div class="card">
+                                <div class="card-body">
+                                    @foreach ($activity->comments as $comment)
+                                        <div class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <p class="mb-1">{{ $comment->comment }}</p>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock"></i> 
+                                                    {{ $comment->created_at->format('d/m/Y H:i:s') }}
+                                                    <span class="ml-2">
+                                                        ({{ $comment->created_at->diffForHumans() }})
+                                                    </span>
+                                                </small>
+                                            </div>
+                                            <div class="ml-2">
+                                                <form action="{{ route('comments.destroy', $comment) }}" method="POST" 
+                                                      style="display: inline;" 
+                                                      onsubmit="return confirm('¿Estás seguro de eliminar este comentario?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar comentario">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('activities.comments.tab.store', $activity) }}" method="POST">
+                        @csrf
+                        <div class="form-group">
+                            <label for="comments">Agregar Nuevos Comentarios</label>
+                            <div id="comments-container">
+                                <div class="comment-item mb-2">
+                                    <div class="input-group">
+                                        <textarea class="form-control" name="comments[]" placeholder="Agrega nuevos comentarios (deja vacío si no hay)"></textarea>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-danger remove-comment" title="Eliminar comentario">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="add-comment">
+                                <i class="fas fa-plus"></i> Agregar Comentario
+                            </button>
+                            
+                            <!-- Botón de Actualizar para Comentarios -->
+                            <div class="mt-4 pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-save"></i> Actualizar Comentarios
+                                        </button>
+                                        <a href="{{ route('activities.comments', $activity) }}" class="btn btn-info btn-lg ml-2">
+                                            <i class="fas fa-eye"></i> Ver Página de Comentarios
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            Los cambios se guardarán al hacer clic en "Actualizar"
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña: Correos -->
+        <div class="tab-pane fade" id="emails" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-envelope"></i> Gestión de Correos</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Mostrar correos existentes -->
+                    @if ($activity->emails->count() > 0)
+                        <div class="mb-4">
+                            <h6>Correos Existentes ({{ $activity->emails->count() }} total)</h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    @foreach ($activity->emails->sortByDesc('created_at')->take(5) as $email)
+                                        <div class="border rounded p-3 mb-3 {{ $email->type == 'sent' ? 'border-primary' : 'border-success' }}">
+                                            <div class="row">
+                                                <div class="col-md-8">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <span class="badge badge-{{ $email->type == 'sent' ? 'primary' : 'success' }} mr-2">
+                                                            <i class="fas fa-{{ $email->type == 'sent' ? 'paper-plane' : 'inbox' }}"></i>
+                                                            {{ $email->type == 'sent' ? 'Enviado' : 'Recibido' }}
+                                                        </span>
+                                                        <h6 class="mb-0">{{ $email->subject }}</h6>
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <strong>{{ $email->type == 'sent' ? 'Para:' : 'De:' }}</strong> 
+                                                        {{ $email->sender_recipient ?: 'No especificado' }}
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <strong>Contenido:</strong>
+                                                        <div class="bg-light p-2 rounded mt-1" style="max-height: 150px; overflow-y: auto;">
+                                                            {!! nl2br(e($email->content)) !!}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    @if($email->attachments && count($email->attachments) > 0)
+                                                        <div class="mb-2">
+                                                            <strong>Archivos Adjuntos:</strong>
+                                                            <ul class="list-unstyled mb-0 ml-3">
+                                                                @foreach($email->attachments as $index => $attachment)
+                                                                    <li class="mb-1">
+                                                                        <i class="fas fa-paperclip text-primary"></i>
+                                                                        @if(is_array($attachment))
+                                                                            <a href="{{ route('emails.download', [$email, $index]) }}" 
+                                                                               class="text-decoration-none" target="_blank">
+                                                                                {{ $attachment['original_name'] }}
+                                                                            </a>
+                                                                            <small class="text-muted">
+                                                                                ({{ number_format($attachment['file_size'] / 1024, 1) }} KB)
+                                                                            </small>
+                                                                        @else
+                                                                            <span class="text-muted">{{ $attachment }}</span>
+                                                                        @endif
+                                                                    </li>
+                                                                @endforeach
+                                                            </ul>
+                                                        </div>
                                                     @endif
-                                                @endforeach
-                                            </small>
+                                                </div>
+                                                
+                                                <div class="col-md-4 text-right">
+                                                    <div class="mb-2">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-clock"></i> 
+                                                            {{ $email->created_at->format('d/m/Y H:i:s') }}
+                                                        </small>
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            ({{ $email->created_at->diffForHumans() }})
+                                                        </small>
+                                                    </div>
+                                                    
+                                                    <form action="{{ route('emails.destroy', $email) }}" method="POST" 
+                                                          style="display: inline;" 
+                                                          onsubmit="return confirm('¿Estás seguro de eliminar este correo?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar correo">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    @if ($activity->emails->count() > 5)
+                                        <div class="text-center mt-2">
+                                            <a href="{{ route('activities.emails', $activity) }}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye"></i> Ver todos los correos ({{ $activity->emails->count() }})
+                                            </a>
                                         </div>
                                     @endif
                                 </div>
-                                <div class="col-md-4 text-right">
-                                    <small class="text-muted d-block">
-                                        <i class="fas fa-clock"></i> {{ $email->created_at->format('d/m/Y H:i:s') }}
-                                    </small>
-                                    <small class="text-muted d-block mb-2">
-                                        ({{ $email->created_at->diffForHumans() }})
-                                    </small>
-                                    <form action="{{ route('emails.destroy', $email) }}" method="POST" 
-                                          style="display: inline;" 
-                                          onsubmit="return confirm('¿Estás seguro de eliminar este correo?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar correo">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
                             </div>
-                        </div>
-                    @endforeach
-                    @if($activity->emails->count() > 3)
-                        <div class="text-center mt-3">
-                            <small class="text-muted">
-                                Mostrando los 3 correos más recientes. 
-                                <a href="{{ route('activities.emails', $activity) }}">Ver todos ({{ $activity->emails->count() }})</a>
-                            </small>
                         </div>
                     @endif
-                </div>
-            </div>
-        @endif
 
-        {{-- Formulario para agregar nuevo correo --}}
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Agregar Nuevo Correo</h5>
-            </div>
-            <div class="card-body">
-                <form action="{{ route('activities.emails.store', $activity) }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="email_type">Tipo de Correo</label>
-                                <select class="form-control" id="email_type" name="type" required>
-                                    <option value="">-- Seleccionar Tipo --</option>
-                                    <option value="sent">Enviado</option>
-                                    <option value="received">Recibido</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="email_sender_recipient">
-                                    <span id="sender_recipient_label">Remitente/Destinatario</span>
-                                </label>
-                                <input type="text" class="form-control" id="email_sender_recipient" 
-                                       name="sender_recipient" placeholder="Dirección de correo (opcional)">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email_subject">Asunto</label>
-                        <input type="text" class="form-control" id="email_subject" name="subject" 
-                               placeholder="Asunto del correo" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email_content">Contenido</label>
-                        <textarea class="form-control" id="email_content" name="content" rows="4" 
-                                  placeholder="Contenido del correo" required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email_attachments">Archivos Adjuntos</label>
-                        
-                        <!-- Zona de arrastrar y soltar -->
-                        <div id="drop-zone" class="border border-dashed border-primary rounded p-4 mb-3 text-center" 
-                             style="min-height: 120px; background-color: #f8f9fa; transition: all 0.3s ease;">
-                            <div id="drop-zone-content">
-                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
-                                <p class="mb-1"><strong>Arrastra y suelta archivos aquí</strong></p>
-                                <p class="text-muted mb-2">o</p>
-                                <button type="button" class="btn btn-primary" id="browse-files">
-                                    <i class="fas fa-folder-open"></i> Seleccionar Archivos
-                                </button>
-                                <input type="file" id="multiple-file-input" name="attachments[]" multiple 
-                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar" 
-                                       style="display: none;">
-                            </div>
-                        </div>
-                        
-                        <!-- Lista de archivos seleccionados -->
-                        <div id="selected-files-list" class="mb-3" style="display: none;">
-                            <h6>Archivos Seleccionados:</h6>
-                            <div id="files-preview" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
-                                <!-- Los archivos se mostrarán aquí -->
-                            </div>
-                        </div>
-                        
-                        <!-- Contenedor tradicional (oculto por defecto) -->
-                        <div id="attachments-container" style="display: none;">
-                            <div class="attachment-item mb-2">
-                                <div class="input-group">
-                                    <div class="custom-file">
-                                        <input type="file" class="custom-file-input" name="attachments[]" 
-                                               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
-                                        <label class="custom-file-label">Seleccionar archivo...</label>
+                    <!-- Formulario para agregar nuevo correo -->
+                    <form action="{{ route('activities.emails.store', $activity) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="form-group">
+                            <label>Agregar Nuevo Correo</label>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="type">
+                                            <i class="fas fa-exchange-alt text-primary"></i> Tipo de Correo
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-control" id="type" name="type" required>
+                                            <option value="">Seleccionar tipo</option>
+                                            <option value="received">Correo Recibido</option>
+                                            <option value="sent">Correo Enviado</option>
+                                        </select>
                                     </div>
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-danger remove-attachment" title="Eliminar archivo">
-                                            <i class="fas fa-trash"></i>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="sender_recipient">
+                                            <i class="fas fa-user text-primary"></i> De/Para
+                                        </label>
+                                        <input type="email" class="form-control" id="sender_recipient" name="sender_recipient" 
+                                               placeholder="correo@ejemplo.com">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="subject">
+                                    <i class="fas fa-tag text-primary"></i> Asunto
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="subject" name="subject" 
+                                       placeholder="Asunto del correo" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="content">
+                                    <i class="fas fa-align-left text-primary"></i> Contenido
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="content" name="content" rows="4" 
+                                          placeholder="Contenido del correo..." required></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="attachments">
+                                    <i class="fas fa-paperclip text-primary"></i> Archivos Adjuntos
+                                </label>
+                                <input type="file" class="form-control-file" id="attachments" name="attachments[]" multiple
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                                <small class="form-text text-muted">
+                                    Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, GIF, ZIP, RAR
+                                </small>
+                            </div>
+                            
+                            <!-- Botón de Agregar Correo -->
+                            <div class="mt-4 pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="fas fa-plus"></i> Agregar Correo
                                         </button>
+                                        <a href="{{ route('activities.emails', $activity) }}" class="btn btn-info btn-lg ml-2">
+                                            <i class="fas fa-eye"></i> Ver Todos los Correos
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            El correo se agregará al hacer clic en "Agregar Correo"
+                                        </small>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center">
-                            <button type="button" class="btn btn-secondary btn-sm" id="add-attachment">
-                                <i class="fas fa-plus"></i> Agregar Archivo Individual
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="clear-all-files" style="display: none;">
-                                <i class="fas fa-trash-alt"></i> Limpiar Todo
-                            </button>
-                        </div>
-                        
-                        <small class="form-text text-muted">
-                            <strong>Formatos permitidos:</strong> PDF, Word, Excel, imágenes, archivos comprimidos. 
-                            <strong>Tamaño máximo:</strong> 10MB por archivo.
-                            <br><strong>Tip:</strong> Puedes arrastrar múltiples archivos desde tu explorador de archivos.
-                        </small>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-envelope"></i> Guardar Correo
-                    </button>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
     </div>
 </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Edit form JavaScript loaded');
+    
+    // ===== FUNCIONALIDAD DE PESTAÑAS =====
+    
+    // Inicializar pestañas de Bootstrap
+    const tabLinks = document.querySelectorAll('#activityTabs .nav-link');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    
+    // Manejar clicks en las pestañas
+    tabLinks.forEach(function(tabLink) {
+        tabLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remover clases activas de todas las pestañas
+            tabLinks.forEach(link => link.classList.remove('active'));
+            tabPanes.forEach(pane => {
+                pane.classList.remove('show', 'active');
+            });
+            
+            // Activar la pestaña clickeada
+            this.classList.add('active');
+            
+            // Mostrar el contenido correspondiente
+            const targetId = this.getAttribute('href').substring(1);
+            const targetPane = document.getElementById(targetId);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+            }
+        });
+    });
+    
+    // Función para activar una pestaña específica
+    function activateTab(tabId) {
+        // Remover clases activas
+        tabLinks.forEach(link => link.classList.remove('active'));
+        tabPanes.forEach(pane => {
+            pane.classList.remove('show', 'active');
+        });
+        
+        // Activar la pestaña específica
+        const tabLink = document.querySelector(`#activityTabs .nav-link[href="#${tabId}"]`);
+        const tabPane = document.getElementById(tabId);
+        
+        if (tabLink && tabPane) {
+            tabLink.classList.add('active');
+            tabPane.classList.add('show', 'active');
+        }
+    }
+    
+    // Verificar si hay una pestaña activa desde el servidor
+    @if(session('active_tab'))
+        activateTab('{{ session('active_tab') }}');
+    @endif
+    
+    // Verificar si hay un hash en la URL para activar una pestaña específica
+    if (window.location.hash) {
+        const hashTab = window.location.hash.substring(1);
+        if (['basic', 'requirements', 'comments', 'emails'].includes(hashTab)) {
+            activateTab(hashTab);
+        }
+    }
+    
+    // ===== FUNCIONALIDAD DE REQUERIMIENTOS =====
     
     // Agregar requerimiento
     const addRequirementBtn = document.getElementById('add-requirement');
@@ -481,355 +749,79 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // === FUNCIONALIDAD DE CORREOS ===
+    // ===== FUNCIONALIDAD DE SELECCIÓN DE ANALISTAS =====
+    let selectedAnalysts = [];
     
-    // Cambiar etiqueta según tipo de correo
-    const emailTypeSelect = document.getElementById('email_type');
-    const senderRecipientLabel = document.getElementById('sender_recipient_label');
-    const senderRecipientInput = document.getElementById('email_sender_recipient');
+    // Inicializar analistas seleccionados desde el servidor
+    function initializeSelectedAnalysts() {
+        const existingInputs = document.querySelectorAll('#selected-analysts-inputs input[name="analista_id[]"]');
+        existingInputs.forEach(input => {
+            const analystId = input.value;
+            const analystCard = document.querySelector(`[data-analyst-id="${analystId}"]`);
+            if (analystCard) {
+                const analystName = analystCard.dataset.analystName;
+                selectedAnalysts.push({ id: analystId, name: analystName });
+                analystCard.classList.add('selected');
+            }
+        });
+        updateAnalystsDisplay();
+    }
     
-    if (emailTypeSelect && senderRecipientLabel && senderRecipientInput) {
-        emailTypeSelect.addEventListener('change', function() {
-            if (this.value === 'sent') {
-                senderRecipientLabel.textContent = 'Destinatario';
-                senderRecipientInput.placeholder = 'Correo del destinatario (opcional)';
-            } else if (this.value === 'received') {
-                senderRecipientLabel.textContent = 'Remitente';
-                senderRecipientInput.placeholder = 'Correo del remitente (opcional)';
+    // Manejar clicks en las tarjetas de analistas
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.analyst-card')) {
+            const card = e.target.closest('.analyst-card');
+            const analystId = card.dataset.analystId;
+            const analystName = card.dataset.analystName;
+            
+            if (card.classList.contains('selected')) {
+                // Deseleccionar
+                card.classList.remove('selected');
+                selectedAnalysts = selectedAnalysts.filter(a => a.id !== analystId);
             } else {
-                senderRecipientLabel.textContent = 'Remitente/Destinatario';
-                senderRecipientInput.placeholder = 'Dirección de correo (opcional)';
+                // Seleccionar
+                card.classList.add('selected');
+                selectedAnalysts.push({ id: analystId, name: analystName });
             }
-        });
-    }
-
-    // Variables globales para manejo de archivos
-    let selectedFiles = [];
-    let fileCounter = 0;
-
-    // Elementos del DOM
-    const dropZone = document.getElementById('drop-zone');
-    const multipleFileInput = document.getElementById('multiple-file-input');
-    const browseFilesBtn = document.getElementById('browse-files');
-    const selectedFilesList = document.getElementById('selected-files-list');
-    const filesPreview = document.getElementById('files-preview');
-    const clearAllBtn = document.getElementById('clear-all-files');
-    const attachmentsContainer = document.getElementById('attachments-container');
-
-    // Configurar drag & drop
-    if (dropZone) {
-        // Prevenir comportamiento por defecto
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-
-        // Efectos visuales
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-
-        // Manejar drop
-        dropZone.addEventListener('drop', handleDrop, false);
-    }
-
-    // Botón para seleccionar archivos
-    if (browseFilesBtn) {
-        browseFilesBtn.addEventListener('click', function() {
-            multipleFileInput.click();
-        });
-    }
-
-    // Input de archivos múltiples
-    if (multipleFileInput) {
-        multipleFileInput.addEventListener('change', function() {
-            handleFiles(this.files);
-        });
-    }
-
-    // Botón limpiar todo
-    if (clearAllBtn) {
-        clearAllBtn.addEventListener('click', function() {
-            clearAllFiles();
-        });
-    }
-
-    // Funciones auxiliares
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    function highlight(e) {
-        dropZone.style.backgroundColor = '#e3f2fd';
-        dropZone.style.borderColor = '#2196f3';
-        dropZone.style.transform = 'scale(1.02)';
-    }
-
-    function unhighlight(e) {
-        dropZone.style.backgroundColor = '#f8f9fa';
-        dropZone.style.borderColor = '#007bff';
-        dropZone.style.transform = 'scale(1)';
-    }
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        handleFiles(files);
-    }
-
-    function handleFiles(files) {
-        ([...files]).forEach(addFile);
-        updateFilesDisplay();
-    }
-
-    function addFile(file) {
-        // Validar tipo de archivo
-        const allowedTypes = [
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'text/plain',
-            'image/jpeg',
-            'image/jpg',
-            'image/png',
-            'image/gif',
-            'application/zip',
-            'application/x-rar-compressed'
-        ];
-
-        if (!allowedTypes.includes(file.type) && !isValidFileExtension(file.name)) {
-            alert(`Tipo de archivo no permitido: ${file.name}`);
-            return;
-        }
-
-        // Validar tamaño (10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            alert(`Archivo muy grande: ${file.name}. Máximo 10MB.`);
-            return;
-        }
-
-        // Agregar archivo a la lista
-        const fileId = 'file_' + (++fileCounter);
-        selectedFiles.push({
-            id: fileId,
-            file: file,
-            name: file.name,
-            size: file.size
-        });
-    }
-
-    function isValidFileExtension(filename) {
-        const validExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.zip', '.rar'];
-        const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
-        return validExtensions.includes(extension);
-    }
-
-    function updateFilesDisplay() {
-        if (selectedFiles.length === 0) {
-            selectedFilesList.style.display = 'none';
-            clearAllBtn.style.display = 'none';
-            return;
-        }
-
-        selectedFilesList.style.display = 'block';
-        clearAllBtn.style.display = 'inline-block';
-
-        filesPreview.innerHTML = '';
-        selectedFiles.forEach((fileObj, index) => {
-            const fileDiv = document.createElement('div');
-            fileDiv.className = 'file-item d-flex justify-content-between align-items-center p-2 mb-1 bg-light rounded';
-            fileDiv.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-file text-primary mr-2"></i>
-                    <div>
-                        <div class="font-weight-bold">${fileObj.name}</div>
-                        <small class="text-muted">${formatFileSize(fileObj.size)}</small>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile('${fileObj.id}')">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            filesPreview.appendChild(fileDiv);
-        });
-
-        // Crear inputs ocultos para el formulario
-        createHiddenInputs();
-    }
-
-    function createHiddenInputs() {
-        // Limpiar inputs existentes
-        const existingInputs = document.querySelectorAll('input[name="attachments[]"][type="file"].hidden-file-input');
-        existingInputs.forEach(input => input.remove());
-
-        if (selectedFiles.length === 0) {
-            return;
-        }
-
-        // Usar el input múltiple existente y asignarle todos los archivos
-        if (multipleFileInput && selectedFiles.length > 0) {
-            try {
-                const dt = new DataTransfer();
-                selectedFiles.forEach(fileObj => {
-                    dt.items.add(fileObj.file);
-                });
-                multipleFileInput.files = dt.files;
-            } catch (error) {
-                console.error('Error asignando archivos al input múltiple:', error);
-                // Fallback: crear inputs individuales
-                createIndividualInputs();
-            }
-        }
-    }
-
-    function createIndividualInputs() {
-        selectedFiles.forEach((fileObj, index) => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.name = 'attachments[]';
-            input.className = 'hidden-file-input';
-            input.style.display = 'none';
             
-            try {
-                const dt = new DataTransfer();
-                dt.items.add(fileObj.file);
-                input.files = dt.files;
-                
-                const form = document.querySelector('form[action*="emails"]');
-                if (form) {
-                    form.appendChild(input);
-                }
-            } catch (error) {
-                console.error('Error creando input individual:', error);
-            }
-        });
-    }
-
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    function removeFile(fileId) {
-        selectedFiles = selectedFiles.filter(f => f.id !== fileId);
-        updateFilesDisplay();
-    }
-
-    function clearAllFiles() {
-        selectedFiles = [];
-        updateFilesDisplay();
-        multipleFileInput.value = '';
-    }
-
-    // Hacer removeFile global para que funcione desde el HTML
-    window.removeFile = removeFile;
-
-    // Agregar archivo adjunto individual (método tradicional)
-    const addAttachmentBtn = document.getElementById('add-attachment');
-    if (addAttachmentBtn) {
-        addAttachmentBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Mostrar el contenedor tradicional
-            attachmentsContainer.style.display = 'block';
-            
-            const newAttachment = document.createElement('div');
-            newAttachment.classList.add('attachment-item', 'mb-2');
-            newAttachment.innerHTML = `
-                <div class="input-group">
-                    <div class="custom-file">
-                        <input type="file" class="custom-file-input" name="attachments[]" 
-                               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
-                        <label class="custom-file-label">Seleccionar archivo...</label>
-                    </div>
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-danger remove-attachment" title="Eliminar archivo">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            attachmentsContainer.appendChild(newAttachment);
-            attachEmailHandlers();
-        });
-    }
-
-    // Función para adjuntar manejadores de correos
-    function attachEmailHandlers() {
-        const attachmentsContainer = document.getElementById('attachments-container');
-        if (attachmentsContainer) {
-            attachmentsContainer.querySelectorAll('.remove-attachment').forEach(function(button) {
-                button.removeEventListener('click', removeAttachment);
-                button.addEventListener('click', removeAttachment);
-            });
-            
-            // Manejar cambio de archivos para mostrar el nombre
-            attachmentsContainer.querySelectorAll('.custom-file-input').forEach(function(input) {
-                input.addEventListener('change', function() {
-                    const fileName = this.files[0] ? this.files[0].name : 'Seleccionar archivo...';
-                    const label = this.nextElementSibling;
-                    label.textContent = fileName;
-                });
-            });
+            updateAnalystsDisplay();
         }
-    }
-
-    function removeAttachment(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    });
+    
+    // Actualizar la visualización y los inputs ocultos
+    function updateAnalystsDisplay() {
+        const container = document.getElementById('selected-analysts-inputs');
+        const summary = document.getElementById('selected-analysts-summary');
+        const countSpan = document.getElementById('selected-count');
+        const namesSpan = document.getElementById('selected-names');
         
-        const container = document.getElementById('attachments-container');
-        if (container.children.length > 1) {
-            const item = e.target.closest('.attachment-item');
-            if (item) {
-                item.remove();
-            }
+        // Limpiar inputs existentes
+        container.innerHTML = '';
+        
+        // Crear nuevos inputs
+        selectedAnalysts.forEach(analyst => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'analista_id[]';
+            input.value = analyst.id;
+            container.appendChild(input);
+        });
+        
+        // Actualizar resumen
+        if (selectedAnalysts.length > 0) {
+            countSpan.textContent = selectedAnalysts.length;
+            namesSpan.textContent = selectedAnalysts.map(a => a.name).join(', ');
+            summary.style.display = 'block';
         } else {
-            // Limpiar el campo en lugar de eliminarlo si es el último
-            const input = container.querySelector('input[name="attachments[]"]');
-            if (input) {
-                input.value = '';
-            }
+            summary.style.display = 'none';
         }
     }
 
     // Inicializar manejadores para elementos existentes
     attachRemoveHandlers();
-    attachEmailHandlers();
     
-    // Inicializar el primer campo de archivo
-    const firstFileInput = document.querySelector('.custom-file-input');
-    if (firstFileInput) {
-        firstFileInput.addEventListener('change', function() {
-            const fileName = this.files[0] ? this.files[0].name : 'Seleccionar archivo...';
-            const label = this.nextElementSibling;
-            label.textContent = fileName;
-        });
-    }
-
-
-    
-    // Asegurar que el botón de submit funcione correctamente
-    const form = document.querySelector('form');
-    const submitBtn = document.querySelector('button[type="submit"].btn-primary');
-    
-    if (submitBtn && form) {
-        submitBtn.addEventListener('click', function(e) {
-            // Forzar el envío del formulario para asegurar que funcione
-            form.submit();
-        });
-    }
+    // Inicializar analistas seleccionados
+    initializeSelectedAnalysts();
 });
 </script>
 @endsection

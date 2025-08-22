@@ -1,16 +1,39 @@
 @extends('layouts.app')
 
+@section('styles')
+<link href="{{ asset('css/custom-styles.css') }}" rel="stylesheet">
+@endsection
+
 @section('content')
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Correos de la Actividad: {{ $activity->name }}</h1>
-        <div>
-            <a href="{{ route('activities.edit', $activity) }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Volver a Editar
-            </a>
-            <a href="{{ route('activities.index') }}" class="btn btn-primary">
-                <i class="fas fa-list"></i> Ver Actividades
-            </a>
+    <!-- Breadcrumbs -->
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('activities.index') }}">Actividades</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('activities.edit', $activity) }}">{{ $activity->name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Correos</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Barra de Acciones -->
+    <div class="action-bar">
+        <div class="action-group">
+            <h1 class="text-gradient mb-0">Correos de la Actividad</h1>
+        </div>
+        <div class="action-group">
+            <div class="quick-nav">
+                <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-list"></i> Ver Actividades
+                </a>
+                <a href="{{ route('activities.edit', $activity) }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-edit"></i> Volver a Editar
+                </a>
+                <a href="{{ route('activities.comments', $activity) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-comments"></i> Comentarios
+                </a>
+            </div>
         </div>
     </div>
 
@@ -160,9 +183,88 @@
         <div class="alert alert-info">
             <i class="fas fa-info-circle"></i> 
             No hay correos registrados para esta actividad y sus subactividades.
-            <br>
-            <small>Puedes agregar correos desde la página de edición de cada actividad.</small>
         </div>
     @endif
+
+    <!-- Formulario para agregar nuevo correo -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-plus"></i> Agregar Nuevo Correo</h5>
+        </div>
+        <div class="card-body">
+            <form action="{{ route('activities.emails.store', $activity) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="type">
+                                <i class="fas fa-exchange-alt text-primary"></i> Tipo de Correo
+                                <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-control" id="type" name="type" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="received">Correo Recibido</option>
+                                <option value="sent">Correo Enviado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="sender_recipient">
+                                <i class="fas fa-user text-primary"></i> De/Para
+                            </label>
+                            <input type="email" class="form-control" id="sender_recipient" name="sender_recipient" 
+                                   placeholder="correo@ejemplo.com">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="subject">
+                        <i class="fas fa-tag text-primary"></i> Asunto
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="subject" name="subject" 
+                           placeholder="Asunto del correo" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="content">
+                        <i class="fas fa-align-left text-primary"></i> Contenido
+                        <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" id="content" name="content" rows="4" 
+                              placeholder="Contenido del correo..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="attachments">
+                        <i class="fas fa-paperclip text-primary"></i> Archivos Adjuntos
+                    </label>
+                    <input type="file" class="form-control-file" id="attachments" name="attachments[]" multiple
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                    <small class="form-text text-muted">
+                        Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, GIF, ZIP, RAR
+                    </small>
+                </div>
+                
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-plus"></i> Agregar Correo
+                            </button>
+                        </div>
+                        <div>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                El correo se agregará a la actividad actual
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection

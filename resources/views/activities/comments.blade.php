@@ -1,14 +1,41 @@
 @extends('layouts.app')
+
+@section('styles')
+<link href="{{ asset('css/custom-styles.css') }}" rel="stylesheet">
+@endsection
+
 @section('content')
 <div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>Comentarios de la Actividad</h1>
-                <a href="{{ route('activities.index') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Volver al Listado
+    <!-- Breadcrumbs -->
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('activities.index') }}">Actividades</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('activities.edit', $activity) }}">{{ $activity->name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Comentarios</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Barra de Acciones -->
+    <div class="action-bar">
+        <div class="action-group">
+            <h1 class="text-gradient mb-0">Comentarios de la Actividad</h1>
+        </div>
+        <div class="action-group">
+            <div class="quick-nav">
+                <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-list"></i> Ver Actividades
+                </a>
+                <a href="{{ route('activities.edit', $activity) }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-edit"></i> Volver a Editar
+                </a>
+                <a href="{{ route('activities.emails', $activity) }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-envelope"></i> Correos
                 </a>
             </div>
+        </div>
+    </div>
 
             {{-- Mensajes de éxito --}}
             @if (session('success'))

@@ -84,10 +84,10 @@ class ActivityController extends Controller
     {
         // Obtener todos los analistas
         $analistas = Analista::all();
-        // Obtener todas las actividades para el campo de actividad padre
-        $activities = Activity::all();
-        // Cargar los comentarios y correos de la actividad
-        $activity->load(['comments', 'emails']);
+        // Obtener todas las actividades para el campo de actividad padre (excluyendo la actividad actual)
+        $activities = Activity::where('id', '!=', $activity->id)->get();
+        // Cargar los comentarios, correos, analistas y requerimientos de la actividad
+        $activity->load(['comments', 'emails', 'analistas', 'requirements']);
         // Pasar las variables a la vista
         return view('activities.edit', compact('activity', 'analistas', 'activities'));
     }
@@ -140,7 +140,9 @@ class ActivityController extends Controller
                 }
             }
 
-            return redirect()->route('activities.index')->with('success', 'Actividad actualizada con éxito.');
+            return redirect()->route('activities.edit', $activity)
+                ->with('success', 'Información básica actualizada con éxito.')
+                ->with('active_tab', 'basic');
             
         } catch (\Exception $e) {
             return redirect()->back()
@@ -185,11 +187,36 @@ class ActivityController extends Controller
         $referer = request()->headers->get('referer');
         if (strpos($referer, '/edit') !== false) {
             return redirect()->route('activities.edit', $activity)
-                ->with('success', 'Comentario eliminado exitosamente.');
+                ->with('success', 'Comentario eliminado exitosamente.')
+                ->with('active_tab', 'comments');
         }
         
         return redirect()->route('activities.comments', $activity)
             ->with('success', 'Comentario eliminado exitosamente.');
+    }
+
+    public function storeRequirements(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'requirements' => 'nullable|array',
+            'requirements.*' => 'nullable|string|max:1000',
+        ]);
+
+        // Agregar nuevos requerimientos (no eliminar los existentes para mantener el historial)
+        if ($request->has('requirements')) {
+            foreach ($request->requirements as $requirementDescription) {
+                if (!empty($requirementDescription)) {
+                    Requirement::create([
+                        'activity_id' => $activity->id,
+                        'description' => $requirementDescription,
+                    ]);
+                }
+            }
+        }
+
+        return redirect()->route('activities.edit', $activity)
+            ->with('success', 'Requerimientos agregados exitosamente.')
+            ->with('active_tab', 'requirements');
     }
 
     public function destroyRequirement(Requirement $requirement)
@@ -198,7 +225,32 @@ class ActivityController extends Controller
         $requirement->delete();
         
         return redirect()->route('activities.edit', $activity)
-            ->with('success', 'Requerimiento eliminado exitosamente.');
+            ->with('success', 'Requerimiento eliminado exitosamente.')
+            ->with('active_tab', 'requirements');
+    }
+
+    public function storeCommentsFromTab(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'comments' => 'nullable|array',
+            'comments.*' => 'nullable|string|max:1000',
+        ]);
+
+        // Agregar nuevos comentarios (no eliminar los existentes para mantener el historial)
+        if ($request->has('comments')) {
+            foreach ($request->comments as $commentText) {
+                if (!empty($commentText)) {
+                    Comment::create([
+                        'activity_id' => $activity->id,
+                        'comment' => $commentText,
+                    ]);
+                }
+            }
+        }
+
+        return redirect()->route('activities.edit', $activity)
+            ->with('success', 'Comentarios agregados exitosamente.')
+            ->with('active_tab', 'comments');
     }
 
     /**
@@ -251,8 +303,16 @@ class ActivityController extends Controller
         $typeLabel = $request->type === 'sent' ? 'enviado' : 'recibido';
         $successMessage = "Correo {$typeLabel} agregado exitosamente: \"{$email->subject}\"";
         
+        // Verificar de dónde viene la petición para redirigir apropiadamente
+        $referer = request()->headers->get('referer');
+        if (strpos($referer, '/emails') !== false) {
+            return redirect()->route('activities.emails', $activity)
+                ->with('success', $successMessage);
+        }
+        
         return redirect()->route('activities.edit', $activity)
-            ->with('success', $successMessage);
+            ->with('success', $successMessage)
+            ->with('active_tab', 'emails');
     }
 
     /**
@@ -271,7 +331,8 @@ class ActivityController extends Controller
         }
         
         return redirect()->route('activities.edit', $activity)
-            ->with('success', 'Correo eliminado exitosamente.');
+            ->with('success', 'Correo eliminado exitosamente.')
+            ->with('active_tab', 'emails');
     }
 
     /**

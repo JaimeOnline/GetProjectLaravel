@@ -1,0 +1,500 @@
+/* ===== ESTILOS PERSONALIZADOS PARA MEJORAR LA UX ===== */
+
+/* Variables CSS para consistencia */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --border-radius: 8px;
+    --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --transition: all 0.3s ease;
+}
+
+/* ===== MEJORAS GENERALES ===== */
+.container {
+    max-width: 1200px;
+}
+
+.card {
+    border: none;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+    color: white;
+    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+/* ===== BREADCRUMBS ===== */
+.breadcrumb-container {
+    background: white;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.breadcrumb {
+    background: none;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+/* ===== SELECCIÓN DE ANALISTAS CON TAGS ===== */
+.analysts-selector {
+    background: white;
+    border: 2px dashed #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.analysts-selector:hover {
+    border-color: var(--primary-color);
+    background: #f8f9ff;
+}
+
+.analysts-selector.has-selection {
+    border-color: var(--success-color);
+    border-style: solid;
+    background: #f8fff9;
+}
+
+.analysts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.analyst-card {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.analyst-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.analyst-card.selected {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: var(--dark-color);
+}
+
+.analyst-card.selected::before {
+    content: "✓";
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    background: var(--success-color);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.analyst-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin: 0 auto 0.5rem;
+    font-size: 16px;
+}
+
+.analyst-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* ===== BOTONES MEJORADOS ===== */
+.btn {
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: var(--transition);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color), #1e7e34);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger-color), #c82333);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--secondary-color), #545b62);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, var(--info-color), #138496);
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.125rem;
+}
+
+/* ===== NAVEGACIÓN Y ACCIONES RÁPIDAS ===== */
+.action-bar {
+    background: white;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.action-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.quick-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.quick-nav .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* ===== SECCIONES CON PESTAÑAS ===== */
+.section-tabs {
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 2rem;
+}
+
+.section-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--secondary-color);
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    transition: var(--transition);
+}
+
+.section-tabs .nav-link:hover {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.section-tabs .nav-link.active {
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    background: none;
+}
+
+/* ===== FORMULARIOS MEJORADOS ===== */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-control {
+    border-radius: var(--border-radius);
+    border: 2px solid #e9ecef;
+    padding: 0.75rem;
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control option {
+    color: var(--dark-color);
+    background: white;
+    padding: 0.5rem;
+}
+
+.form-control select {
+    color: var(--dark-color) !important;
+}
+
+/* Mejorar legibilidad de selects */
+select.form-control {
+    color: #212529 !important;
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.5;
+    background-color: #fff !important;
+    border: 1px solid #ced4da;
+    padding: 0.375rem 0.75rem;
+}
+
+select.form-control:focus {
+    color: #212529 !important;
+    background-color: #fff !important;
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+select.form-control option {
+    color: #212529 !important;
+    background-color: #fff !important;
+    padding: 8px 12px;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+/* Estilos específicos para diferentes estados */
+select.form-control option:checked {
+    background-color: #007bff !important;
+    color: white !important;
+}
+
+select.form-control option:hover {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+/* ===== ALERTAS Y NOTIFICACIONES ===== */
+.alert {
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 1rem 1.5rem;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background: #d4edda;
+    border-left-color: var(--success-color);
+    color: #155724;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    border-left-color: var(--danger-color);
+    color: #721c24;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    border-left-color: var(--warning-color);
+    color: #856404;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    border-left-color: var(--info-color);
+    color: #0c5460;
+}
+
+/* ===== DRAG & DROP MEJORADO ===== */
+#drop-zone {
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+#drop-zone:hover {
+    border-color: var(--primary-color);
+    background: #f8f9ff;
+}
+
+.file-item {
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.file-item:hover {
+    background: #e9ecef !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .analysts-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .action-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .action-group {
+        justify-content: center;
+    }
+    
+    .quick-nav {
+        justify-content: center;
+    }
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* ===== UTILIDADES ===== */
+.text-gradient {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: bold;
+}
+
+.shadow-sm {
+    box-shadow: var(--box-shadow) !important;
+}
+
+.border-radius {
+    border-radius: var(--border-radius) !important;
+}
+
+/* ===== ESTILOS ADICIONALES PARA BADGES ===== */
+.badge-outline-primary {
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.badge-outline-success {
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.badge-outline-info {
+    color: var(--info-color);
+    border: 1px solid var(--info-color);
+    background: rgba(23, 162, 184, 0.1);
+}
+
+.badge-outline-warning {
+    color: var(--warning-color);
+    border: 1px solid var(--warning-color);
+    background: rgba(255, 193, 7, 0.1);
+}
+
+.badge-outline-danger {
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    background: rgba(220, 53, 69, 0.1);
+}
+
+/* ===== MEJORAS PARA TABLAS ===== */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+}
+
+.modern-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modern-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* ===== ESTADOS DE CARGA ===== */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 123, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== MEJORAS RESPONSIVE ADICIONALES ===== */
+@media (max-width: 576px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group-vertical .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
