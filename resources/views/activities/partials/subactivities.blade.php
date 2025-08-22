@@ -16,7 +16,25 @@
             </span>
         </td>
         <td>{{ $subactivity->description }}</td>
-        <td>{{ $subactivity->status_label }}</td>
+        <td class="align-middle">
+            @php
+                $statusClass = match($subactivity->status) {
+                    'culminada' => 'success',
+                    'en_ejecucion' => 'primary',
+                    'en_espera_de_insumos' => 'warning',
+                    default => 'secondary'
+                };
+                $statusIcon = match($subactivity->status) {
+                    'culminada' => 'check-circle',
+                    'en_ejecucion' => 'play-circle',
+                    'en_espera_de_insumos' => 'pause-circle',
+                    default => 'circle'
+                };
+            @endphp
+            <span class="badge badge-{{ $statusClass }} badge-pill">
+                <i class="fas fa-{{ $statusIcon }}"></i> {{ $subactivity->status_label }}
+            </span>
+        </td>
         <td>
             @if ($subactivity->analistas->isEmpty())
                 Sin analistas asignados

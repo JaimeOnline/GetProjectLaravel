@@ -36,6 +36,131 @@
         </div>
     @endif
 
+    <!-- Search and Filters Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-search text-primary"></i> Búsqueda y Filtros
+                </h5>
+                <button class="btn btn-outline-secondary btn-sm" id="toggleFilters">
+                    <i class="fas fa-filter"></i> <span id="filterToggleText">Mostrar Filtros</span>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Search Bar -->
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <div class="search-container">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                            </div>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="searchInput" 
+                                   placeholder="Buscar en actividades, casos, analistas, comentarios, correos..."
+                                   autocomplete="off">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="search-stats">
+                        <div class="d-flex align-items-center justify-content-end">
+                            <span class="badge badge-info mr-2" id="searchResultsCount" style="display: none;">
+                                <i class="fas fa-list-ol"></i> <span id="resultsNumber">0</span> resultados
+                            </span>
+                            <div class="loading-spinner" id="searchSpinner" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Filters (Initially Hidden) -->
+            <div class="advanced-filters" id="advancedFilters" style="display: none;">
+                <hr>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="filterStatus" class="font-weight-bold">
+                                <i class="fas fa-flag text-primary"></i> Estado
+                            </label>
+                            <select class="form-control" id="filterStatus">
+                                <option value="">Todos los estados</option>
+                                @foreach($statuses as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="filterAnalista" class="font-weight-bold">
+                                <i class="fas fa-user text-primary"></i> Analista
+                            </label>
+                            <select class="form-control" id="filterAnalista">
+                                <option value="">Todos los analistas</option>
+                                @foreach($analistas as $analista)
+                                    <option value="{{ $analista->id }}">{{ $analista->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="filterCaso" class="font-weight-bold">
+                                <i class="fas fa-hashtag text-primary"></i> Caso
+                            </label>
+                            <input type="text" class="form-control" id="filterCaso" placeholder="Buscar por caso...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="font-weight-bold">
+                                <i class="fas fa-calendar text-primary"></i> Acciones
+                            </label>
+                            <div class="btn-group-vertical btn-group-sm w-100">
+                                <button type="button" class="btn btn-outline-primary" id="clearAllFilters">
+                                    <i class="fas fa-eraser"></i> Limpiar Filtros
+                                </button>
+                                <button type="button" class="btn btn-outline-info" id="exportResults">
+                                    <i class="fas fa-download"></i> Exportar Resultados
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="filterFechaDesde" class="font-weight-bold">
+                                <i class="fas fa-calendar-alt text-primary"></i> Fecha Desde
+                            </label>
+                            <input type="date" class="form-control" id="filterFechaDesde">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="filterFechaHasta" class="font-weight-bold">
+                                <i class="fas fa-calendar-alt text-primary"></i> Fecha Hasta
+                            </label>
+                            <input type="date" class="form-control" id="filterFechaHasta">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
@@ -84,14 +209,34 @@
         </div>
     </div>
 
+    <!-- Search Results Alert -->
+    <div class="alert alert-info" id="searchResultsAlert" style="display: none;">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-search mr-2"></i>
+            <div>
+                <strong>Resultados de búsqueda:</strong> 
+                <span id="searchResultsText"></span>
+                <button class="btn btn-sm btn-outline-info ml-2" id="showAllResults">
+                    <i class="fas fa-eye"></i> Ver todos los resultados
+                </button>
+                <button class="btn btn-sm btn-outline-secondary ml-1" id="clearSearchResults">
+                    <i class="fas fa-times"></i> Limpiar búsqueda
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Activities Table -->
     <div class="card shadow-sm">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                    <i class="fas fa-list"></i> Lista de Actividades
+                    <i class="fas fa-list"></i> <span id="tableTitle">Lista de Actividades</span>
                 </h5>
                 <div class="header-actions">
+                    <button class="btn btn-sm btn-warning mr-2" id="clearAllColumnFilters" style="display: block;">
+                        <i class="fas fa-times-circle"></i> Limpiar Filtros
+                    </button>
                     <small class="text-light">
                         <i class="fas fa-info-circle"></i> 
                         Haz clic en <i class="fas fa-chevron-right"></i> para ver subactividades
@@ -101,11 +246,17 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0 modern-table">
-                    <thead class="thead-light">
+                <div id="tableContainer">
+                    <table class="table table-hover mb-0 modern-table">
+                        <thead class="thead-light">
                         <tr>
-                            <th class="border-0">
-                                <i class="fas fa-hashtag text-primary"></i> Caso
+                            <th class="border-0" style="position: relative;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="sortable" data-sort="caso" style="cursor: pointer;">
+                                        <i class="fas fa-hashtag text-primary"></i> Caso
+                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                    </div>
+                                </div>
                             </th>
                             <th class="border-0">
                                 <i class="fas fa-file-alt text-primary"></i> Nombre
@@ -113,11 +264,61 @@
                             <th class="border-0">
                                 <i class="fas fa-align-left text-primary"></i> Descripción
                             </th>
-                            <th class="border-0">
-                                <i class="fas fa-flag text-primary"></i> Estado
+                            <th class="border-0" style="position: relative;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="sortable" data-sort="status" style="cursor: pointer;">
+                                        <i class="fas fa-flag text-primary"></i> Estado
+                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                    </div>
+                                    <div class="custom-dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button" data-filter="status" style="padding: 2px 6px;">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <div class="custom-dropdown-menu" id="status-filter-menu" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                                            <h6 class="dropdown-header" style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">Filtrar por Estado</h6>
+                                            <div class="px-3 py-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input status-filter" type="checkbox" value="" id="status-all" checked>
+                                                    <label class="form-check-label" for="status-all">Todos</label>
+                                                </div>
+                                                @foreach($statuses as $key => $label)
+                                                <div class="form-check">
+                                                    <input class="form-check-input status-filter" type="checkbox" value="{{ $key }}" id="status-{{ $key }}">
+                                                    <label class="form-check-label" for="status-{{ $key }}">{{ $label }}</label>
+                                                </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </th>
-                            <th class="border-0">
-                                <i class="fas fa-users text-primary"></i> Analistas
+                            <th class="border-0" style="position: relative;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="sortable" data-sort="analistas" style="cursor: pointer;">
+                                        <i class="fas fa-users text-primary"></i> Analistas
+                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                    </div>
+                                    <div class="custom-dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button" data-filter="analistas" style="padding: 2px 6px;">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <div class="custom-dropdown-menu" id="analistas-filter-menu" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                                            <h6 class="dropdown-header" style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">Filtrar por Analista</h6>
+                                            <div class="px-3 py-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input analista-filter" type="checkbox" value="" id="analista-all" checked>
+                                                    <label class="form-check-label" for="analista-all">Todos</label>
+                                                </div>
+                                                @foreach($analistas as $analista)
+                                                <div class="form-check">
+                                                    <input class="form-check-input analista-filter" type="checkbox" value="{{ $analista->id }}" id="analista-{{ $analista->id }}">
+                                                    <label class="form-check-label" for="analista-{{ $analista->id }}">{{ $analista->name }}</label>
+                                                </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </th>
                             <th class="border-0">
                                 <i class="fas fa-comments text-primary"></i> Comentarios
@@ -125,8 +326,33 @@
                             <th class="border-0">
                                 <i class="fas fa-envelope text-primary"></i> Correos
                             </th>
-                            <th class="border-0">
-                                <i class="fas fa-calendar text-primary"></i> Fecha Recepción
+                            <th class="border-0" style="position: relative;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
+                                        <i class="fas fa-calendar text-primary"></i> Fecha
+                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                    </div>
+                                    <div class="custom-dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button" data-filter="fecha" style="padding: 2px 6px;">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <div class="custom-dropdown-menu" id="fecha-filter-menu" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 250px;">
+                                            <h6 class="dropdown-header" style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">Filtrar por Fecha</h6>
+                                            <div class="px-3 py-2">
+                                                <div class="form-group mb-2">
+                                                    <label class="small">Desde:</label>
+                                                    <input type="date" class="form-control form-control-sm" id="fecha-desde-filter">
+                                                </div>
+                                                <div class="form-group mb-2">
+                                                    <label class="small">Hasta:</label>
+                                                    <input type="date" class="form-control form-control-sm" id="fecha-hasta-filter">
+                                                </div>
+                                                <button class="btn btn-sm btn-primary btn-block" id="apply-date-filter">Aplicar</button>
+                                                <button class="btn btn-sm btn-outline-secondary btn-block" id="clear-date-filter">Limpiar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </th>
                             <th class="border-0 text-center">
                                 <i class="fas fa-cogs text-primary"></i> Acciones
@@ -334,8 +560,9 @@
                                 </td>
                             </tr>
                         @endforelse
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -586,16 +813,885 @@
 [data-toggle="tooltip"] {
     cursor: help;
 }
+
+/* ===== ESTILOS PARA BÚSQUEDA Y FILTROS ===== */
+
+/* Contenedor de búsqueda */
+.search-container {
+    position: relative;
+}
+
+.search-container .input-group {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.search-container .form-control {
+    border: none;
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+}
+
+.search-container .form-control:focus {
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.search-container .input-group-text {
+    background: #f8f9fa;
+    border: none;
+    color: #6c757d;
+}
+
+.search-container .btn {
+    border: none;
+    background: #f8f9fa;
+}
+
+.search-container .btn:hover {
+    background: #e9ecef;
+}
+
+/* Sugerencias de búsqueda */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.search-suggestion-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f3f4;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.search-suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.search-suggestion-type {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.search-suggestion-content {
+    font-weight: 500;
+    color: #343a40;
+}
+
+.search-suggestion-meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Filtros avanzados */
+.advanced-filters {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.advanced-filters .form-group label {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.advanced-filters .form-control {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.advanced-filters .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Estadísticas de búsqueda */
+.search-stats {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+}
+
+/* Resultados de búsqueda */
+.search-result-highlight {
+    background-color: rgba(255, 193, 7, 0.3);
+    padding: 0.1rem 0.2rem;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.search-result-row {
+    background: linear-gradient(90deg, rgba(0, 123, 255, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-left: 3px solid #007bff;
+}
+
+.search-result-subactivity {
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-left: 3px solid #28a745;
+}
+
+/* Animaciones para filtros */
+.advanced-filters {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estados de carga para búsqueda */
+.search-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.search-loading .table {
+    position: relative;
+}
+
+.search-loading .table::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+}
+
+/* Responsive para búsqueda */
+@media (max-width: 768px) {
+    .search-container .input-group {
+        margin-bottom: 1rem;
+    }
+    
+    .search-stats {
+        justify-content: center;
+    }
+    
+    .advanced-filters .row {
+        margin: 0;
+    }
+    
+    .advanced-filters .col-md-3,
+    .advanced-filters .col-md-6 {
+        padding: 0.5rem;
+    }
+}
+
+/* Botones de filtro */
+#toggleFilters {
+    transition: all 0.2s ease;
+}
+
+#toggleFilters:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Indicador de filtros activos */
+.filter-active {
+    position: relative;
+}
+
+.filter-active::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #dc3545;
+    border-radius: 50%;
+    border: 2px solid white;
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    let searchTimeout;
+    let originalTableContent;
+    let isSearchActive = false;
+    let currentSearchQuery = '';
+    let currentFilters = {};
+
     // Inicializar tooltips de Bootstrap
-    if (typeof $!== 'undefined' && $.fn.tooltip) {
+    if (typeof $ !== 'undefined' && $.fn.tooltip) {
         $('[data-toggle="tooltip"]').tooltip();
     }
 
-    // Función para manejar el toggle de subactividades
+    // Guardar contenido original de la tabla
+    originalTableContent = document.getElementById('tableContainer').innerHTML;
+    
+
+
+    // ===== FUNCIONALIDAD DE BÚSQUEDA ===== //
+
+    const searchInput = document.getElementById('searchInput');
+    const searchSpinner = document.getElementById('searchSpinner');
+    const searchResultsCount = document.getElementById('searchResultsCount');
+    const resultsNumber = document.getElementById('resultsNumber');
+    const searchResultsAlert = document.getElementById('searchResultsAlert');
+    const searchResultsText = document.getElementById('searchResultsText');
+    const tableTitle = document.getElementById('tableTitle');
+
+    // Búsqueda en tiempo real
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        currentSearchQuery = query;
+        
+        // Limpiar timeout anterior
+        clearTimeout(searchTimeout);
+        
+        if (query.length === 0) {
+            clearSearch();
+            return;
+        }
+
+        // Mostrar spinner
+        searchSpinner.style.display = 'inline-block';
+        searchResultsCount.style.display = 'none';
+
+        // Debounce la búsqueda
+        searchTimeout = setTimeout(function() {
+            performSearch(query, currentFilters);
+        }, 300);
+    });
+
+    // Limpiar búsqueda
+    document.getElementById('clearSearch').addEventListener('click', clearSearch);
+    document.getElementById('clearSearchResults').addEventListener('click', clearSearch);
+    
+    // Cancelar búsqueda con tecla ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isSearchActive) {
+            clearSearch();
+            searchInput.blur(); // Quitar foco del campo de búsqueda
+        }
+    });
+
+    function clearSearch() {
+        searchInput.value = '';
+        currentSearchQuery = '';
+        searchSpinner.style.display = 'none';
+        searchResultsCount.style.display = 'none';
+        searchResultsAlert.style.display = 'none';
+        document.getElementById('tableContainer').innerHTML = originalTableContent;
+        tableTitle.textContent = 'Lista de Actividades';
+        isSearchActive = false;
+        setupToggleHandlers();
+        updateStatistics();
+    }
+
+    // Realizar búsqueda AJAX con jQuery
+    function performSearch(query, filters = {}) {
+        // Preparar datos
+        const data = { query: query };
+        Object.keys(filters).forEach(key => {
+            if (filters[key]) {
+                data[key] = filters[key];
+            }
+        });
+        
+        $.ajax({
+            url: '{{ route("activities.search") }}',
+            method: 'GET',
+            data: data,
+            dataType: 'json',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(data, textStatus, xhr) {
+                try {
+                    displaySearchResults(data, query);
+                    searchSpinner.style.display = 'none';
+                } catch (error) {
+                    console.error('Error al mostrar resultados:', error);
+                    searchSpinner.style.display = 'none';
+                    showErrorMessage('Error al mostrar los resultados: ' + error.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                searchSpinner.style.display = 'none';
+                
+                let errorMessage = 'Error al realizar la búsqueda. Inténtalo de nuevo.';
+                if (xhr.responseText) {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        errorMessage += ' Error: ' + (errorData.message || errorData.error || xhr.responseText);
+                    } catch (e) {
+                        errorMessage += ' Error: ' + xhr.responseText;
+                    }
+                } else {
+                    errorMessage += ' Error: ' + error;
+                }
+                
+                showErrorMessage(errorMessage);
+            }
+        });
+    }
+
+    // Mostrar resultados de búsqueda
+    function displaySearchResults(data, query) {
+        const { activities, subactivities, total_results } = data;
+        
+        // Actualizar contador
+        resultsNumber.textContent = total_results;
+        searchResultsCount.style.display = 'inline-block';
+        
+        // Mostrar alerta de resultados
+        if (total_results > 0) {
+            searchResultsText.textContent = `Se encontraron ${total_results} resultado(s) para "${query}"`;
+            searchResultsAlert.style.display = 'block';
+            tableTitle.textContent = `Resultados de búsqueda (${total_results})`;
+        } else {
+            searchResultsText.textContent = `No se encontraron resultados para "${query}"`;
+            searchResultsAlert.style.display = 'block';
+            tableTitle.textContent = 'Sin resultados';
+        }
+
+        // Generar HTML de resultados
+        let resultsHTML = generateSearchResultsHTML(activities, subactivities, query);
+        document.getElementById('tableContainer').innerHTML = resultsHTML;
+        
+        isSearchActive = true;
+        setupToggleHandlers();
+        highlightSearchTerms(query);
+    }
+
+    // Generar HTML para resultados de búsqueda
+    function generateSearchResultsHTML(activities, subactivities, query) {
+        if (activities.length === 0 && subactivities.length === 0) {
+            return `
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No se encontraron resultados</h5>
+                    <p class="text-muted">Intenta con otros términos de búsqueda o ajusta los filtros</p>
+                </div>
+            `;
+        }
+
+        let html = `
+            <table class="table table-hover mb-0 modern-table">
+                <thead class="thead-light">
+                    <tr>
+                        <th class="border-0 sortable" data-sort="caso" style="cursor: pointer;">
+                            <i class="fas fa-hashtag text-primary"></i> Caso
+                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                        </th>
+                        <th class="border-0 sortable" data-sort="nombre" style="cursor: pointer;">
+                            <i class="fas fa-file-alt text-primary"></i> Nombre
+                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                        </th>
+                        <th class="border-0 sortable" data-sort="descripcion" style="cursor: pointer;">
+                            <i class="fas fa-align-left text-primary"></i> Descripción
+                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                        </th>
+                        <th class="border-0" style="position: relative;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="sortable" data-sort="status" style="cursor: pointer;">
+                                    <i class="fas fa-flag text-primary"></i> Estado
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" style="padding: 2px 6px;">
+                                        <i class="fas fa-filter"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right" style="min-width: 200px;">
+                                        <h6 class="dropdown-header">Filtrar por Estado</h6>
+                                        <div class="px-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input status-filter" type="checkbox" value="" id="status-all-search" checked>
+                                                <label class="form-check-label" for="status-all-search">Todos</label>
+                                            </div>
+                                            @foreach($statuses as $key => $label)
+                                            <div class="form-check">
+                                                <input class="form-check-input status-filter" type="checkbox" value="{{ $key }}" id="status-search-{{ $key }}">
+                                                <label class="form-check-label" for="status-search-{{ $key }}">{{ $label }}</label>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="border-0" style="position: relative;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="sortable" data-sort="analistas" style="cursor: pointer;">
+                                    <i class="fas fa-users text-primary"></i> Analistas
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" style="padding: 2px 6px;">
+                                        <i class="fas fa-filter"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right" style="min-width: 200px;">
+                                        <h6 class="dropdown-header">Filtrar por Analista</h6>
+                                        <div class="px-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input analista-filter" type="checkbox" value="" id="analista-all-search" checked>
+                                                <label class="form-check-label" for="analista-all-search">Todos</label>
+                                            </div>
+                                            @foreach($analistas as $analista)
+                                            <div class="form-check">
+                                                <input class="form-check-input analista-filter" type="checkbox" value="{{ $analista->id }}" id="analista-search-{{ $analista->id }}">
+                                                <label class="form-check-label" for="analista-search-{{ $analista->id }}">{{ $analista->name }}</label>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="border-0">
+                            <i class="fas fa-comments text-primary"></i> Comentarios
+                        </th>
+                        <th class="border-0">
+                            <i class="fas fa-envelope text-primary"></i> Correos
+                        </th>
+                        <th class="border-0" style="position: relative;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
+                                    <i class="fas fa-calendar text-primary"></i> Fecha
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" style="padding: 2px 6px;">
+                                        <i class="fas fa-filter"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right" style="min-width: 250px;">
+                                        <h6 class="dropdown-header">Filtrar por Fecha</h6>
+                                        <div class="px-3">
+                                            <div class="form-group mb-2">
+                                                <label class="small">Desde:</label>
+                                                <input type="date" class="form-control form-control-sm" id="fecha-desde-filter-search">
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label class="small">Hasta:</label>
+                                                <input type="date" class="form-control form-control-sm" id="fecha-hasta-filter-search">
+                                            </div>
+                                            <button class="btn btn-sm btn-primary btn-block" id="apply-date-filter-search">Aplicar</button>
+                                            <button class="btn btn-sm btn-outline-secondary btn-block" id="clear-date-filter-search">Limpiar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="border-0 text-center">
+                            <i class="fas fa-cogs text-primary"></i> Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        // Agregar actividades principales
+        activities.forEach(activity => {
+            html += generateActivityRowHTML(activity, true);
+        });
+
+        // Agregar subactividades encontradas
+        subactivities.forEach(subactivity => {
+            html += generateSubactivityRowHTML(subactivity);
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        return html;
+    }
+
+    // Generar HTML para fila de actividad
+    function generateActivityRowHTML(activity, isSearchResult = false) {
+        const statusClass = getStatusClass(activity.status);
+        const statusIcon = getStatusIcon(activity.status);
+        const rowClass = isSearchResult ? 'search-result-row' : '';
+        
+        return `
+            <tr class="parent-activity activity-row ${rowClass}" data-activity-id="${activity.id}">
+                <td class="align-middle">
+                    <span class="badge badge-outline-primary font-weight-bold">${activity.caso}</span>
+                </td>
+                <td class="align-middle">
+                    <div class="d-flex align-items-center">
+                        ${activity.subactivities && activity.subactivities.length > 0 ? `
+                            <span class="toggle-subactivities mr-2" style="cursor: pointer;">
+                                <i class="fas fa-chevron-right text-primary" id="icon-${activity.id}"></i>
+                            </span>
+                        ` : ''}
+                        <div>
+                            <div class="font-weight-bold text-dark">${activity.name}</div>
+                            ${activity.subactivities && activity.subactivities.length > 0 ? `
+                                <small class="text-muted">
+                                    <i class="fas fa-sitemap"></i> ${activity.subactivities.length} subactividad(es)
+                                </small>
+                            ` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td class="align-middle">
+                    <div class="description-cell">
+                        ${activity.description ? (activity.description.length > 80 ? activity.description.substring(0, 80) + '...' : activity.description) : ''}
+                    </div>
+                </td>
+                <td class="align-middle">
+                    <span class="badge badge-${statusClass} badge-pill">
+                        <i class="fas fa-${statusIcon}"></i> ${getStatusLabel(activity.status)}
+                    </span>
+                </td>
+                <td class="align-middle">
+                    ${generateAnalistasHTML(activity.analistas)}
+                </td>
+                <td class="align-middle">
+                    ${generateCommentsHTML(activity)}
+                </td>
+                <td class="align-middle">
+                    ${generateEmailsHTML(activity)}
+                </td>
+                <td class="align-middle">
+                    ${generateDateHTML(activity.fecha_recepcion)}
+                </td>
+                <td class="align-middle text-center">
+                    ${generateActionsHTML(activity)}
+                </td>
+            </tr>
+        `;
+    }
+
+    // Generar HTML para subactividad en resultados
+    function generateSubactivityRowHTML(subactivity) {
+        const statusClass = getStatusClass(subactivity.status);
+        const statusIcon = getStatusIcon(subactivity.status);
+        
+        return `
+            <tr class="activity-row search-result-subactivity" data-activity-id="${subactivity.id}">
+                <td class="align-middle">
+                    <span class="badge badge-outline-success font-weight-bold">${subactivity.caso}</span>
+                    <div><small class="text-muted">Subactividad de: ${subactivity.parent ? subactivity.parent.name : 'N/A'}</small></div>
+                </td>
+                <td class="align-middle">
+                    <div class="font-weight-bold text-dark">${subactivity.name}</div>
+                    <small class="text-success"><i class="fas fa-level-down-alt"></i> Subactividad</small>
+                </td>
+                <td class="align-middle">
+                    <div class="description-cell">
+                        ${subactivity.description ? (subactivity.description.length > 80 ? subactivity.description.substring(0, 80) + '...' : subactivity.description) : ''}
+                    </div>
+                </td>
+                <td class="align-middle">
+                    <span class="badge badge-${statusClass} badge-pill">
+                        <i class="fas fa-${statusIcon}"></i> ${getStatusLabel(subactivity.status)}
+                    </span>
+                </td>
+                <td class="align-middle">
+                    ${generateAnalistasHTML(subactivity.analistas)}
+                </td>
+                <td class="align-middle">
+                    ${generateCommentsHTML(subactivity)}
+                </td>
+                <td class="align-middle">
+                    ${generateEmailsHTML(subactivity)}
+                </td>
+                <td class="align-middle">
+                    ${generateDateHTML(subactivity.fecha_recepcion)}
+                </td>
+                <td class="align-middle text-center">
+                    ${generateActionsHTML(subactivity)}
+                </td>
+            </tr>
+        `;
+    }
+
+    // Funciones auxiliares para generar HTML
+    function getStatusClass(status) {
+        const statusClasses = {
+            'culminada': 'success',
+            'en_ejecucion': 'primary',
+            'en_espera_de_insumos': 'warning'
+        };
+        return statusClasses[status] || 'secondary';
+    }
+
+    function getStatusIcon(status) {
+        const statusIcons = {
+            'culminada': 'check-circle',
+            'en_ejecucion': 'play-circle',
+            'en_espera_de_insumos': 'pause-circle'
+        };
+        return statusIcons[status] || 'circle';
+    }
+
+    function getStatusLabel(status) {
+        const statusLabels = {
+            'culminada': 'Culminada',
+            'en_ejecucion': 'En Ejecución',
+            'en_espera_de_insumos': 'En Espera de Insumos'
+        };
+        return statusLabels[status] || status;
+    }
+
+    function generateAnalistasHTML(analistas) {
+        if (!analistas || analistas.length === 0) {
+            return '<span class="text-muted"><i class="fas fa-user-slash"></i> Sin asignar</span>';
+        }
+        
+        let html = '<div class="analysts-list">';
+        analistas.forEach(analista => {
+            html += `<span class="badge badge-light mr-1 mb-1"><i class="fas fa-user"></i> ${analista.name}</span>`;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function generateCommentsHTML(activity) {
+        if (!activity.comments || activity.comments.length === 0) {
+            return '<span class="text-muted"><i class="fas fa-comment-slash"></i> Sin comentarios</span>';
+        }
+        
+        return `
+            <div class="comments-info">
+                <a href="/activities/${activity.id}/comments" class="text-decoration-none">
+                    <span class="badge badge-info badge-pill">
+                        <i class="fas fa-comments"></i> ${activity.comments.length}
+                    </span>
+                </a>
+            </div>
+        `;
+    }
+
+    function generateEmailsHTML(activity) {
+        if (!activity.emails || activity.emails.length === 0) {
+            return '<span class="text-muted"><i class="fas fa-envelope-open"></i> Sin correos</span>';
+        }
+        
+        return `
+            <div class="emails-info">
+                <a href="/activities/${activity.id}/emails" class="text-decoration-none">
+                    <span class="badge badge-success badge-pill">
+                        <i class="fas fa-envelope"></i> ${activity.emails.length}
+                    </span>
+                </a>
+            </div>
+        `;
+    }
+
+    function generateDateHTML(fecha) {
+        if (!fecha) {
+            return '<span class="text-muted"><i class="fas fa-calendar-times"></i> No asignada</span>';
+        }
+        
+        const date = new Date(fecha);
+        // Formatear fecha como DD/MM/YYYY para consistencia con el formato del backend
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+        
+        return `
+            <div class="date-info">
+                <span class="badge badge-outline-info">
+                    <i class="fas fa-calendar-alt"></i> ${formattedDate}
+                </span>
+            </div>
+        `;
+    }
+
+    function generateActionsHTML(activity) {
+        return `
+            <div class="action-buttons">
+                <div class="btn-group-vertical btn-group-sm" role="group">
+                    <a href="/activities/${activity.id}/edit" class="btn btn-warning btn-sm" title="Editar actividad">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="/activities/${activity.id}/emails" class="btn btn-info btn-sm" title="Ver correos">
+                        <i class="fas fa-envelope"></i> Correos
+                    </a>
+                    <a href="/activities/create?parentId=${activity.id}" class="btn btn-secondary btn-sm" title="Crear subactividad">
+                        <i class="fas fa-plus"></i> Subactividad
+                    </a>
+                </div>
+                <form action="/activities/${activity.id}" method="POST" style="display:inline;" class="mt-2">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar actividad"
+                            onclick="return confirm('¿Estás seguro de eliminar esta actividad?')">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </form>
+            </div>
+        `;
+    }
+
+    // Resaltar términos de búsqueda
+    function highlightSearchTerms(query) {
+        if (!query) return;
+        
+        const terms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+        const tableContainer = document.getElementById('tableContainer');
+        
+        terms.forEach(term => {
+            highlightTerm(tableContainer, term);
+        });
+    }
+
+    function highlightTerm(container, term) {
+        const walker = document.createTreeWalker(
+            container,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+
+        const textNodes = [];
+        let node;
+        while (node = walker.nextNode()) {
+            textNodes.push(node);
+        }
+
+        textNodes.forEach(textNode => {
+            const text = textNode.textContent;
+            const regex = new RegExp(`(${term})`, 'gi');
+            if (regex.test(text)) {
+                const highlightedText = text.replace(regex, '<span class="search-result-highlight">$1</span>');
+                const wrapper = document.createElement('span');
+                wrapper.innerHTML = highlightedText;
+                textNode.parentNode.replaceChild(wrapper, textNode);
+            }
+        });
+    }
+
+    // ===== FUNCIONALIDAD DE FILTROS ===== //
+
+    const toggleFiltersBtn = document.getElementById('toggleFilters');
+    const advancedFilters = document.getElementById('advancedFilters');
+    const filterToggleText = document.getElementById('filterToggleText');
+
+    // Toggle filtros avanzados
+    toggleFiltersBtn.addEventListener('click', function() {
+        if (advancedFilters.style.display === 'none' || advancedFilters.style.display === '') {
+            advancedFilters.style.display = 'block';
+            filterToggleText.textContent = 'Ocultar Filtros';
+            this.classList.add('filter-active');
+        } else {
+            advancedFilters.style.display = 'none';
+            filterToggleText.textContent = 'Mostrar Filtros';
+            this.classList.remove('filter-active');
+        }
+    });
+
+    // Event listeners para filtros
+    const filterElements = [
+        'filterStatus',
+        'filterAnalista', 
+        'filterCaso',
+        'filterFechaDesde',
+        'filterFechaHasta'
+    ];
+
+    filterElements.forEach(filterId => {
+        const element = document.getElementById(filterId);
+        if (element) {
+            element.addEventListener('change', applyFilters);
+            element.addEventListener('input', applyFilters);
+        }
+    });
+
+    // Aplicar filtros
+    function applyFilters() {
+        currentFilters = {
+            status: document.getElementById('filterStatus').value,
+            analista_id: document.getElementById('filterAnalista').value,
+            caso: document.getElementById('filterCaso').value,
+            fecha_desde: document.getElementById('filterFechaDesde').value,
+            fecha_hasta: document.getElementById('filterFechaHasta').value
+        };
+
+        // Remover filtros vacíos
+        Object.keys(currentFilters).forEach(key => {
+            if (!currentFilters[key]) {
+                delete currentFilters[key];
+            }
+        });
+
+        // Si hay búsqueda activa, aplicar filtros a la búsqueda
+        if (currentSearchQuery) {
+            performSearch(currentSearchQuery, currentFilters);
+        } else if (Object.keys(currentFilters).length > 0) {
+            // Si no hay búsqueda pero sí filtros, realizar búsqueda solo con filtros
+            performSearch('', currentFilters);
+        } else {
+            // Si no hay filtros ni búsqueda, mostrar todo
+            clearSearch();
+        }
+
+        // Actualizar indicador de filtros activos
+        updateFilterIndicator();
+    }
+
+    // Actualizar indicador de filtros activos
+    function updateFilterIndicator() {
+        const hasActiveFilters = Object.keys(currentFilters).length > 0;
+        if (hasActiveFilters) {
+            toggleFiltersBtn.classList.add('filter-active');
+        } else {
+            toggleFiltersBtn.classList.remove('filter-active');
+        }
+    }
+
+    // Limpiar todos los filtros
+    document.getElementById('clearAllFilters').addEventListener('click', function() {
+        filterElements.forEach(filterId => {
+            const element = document.getElementById(filterId);
+            if (element) {
+                element.value = '';
+            }
+        });
+        currentFilters = {};
+        updateFilterIndicator();
+        
+        if (currentSearchQuery) {
+            performSearch(currentSearchQuery, {});
+        } else {
+            clearSearch();
+        }
+    });
+
+    // ===== FUNCIONALIDAD ORIGINAL DE SUBACTIVIDADES ===== //
+
     function setupToggleHandlers() {
         // Manejar el clic en las actividades padre para mostrar/ocultar subactividades
         document.querySelectorAll('.parent-activity').forEach(function(row) {
@@ -611,7 +1707,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (subactivities.length > 0) {
                         const isVisible = subactivities[0].style.display !== 'none';
                         
-                        // Animación suave para mostrar/ocultar
                         subactivities.forEach(function(subRow, index) {
                             setTimeout(function() {
                                 if (isVisible) {
@@ -623,14 +1718,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                     icon.className = 'fas fa-chevron-down text-primary';
                                     toggleIcon.classList.add('expanded');
                                 }
-                            }, index * 50); // Retraso escalonado para efecto visual
+                            }, index * 50);
                         });
                     }
                 });
             }
         });
 
-        // Manejar el clic en subactividades que tienen sus propias subactividades
+        // Manejar subactividades anidadas
         document.querySelectorAll('.toggle-subactivities[data-subactivity-id]').forEach(function(toggle) {
             if (!toggle.hasAttribute('data-handler-attached')) {
                 toggle.setAttribute('data-handler-attached', 'true');
@@ -660,18 +1755,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
+        
+        // También configurar handlers de ordenamiento y filtros
+        setupSortHandlers();
+        setupColumnFilters();
     }
+
+    // ===== FUNCIONES AUXILIARES ===== //
+
+    function showErrorMessage(message) {
+        // Crear y mostrar mensaje de error
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'alert alert-danger alert-dismissible fade show';
+        errorAlert.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i> ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        `;
+        
+        const container = document.querySelector('.container');
+        container.insertBefore(errorAlert, container.firstChild);
+        
+        // Auto-dismiss después de 5 segundos
+        setTimeout(() => {
+            if (errorAlert.parentNode) {
+                errorAlert.remove();
+            }
+        }, 5000);
+    }
+
+    function updateStatistics() {
+        // Actualizar estadísticas si es necesario
+        // Esta función se puede expandir para recalcular estadísticas
+    }
+
+    // ===== INICIALIZACIÓN ===== //
 
     // Configurar handlers inicialmente
     setupToggleHandlers();
     
-    // Reconfigurar handlers después de cualquier cambio dinámico en el DOM
+    // Observer para cambios dinámicos en el DOM
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
                 setupToggleHandlers();
-                // Reinicializar tooltips para elementos nuevos
-                if (typeof $!== 'undefined' && $.fn.tooltip) {
+                if (typeof $ !== 'undefined' && $.fn.tooltip) {
                     $('[data-toggle="tooltip"]').tooltip();
                 }
             }
@@ -699,15 +1828,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Mejorar la experiencia de hover en las filas
-    document.querySelectorAll('.activity-row').forEach(function(row) {
-        row.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateX(5px)';
-        });
-        
-        row.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateX(0)';
-        });
-    });
+    document.addEventListener('mouseenter', function(e) {
+        if (e.target && typeof e.target.closest === 'function') {
+            const row = e.target.closest('.activity-row');
+            if (row) {
+                row.style.transform = 'translateX(5px)';
+            }
+        }
+    }, true);
+    
+    document.addEventListener('mouseleave', function(e) {
+        if (e.target && typeof e.target.closest === 'function') {
+            const row = e.target.closest('.activity-row');
+            if (row) {
+                row.style.transform = 'translateX(0)';
+            }
+        }
+    }, true);
 
     // Auto-dismiss para alertas después de 5 segundos
     const alerts = document.querySelectorAll('.alert');
@@ -723,6 +1860,1026 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 5000);
     });
+
+    // ===== FUNCIONALIDAD DE ORDENAMIENTO Y FILTROS ===== //
+    let currentSort = { column: null, direction: 'asc' };
+    let activeFilters = {
+        status: [],
+        analistas: [],
+        fechaDesde: null,
+        fechaHasta: null
+    };
+    
+    function setupSortHandlers() {
+        const sortableHeaders = document.querySelectorAll('.sortable');
+        sortableHeaders.forEach(header => {
+            // Remover event listeners existentes para evitar duplicados
+            header.removeEventListener('click', handleSort);
+            header.addEventListener('click', handleSort);
+        });
+    }
+    
+    function handleSort(event) {
+        event.stopPropagation(); // Evitar que se propague al dropdown
+        const column = this.getAttribute('data-sort');
+        sortTable(column);
+    }
+    
+    function setupColumnFilters() {
+        console.log('=== CONFIGURANDO FILTROS LIMPIOS ===');
+        
+        // Función global para toggle de dropdowns
+        window.simpleToggle = function(filterType) {
+            console.log('Simple toggle:', filterType);
+            const menu = document.getElementById(`${filterType}-filter-menu`);
+            
+            if (menu) {
+                // Cerrar otros dropdowns
+                document.querySelectorAll('.custom-dropdown-menu').forEach(otherMenu => {
+                    if (otherMenu.id !== `${filterType}-filter-menu`) {
+                        otherMenu.style.display = 'none';
+                    }
+                });
+                
+                // Toggle actual
+                const isVisible = menu.style.display === 'block';
+                menu.style.display = isVisible ? 'none' : 'block';
+                console.log(`Menu ${filterType}: ${isVisible ? 'cerrado' : 'abierto'}`);
+            }
+        }
+        
+        // Configurar botones con onclick directo
+        setTimeout(() => {
+            const statusBtn = document.querySelector('[data-filter="status"]');
+            const analistasBtn = document.querySelector('[data-filter="analistas"]');
+            const fechaBtn = document.querySelector('[data-filter="fecha"]');
+            
+            if (statusBtn) {
+                statusBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    console.log('STATUS CLICK');
+                    simpleToggle('status');
+                };
+                console.log('Status button configurado');
+            }
+            
+            if (analistasBtn) {
+                analistasBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    console.log('ANALISTAS CLICK');
+                    simpleToggle('analistas');
+                };
+                console.log('Analistas button configurado');
+            }
+            
+            if (fechaBtn) {
+                fechaBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    console.log('FECHA CLICK');
+                    simpleToggle('fecha');
+                };
+                console.log('Fecha button configurado');
+            }
+        }, 100);
+        
+        // Cerrar dropdowns al hacer clic fuera (pero no al hacer clic en checkboxes)
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-dropdown') && !e.target.closest('.custom-dropdown-menu')) {
+                document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+        
+        // Configurar checkboxes con event delegation
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('.status-filter')) {
+                handleStatusChange(e.target);
+            } else if (e.target.matches('.analista-filter')) {
+                handleAnalistaChange(e.target);
+            }
+        });
+        
+        // Configurar botón limpiar filtros
+        const clearButton = document.getElementById('clearAllColumnFilters');
+        if (clearButton) {
+            clearButton.onclick = function() {
+                console.log('Limpiando todos los filtros...');
+                clearAllFilters();
+            };
+        }
+        
+        // Configurar filtros de fecha
+        setupDateFilters();
+    }
+    
+    function setupDateFilters() {
+        console.log('Configurando filtros de fecha...');
+        
+        // Configurar filtrado automático para campos de fecha del dropdown
+        const fechaDesdeFilter = document.getElementById('fecha-desde-filter');
+        const fechaHastaFilter = document.getElementById('fecha-hasta-filter');
+        
+        if (fechaDesdeFilter) {
+            fechaDesdeFilter.addEventListener('change', function() {
+                console.log('Fecha desde (dropdown) cambiada:', this.value);
+                
+                // Auto-completar fecha hasta si está vacía
+                if (this.value && !fechaHastaFilter.value) {
+                    fechaHastaFilter.value = this.value;
+                    console.log('Auto-completando fecha hasta:', this.value);
+                }
+                
+                // Aplicar filtro automáticamente SIN cerrar el dropdown
+                applyDateFilterFromDropdownSilent();
+            });
+        }
+        
+        if (fechaHastaFilter) {
+            fechaHastaFilter.addEventListener('change', function() {
+                console.log('Fecha hasta (dropdown) cambiada:', this.value);
+                
+                // Aplicar filtro automáticamente SIN cerrar el dropdown
+                applyDateFilterFromDropdownSilent();
+            });
+        }
+        
+        // Configurar botones de aplicar filtro de fecha (mantener para compatibilidad)
+        const applyDateFilterBtn = document.getElementById('apply-date-filter');
+        const clearDateFilterBtn = document.getElementById('clear-date-filter');
+        
+        if (applyDateFilterBtn) {
+            applyDateFilterBtn.onclick = function(e) {
+                e.preventDefault();
+                applyDateFilterFromDropdown();
+            };
+        }
+        
+        if (clearDateFilterBtn) {
+            clearDateFilterBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log('Limpiando filtro de fecha...');
+                
+                // Limpiar campos
+                document.getElementById('fecha-desde-filter').value = '';
+                document.getElementById('fecha-hasta-filter').value = '';
+                
+                // Limpiar filtros activos
+                activeFilters.fechaDesde = null;
+                activeFilters.fechaHasta = null;
+                
+                // Aplicar filtros
+                throttledApplyFilters();
+                updateFilterIndicators();
+                
+                // Cerrar dropdown
+                document.getElementById('fecha-filter-menu').style.display = 'none';
+            };
+        }
+        
+        // También configurar los filtros de fecha de la sección de búsqueda
+        const fechaDesdeSearchFilter = document.getElementById('fecha-desde-filter-search');
+        const fechaHastaSearchFilter = document.getElementById('fecha-hasta-filter-search');
+        
+        if (fechaDesdeSearchFilter) {
+            fechaDesdeSearchFilter.addEventListener('change', function() {
+                console.log('Fecha desde (búsqueda) cambiada:', this.value);
+                
+                // Auto-completar fecha hasta si está vacía
+                if (this.value && fechaHastaSearchFilter && !fechaHastaSearchFilter.value) {
+                    fechaHastaSearchFilter.value = this.value;
+                    console.log('Auto-completando fecha hasta (búsqueda):', this.value);
+                }
+                
+                // Sincronizar y aplicar filtro automáticamente SIN cerrar dropdown
+                applyDateFilterFromSearchSilent();
+            });
+        }
+        
+        if (fechaHastaSearchFilter) {
+            fechaHastaSearchFilter.addEventListener('change', function() {
+                console.log('Fecha hasta (búsqueda) cambiada:', this.value);
+                
+                // Aplicar filtro automáticamente SIN cerrar dropdown
+                applyDateFilterFromSearchSilent();
+            });
+        }
+        
+        const applyDateFilterSearchBtn = document.getElementById('apply-date-filter-search');
+        const clearDateFilterSearchBtn = document.getElementById('clear-date-filter-search');
+        
+        if (applyDateFilterSearchBtn) {
+            applyDateFilterSearchBtn.onclick = function(e) {
+                e.preventDefault();
+                applyDateFilterFromSearch();
+            };
+        }
+        
+        if (clearDateFilterSearchBtn) {
+            clearDateFilterSearchBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log('Limpiando filtro de fecha desde búsqueda...');
+                
+                // Limpiar campos de búsqueda
+                document.getElementById('fecha-desde-filter-search').value = '';
+                document.getElementById('fecha-hasta-filter-search').value = '';
+                
+                // Sincronizar con los filtros principales
+                if (document.getElementById('fecha-desde-filter')) {
+                    document.getElementById('fecha-desde-filter').value = '';
+                }
+                if (document.getElementById('fecha-hasta-filter')) {
+                    document.getElementById('fecha-hasta-filter').value = '';
+                }
+                
+                // Limpiar filtros activos
+                activeFilters.fechaDesde = null;
+                activeFilters.fechaHasta = null;
+                
+                // Aplicar filtros
+                throttledApplyFilters();
+                updateFilterIndicators();
+            };
+        }
+        
+        // Configurar filtros de fecha de la sección avanzada
+        const filterFechaDesde = document.getElementById('filterFechaDesde');
+        const filterFechaHasta = document.getElementById('filterFechaHasta');
+        
+        if (filterFechaDesde) {
+            filterFechaDesde.addEventListener('change', function() {
+                console.log('Filtro fecha desde (avanzado) cambiado:', this.value);
+                
+                // Auto-completar fecha hasta si está vacía
+                const filterFechaHasta = document.getElementById('filterFechaHasta');
+                if (this.value && filterFechaHasta && !filterFechaHasta.value) {
+                    filterFechaHasta.value = this.value;
+                    console.log('Auto-completando fecha hasta (avanzado):', this.value);
+                }
+                
+                activeFilters.fechaDesde = this.value || null;
+                
+                // Sincronizar con filtros de dropdown
+                if (document.getElementById('fecha-desde-filter')) {
+                    document.getElementById('fecha-desde-filter').value = this.value;
+                }
+                if (document.getElementById('fecha-desde-filter-search')) {
+                    document.getElementById('fecha-desde-filter-search').value = this.value;
+                }
+                
+                // Actualizar también el filtro hasta si se cambió
+                if (filterFechaHasta && filterFechaHasta.value) {
+                    activeFilters.fechaHasta = filterFechaHasta.value;
+                }
+                
+                throttledApplyFilters();
+                updateFilterIndicators();
+            });
+        }
+        
+        if (filterFechaHasta) {
+            filterFechaHasta.addEventListener('change', function() {
+                console.log('Filtro fecha hasta (avanzado) cambiado:', this.value);
+                activeFilters.fechaHasta = this.value || null;
+                
+                // Sincronizar con filtros de dropdown
+                if (document.getElementById('fecha-hasta-filter')) {
+                    document.getElementById('fecha-hasta-filter').value = this.value;
+                }
+                if (document.getElementById('fecha-hasta-filter-search')) {
+                    document.getElementById('fecha-hasta-filter-search').value = this.value;
+                }
+                
+                throttledApplyFilters();
+                updateFilterIndicators();
+            });
+        }
+        
+        console.log('Filtros de fecha configurados correctamente');
+    }
+    
+    function applyDateFilterFromDropdown() {
+        const fechaDesde = document.getElementById('fecha-desde-filter').value;
+        const fechaHasta = document.getElementById('fecha-hasta-filter').value;
+        
+        console.log('Aplicando filtro de fecha desde dropdown:', { fechaDesde, fechaHasta });
+        
+        // Actualizar filtros activos
+        activeFilters.fechaDesde = fechaDesde || null;
+        activeFilters.fechaHasta = fechaHasta || null;
+        
+        // Sincronizar con filtros avanzados
+        const filterFechaDesde = document.getElementById('filterFechaDesde');
+        const filterFechaHasta = document.getElementById('filterFechaHasta');
+        if (filterFechaDesde) filterFechaDesde.value = fechaDesde;
+        if (filterFechaHasta) filterFechaHasta.value = fechaHasta;
+        
+        // Sincronizar con filtros de búsqueda
+        const fechaDesdeSearch = document.getElementById('fecha-desde-filter-search');
+        const fechaHastaSearch = document.getElementById('fecha-hasta-filter-search');
+        if (fechaDesdeSearch) fechaDesdeSearch.value = fechaDesde;
+        if (fechaHastaSearch) fechaHastaSearch.value = fechaHasta;
+        
+        // Aplicar filtros
+        throttledApplyFilters();
+        updateFilterIndicators();
+        
+        // Cerrar dropdown de fecha
+        const fechaFilterMenu = document.getElementById('fecha-filter-menu');
+        if (fechaFilterMenu) {
+            fechaFilterMenu.style.display = 'none';
+        }
+    }
+    
+    function applyDateFilterFromDropdownSilent() {
+        const fechaDesde = document.getElementById('fecha-desde-filter').value;
+        const fechaHasta = document.getElementById('fecha-hasta-filter').value;
+        
+        console.log('Aplicando filtro de fecha desde dropdown (silencioso):', { fechaDesde, fechaHasta });
+        
+        // Actualizar filtros activos
+        activeFilters.fechaDesde = fechaDesde || null;
+        activeFilters.fechaHasta = fechaHasta || null;
+        
+        // Sincronizar con filtros avanzados
+        const filterFechaDesde = document.getElementById('filterFechaDesde');
+        const filterFechaHasta = document.getElementById('filterFechaHasta');
+        if (filterFechaDesde) filterFechaDesde.value = fechaDesde;
+        if (filterFechaHasta) filterFechaHasta.value = fechaHasta;
+        
+        // Sincronizar con filtros de búsqueda
+        const fechaDesdeSearch = document.getElementById('fecha-desde-filter-search');
+        const fechaHastaSearch = document.getElementById('fecha-hasta-filter-search');
+        if (fechaDesdeSearch) fechaDesdeSearch.value = fechaDesde;
+        if (fechaHastaSearch) fechaHastaSearch.value = fechaHasta;
+        
+        // Aplicar filtros SIN cerrar el dropdown
+        throttledApplyFilters();
+        updateFilterIndicators();
+    }
+    
+    function applyDateFilterFromSearch() {
+        const fechaDesde = document.getElementById('fecha-desde-filter-search').value;
+        const fechaHasta = document.getElementById('fecha-hasta-filter-search').value;
+        
+        console.log('Aplicando filtro de fecha desde búsqueda:', { fechaDesde, fechaHasta });
+        
+        // Actualizar filtros activos
+        activeFilters.fechaDesde = fechaDesde || null;
+        activeFilters.fechaHasta = fechaHasta || null;
+        
+        // Sincronizar con otros filtros
+        const fechaDesdeFilter = document.getElementById('fecha-desde-filter');
+        const fechaHastaFilter = document.getElementById('fecha-hasta-filter');
+        if (fechaDesdeFilter) fechaDesdeFilter.value = fechaDesde;
+        if (fechaHastaFilter) fechaHastaFilter.value = fechaHasta;
+        
+        const filterFechaDesde = document.getElementById('filterFechaDesde');
+        const filterFechaHasta = document.getElementById('filterFechaHasta');
+        if (filterFechaDesde) filterFechaDesde.value = fechaDesde;
+        if (filterFechaHasta) filterFechaHasta.value = fechaHasta;
+        
+        // Aplicar filtros
+        throttledApplyFilters();
+        updateFilterIndicators();
+        
+        // Cerrar dropdown de fecha de búsqueda si existe
+        const fechaSearchFilterMenu = document.getElementById('fecha-search-filter-menu');
+        if (fechaSearchFilterMenu) {
+            fechaSearchFilterMenu.style.display = 'none';
+        }
+    }
+    
+    function applyDateFilterFromSearchSilent() {
+        const fechaDesde = document.getElementById('fecha-desde-filter-search').value;
+        const fechaHasta = document.getElementById('fecha-hasta-filter-search').value;
+        
+        console.log('Aplicando filtro de fecha desde búsqueda (silencioso):', { fechaDesde, fechaHasta });
+        
+        // Actualizar filtros activos
+        activeFilters.fechaDesde = fechaDesde || null;
+        activeFilters.fechaHasta = fechaHasta || null;
+        
+        // Sincronizar con otros filtros
+        const fechaDesdeFilter = document.getElementById('fecha-desde-filter');
+        const fechaHastaFilter = document.getElementById('fecha-hasta-filter');
+        if (fechaDesdeFilter) fechaDesdeFilter.value = fechaDesde;
+        if (fechaHastaFilter) fechaHastaFilter.value = fechaHasta;
+        
+        const filterFechaDesde = document.getElementById('filterFechaDesde');
+        const filterFechaHasta = document.getElementById('filterFechaHasta');
+        if (filterFechaDesde) filterFechaDesde.value = fechaDesde;
+        if (filterFechaHasta) filterFechaHasta.value = fechaHasta;
+        
+        // Aplicar filtros SIN cerrar el dropdown
+        throttledApplyFilters();
+        updateFilterIndicators();
+    }
+    
+    // Throttle para evitar filtrados excesivos
+    let filterTimeout = null;
+    
+    function throttledApplyFilters() {
+        if (filterTimeout) {
+            clearTimeout(filterTimeout);
+        }
+        filterTimeout = setTimeout(() => {
+            applyFilters();
+        }, 150); // Esperar 150ms antes de aplicar filtros
+    }
+    
+    function handleStatusChange(checkbox) {
+        console.log('Status filter changed:', checkbox.value, checkbox.checked);
+        
+        if (checkbox.value === '') {
+            // Checkbox "Todos"
+            if (checkbox.checked) {
+                activeFilters.status = [];
+                document.querySelectorAll('.status-filter').forEach(cb => {
+                    if (cb.value !== '') cb.checked = false;
+                });
+            }
+        } else {
+            // Checkbox específico
+            const allCheckbox = document.getElementById('status-all');
+            if (allCheckbox) allCheckbox.checked = false;
+            
+            if (checkbox.checked) {
+                if (!activeFilters.status.includes(checkbox.value)) {
+                    activeFilters.status.push(checkbox.value);
+                }
+            } else {
+                activeFilters.status = activeFilters.status.filter(s => s !== checkbox.value);
+            }
+        }
+        
+        console.log('Active status filters:', activeFilters.status);
+        throttledApplyFilters();
+        updateFilterIndicators();
+    }
+    
+    function handleAnalistaChange(checkbox) {
+        console.log('Analista filter changed:', checkbox.value, checkbox.checked);
+        
+        if (checkbox.value === '') {
+            // Checkbox "Todos"
+            if (checkbox.checked) {
+                activeFilters.analistas = [];
+                document.querySelectorAll('.analista-filter').forEach(cb => {
+                    if (cb.value !== '') cb.checked = false;
+                });
+            }
+        } else {
+            // Checkbox específico
+            const allCheckbox = document.getElementById('analista-all');
+            if (allCheckbox) allCheckbox.checked = false;
+            
+            if (checkbox.checked) {
+                if (!activeFilters.analistas.includes(checkbox.value)) {
+                    activeFilters.analistas.push(checkbox.value);
+                }
+            } else {
+                activeFilters.analistas = activeFilters.analistas.filter(a => a !== checkbox.value);
+            }
+        }
+        
+        console.log('Active analista filters:', activeFilters.analistas);
+        throttledApplyFilters();
+        updateFilterIndicators();
+    }
+    
+    function clearAllFilters() {
+        console.log('Limpiando todos los filtros...');
+        
+        // Limpiar filtros de estado
+        document.querySelectorAll('.status-filter').forEach(cb => {
+            if (cb.value === '') {
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
+        
+        // Limpiar filtros de analistas
+        document.querySelectorAll('.analista-filter').forEach(cb => {
+            if (cb.value === '') {
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
+        
+        // Limpiar filtros de fecha
+        const fechaDesdeInput = document.getElementById('fecha-desde-filter');
+        const fechaHastaInput = document.getElementById('fecha-hasta-filter');
+        if (fechaDesdeInput) fechaDesdeInput.value = '';
+        if (fechaHastaInput) fechaHastaInput.value = '';
+        
+        // Limpiar filtros de fecha de la sección avanzada
+        const filterFechaDesde = document.getElementById('filterFechaDesde');
+        const filterFechaHasta = document.getElementById('filterFechaHasta');
+        if (filterFechaDesde) filterFechaDesde.value = '';
+        if (filterFechaHasta) filterFechaHasta.value = '';
+        
+        // Limpiar filtros de fecha de búsqueda
+        const fechaDesdeSearchInput = document.getElementById('fecha-desde-filter-search');
+        const fechaHastaSearchInput = document.getElementById('fecha-hasta-filter-search');
+        if (fechaDesdeSearchInput) fechaDesdeSearchInput.value = '';
+        if (fechaHastaSearchInput) fechaHastaSearchInput.value = '';
+        
+        // Resetear filtros activos
+        activeFilters = {
+            status: [],
+            analistas: [],
+            fechaDesde: null,
+            fechaHasta: null
+        };
+        
+        // Limpiar caches para mejorar rendimiento
+        clearFilterCaches();
+        
+        // Aplicar filtros para mostrar todas las filas
+        throttledApplyFilters();
+        
+        // Cerrar todos los dropdowns
+        document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
+            menu.style.display = 'none';
+        });
+        
+        // Mostrar todas las filas directamente
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.style.display = '';
+        });
+        
+        // Limpiar indicadores visuales
+        document.querySelectorAll('.filter-toggle').forEach(button => {
+            button.classList.remove('active');
+        });
+        
+        // Actualizar contador
+        updateResultsCount();
+        
+        console.log('Filtros limpiados correctamente');
+    }
+    
+    function updateResultsCount() {
+        const visibleRows = document.querySelectorAll('tbody tr[style=""], tbody tr:not([style*="display: none"])');
+        const totalRows = document.querySelectorAll('tbody tr').length;
+        
+        console.log(`Mostrando ${visibleRows.length} de ${totalRows} actividades`);
+        
+        // Actualizar título de la tabla si existe
+        const tableTitle = document.getElementById('tableTitle');
+        if (tableTitle) {
+            if (visibleRows.length === totalRows) {
+                tableTitle.textContent = 'Lista de Actividades';
+            } else {
+                tableTitle.textContent = `Actividades filtradas (${visibleRows.length} de ${totalRows})`;
+            }
+        }
+    }
+    
+    function sortTable(column) {
+        // Determinar dirección de ordenamiento
+        if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.direction = 'asc';
+        }
+        currentSort.column = column;
+        
+        // Actualizar iconos de ordenamiento
+        updateSortIcons(column, currentSort.direction);
+        
+        // Obtener filas de la tabla
+        const tableBody = document.querySelector('#tableContainer tbody');
+        if (!tableBody) return;
+        
+        const rows = Array.from(tableBody.querySelectorAll('tr.parent-activity'));
+        
+        // Ordenar filas
+        rows.sort((a, b) => {
+            let aValue = getSortValue(a, column);
+            let bValue = getSortValue(b, column);
+            
+            // Convertir a números si es posible
+            const aNum = parseFloat(aValue);
+            const bNum = parseFloat(bValue);
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                aValue = aNum;
+                bValue = bNum;
+            }
+            
+            // Manejar fechas
+            if (column === 'fecha_recepcion') {
+                aValue = new Date(aValue);
+                bValue = new Date(bValue);
+            }
+            
+            if (aValue < bValue) return currentSort.direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+        
+        // Reordenar filas en el DOM
+        rows.forEach(row => {
+            tableBody.appendChild(row);
+            // También mover las subactividades si existen
+            const activityId = row.getAttribute('data-activity-id');
+            const subRows = tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`);
+            subRows.forEach(subRow => {
+                tableBody.appendChild(subRow);
+            });
+        });
+    }
+    
+    function getSortValue(row, column) {
+        const cells = row.querySelectorAll('td');
+        let value = '';
+        
+        switch(column) {
+            case 'caso':
+                value = cells[0]?.textContent?.trim() || '';
+                break;
+            case 'nombre':
+                value = cells[1]?.textContent?.trim() || '';
+                break;
+            case 'descripcion':
+                value = cells[2]?.textContent?.trim() || '';
+                break;
+            case 'status':
+                value = cells[3]?.textContent?.trim() || '';
+                break;
+            case 'analistas':
+                value = cells[4]?.textContent?.trim() || '';
+                break;
+            case 'fecha_recepcion':
+                value = cells[7]?.textContent?.trim() || '';
+                break;
+            default:
+                value = '';
+        }
+        
+        return value.toLowerCase();
+    }
+    
+    // Cache para elementos DOM
+    let tableBodyCache = null;
+    let rowsCache = null;
+    let lastTableHTML = '';
+    
+    function applyFilters() {
+        console.log('Aplicando filtros optimizados...', activeFilters);
+        
+        // Usar cache del tbody si está disponible
+        if (!tableBodyCache) {
+            tableBodyCache = document.querySelector('#tableContainer tbody');
+        }
+        
+        if (!tableBodyCache) {
+            console.error('No se encontró tbody');
+            return;
+        }
+        
+        // Verificar si la tabla cambió (para invalidar cache)
+        const currentTableHTML = tableBodyCache.innerHTML;
+        if (currentTableHTML !== lastTableHTML) {
+            rowsCache = null;
+            lastTableHTML = currentTableHTML;
+        }
+        
+        // Usar cache de filas si está disponible
+        if (!rowsCache) {
+            rowsCache = Array.from(tableBodyCache.querySelectorAll('tr'));
+        }
+        
+        console.log('Filas en cache:', rowsCache.length);
+        let visibleCount = 0;
+        
+        // Usar requestAnimationFrame para no bloquear la UI
+        const processRows = (startIndex = 0) => {
+            const batchSize = 50; // Procesar 50 filas por lote
+            const endIndex = Math.min(startIndex + batchSize, rowsCache.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                const row = rowsCache[i];
+                let shouldShow = true;
+                const cells = row.querySelectorAll('td');
+                
+                // Filtro por estado (optimizado)
+                if (activeFilters.status.length > 0 && cells[3]) {
+                    const statusText = cells[3].textContent.trim().toLowerCase();
+                    const statusMatch = activeFilters.status.some(status => {
+                        switch(status) {
+                            case 'en_espera_de_insumos':
+                                return statusText.includes('espera') || statusText.includes('insumos');
+                            case 'en_ejecucion':
+                                return statusText.includes('ejecución') || statusText.includes('ejecucion');
+                            case 'culminada':
+                                return statusText.includes('culminada');
+                            default:
+                                return statusText.includes(status.toLowerCase());
+                        }
+                    });
+                    if (!statusMatch) shouldShow = false;
+                }
+                
+                // Filtro por analistas (optimizado)
+                if (activeFilters.analistas.length > 0 && cells[4]) {
+                    const analistasText = cells[4].textContent.trim().toLowerCase();
+                    const analistasMatch = activeFilters.analistas.some(analistaId => {
+                        // Cache de nombres de analistas
+                        if (!window.analistasCache) {
+                            window.analistasCache = {};
+                        }
+                        if (!window.analistasCache[analistaId]) {
+                            const analistaElement = document.querySelector(`label[for="analista-${analistaId}"]`);
+                            window.analistasCache[analistaId] = analistaElement?.textContent?.trim().toLowerCase() || '';
+                        }
+                        return analistasText.includes(window.analistasCache[analistaId]);
+                    });
+                    if (!analistasMatch) shouldShow = false;
+                }
+                
+                // Filtro por fechas (optimizado)
+                if ((activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[7]) {
+                    const fechaText = cells[7].textContent.trim();
+                    if (!checkDateFilter(fechaText, activeFilters.fechaDesde, activeFilters.fechaHasta)) {
+                        shouldShow = false;
+                    }
+                }
+                
+                // Aplicar visibilidad
+                row.style.display = shouldShow ? 'table-row' : 'none';
+                if (shouldShow) visibleCount++;
+            }
+            
+            // Continuar con el siguiente lote si hay más filas
+            if (endIndex < rowsCache.length) {
+                requestAnimationFrame(() => processRows(endIndex));
+            } else {
+                // Finalizar procesamiento
+                finishFiltering(visibleCount);
+            }
+        };
+        
+        // Iniciar procesamiento por lotes
+        processRows();
+    }
+    
+    function finishFiltering(visibleCount) {
+        // Actualizar contador y UI
+        const tableTitle = document.getElementById('tableTitle');
+        const clearButton = document.getElementById('clearAllColumnFilters');
+        const hasActiveFilters = activeFilters.status.length > 0 || 
+                                activeFilters.analistas.length > 0 || 
+                                activeFilters.fechaDesde || 
+                                activeFilters.fechaHasta;
+        
+        if (tableTitle) {
+            if (hasActiveFilters && visibleCount < rowsCache.length) {
+                tableTitle.textContent = `Actividades filtradas (${visibleCount} de ${rowsCache.length})`;
+            } else {
+                tableTitle.textContent = 'Lista de Actividades';
+            }
+        }
+        
+        // Mostrar/ocultar botón de limpiar
+        if (clearButton) {
+            clearButton.style.display = hasActiveFilters ? 'inline-block' : 'none';
+        }
+        
+        // Actualizar indicadores visuales de filtros activos
+        updateFilterIndicators();
+        
+        // Manejar caso cuando no hay resultados
+        handleNoResultsDisplay(visibleCount, hasActiveFilters);
+        
+        console.log(`Filtrado completado: ${visibleCount} filas visibles`);
+    }
+    
+    function handleNoResultsDisplay(visibleCount, hasActiveFilters) {
+        const tableContainer = document.getElementById('tableContainer');
+        const tableBody = document.querySelector('#tableContainer tbody');
+        
+        // Remover mensaje anterior si existe
+        const existingMessage = document.getElementById('no-results-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        if (visibleCount === 0 && hasActiveFilters) {
+            // Asegurar altura mínima del contenedor para que los dropdowns sean visibles
+            if (tableContainer) {
+                tableContainer.style.minHeight = '400px';
+                tableContainer.style.position = 'relative';
+            }
+            
+            // Crear mensaje de "no hay resultados"
+            const noResultsMessage = document.createElement('div');
+            noResultsMessage.id = 'no-results-message';
+            noResultsMessage.className = 'text-center py-5';
+            noResultsMessage.style.position = 'absolute';
+            noResultsMessage.style.top = '50%';
+            noResultsMessage.style.left = '50%';
+            noResultsMessage.style.transform = 'translate(-50%, -50%)';
+            noResultsMessage.style.zIndex = '1';
+            noResultsMessage.innerHTML = `
+                <div class="alert alert-info border-0 shadow-sm" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb);">
+                    <i class="fas fa-search fa-2x text-info mb-3"></i>
+                    <h5 class="text-info mb-2">No se encontraron actividades</h5>
+                    <p class="text-muted mb-3">No hay actividades que coincidan con los filtros seleccionados.</p>
+                    <button class="btn btn-outline-info btn-sm" onclick="clearAllFilters()">
+                        <i class="fas fa-eraser"></i> Limpiar filtros
+                    </button>
+                </div>
+            `;
+            
+            if (tableContainer) {
+                tableContainer.appendChild(noResultsMessage);
+            }
+        } else {
+            // Restaurar altura normal del contenedor
+            if (tableContainer) {
+                tableContainer.style.minHeight = '';
+                tableContainer.style.position = '';
+            }
+        }
+    }
+    
+    // Función para limpiar caches y mejorar rendimiento
+    function clearFilterCaches() {
+        tableBodyCache = null;
+        rowsCache = null;
+        lastTableHTML = '';
+        if (window.analistasCache) {
+            window.analistasCache = {};
+        }
+        console.log('Caches de filtros limpiados');
+    }
+    
+    function checkDateFilter(fechaText, fechaDesde, fechaHasta) {
+        if (!fechaDesde && !fechaHasta) return true;
+        
+        // Extraer fecha del texto (formato esperado: DD/MM/YYYY)
+        const dateMatch = fechaText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (!dateMatch) {
+            console.log('No se pudo extraer fecha del texto:', fechaText);
+            return false;
+        }
+        
+        const [, day, month, year] = dateMatch;
+        // Crear fecha en UTC para evitar problemas de zona horaria
+        const rowDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+        
+        if (fechaDesde) {
+            // Crear fecha desde en UTC
+            const fromDateParts = fechaDesde.split('-');
+            const fromDate = new Date(Date.UTC(parseInt(fromDateParts[0]), parseInt(fromDateParts[1]) - 1, parseInt(fromDateParts[2])));
+            
+            if (rowDate < fromDate) {
+                return false;
+            }
+        }
+        
+        if (fechaHasta) {
+            // Crear fecha hasta en UTC
+            const toDateParts = fechaHasta.split('-');
+            const toDate = new Date(Date.UTC(parseInt(toDateParts[0]), parseInt(toDateParts[1]) - 1, parseInt(toDateParts[2])));
+            
+            if (rowDate > toDate) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    function getStatusLabel(status) {
+        const statusLabels = {
+            'culminada': 'Culminada',
+            'en_ejecucion': 'En Ejecución',
+            'en_espera_de_insumos': 'En Espera de Insumos',
+            'cancelada': 'Cancelada'
+        };
+        return statusLabels[status] || status;
+    }
+    
+    function updateFilterIndicators() {
+        // Indicador para filtro de estado
+        const statusButton = document.querySelector('[data-filter="status"]');
+        if (statusButton) {
+            if (activeFilters.status.length > 0) {
+                statusButton.classList.add('active');
+            } else {
+                statusButton.classList.remove('active');
+            }
+        }
+        
+        // Indicador para filtro de analistas
+        const analistasButton = document.querySelector('[data-filter="analistas"]');
+        if (analistasButton) {
+            if (activeFilters.analistas.length > 0) {
+                analistasButton.classList.add('active');
+            } else {
+                analistasButton.classList.remove('active');
+            }
+        }
+        
+        // Indicador para filtro de fecha
+        const fechaButton = document.querySelector('[data-filter="fecha"]');
+        if (fechaButton) {
+            if (activeFilters.fechaDesde || activeFilters.fechaHasta) {
+                fechaButton.classList.add('active');
+            } else {
+                fechaButton.classList.remove('active');
+            }
+        }
+    }
+    
+    function updateSortIcons(activeColumn, direction) {
+        // Limpiar todos los iconos
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+        });
+        
+        // Activar el icono correspondiente
+        const activeHeader = document.querySelector(`[data-sort="${activeColumn}"]`);
+        if (activeHeader) {
+            activeHeader.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
+    }
+    
+    // Configurar ordenamiento y filtros inicial
+    console.log('Iniciando configuración...');
+    setupSortHandlers();
+    
+    // Configurar filtros
+    setupColumnFilters();
+    
+    // Observer para detectar cambios en la tabla y limpiar cache
+    const tableContainer = document.getElementById('tableContainer');
+    if (tableContainer) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    // Se agregaron nuevas filas (probablemente subactividades)
+                    clearFilterCaches();
+                }
+            });
+        });
+        
+        observer.observe(tableContainer, {
+            childList: true,
+            subtree: true
+        });
+    }
+    
+    console.log('Configuración completada');
+    
+    // Agregar estilos CSS para mejorar la apariencia de los dropdowns
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Asegurar que los dropdowns de filtros sean visibles incluso cuando no hay resultados */
+        .custom-dropdown-menu {
+            min-width: 250px !important;
+            max-height: 400px !important;
+            overflow-y: auto !important;
+            z-index: 9999 !important;
+        }
+        
+        /* Mejorar la apariencia del mensaje de no resultados */
+        #no-results-message {
+            pointer-events: none;
+        }
+        
+        #no-results-message .alert {
+            pointer-events: all;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        /* Asegurar que el contenedor de la tabla mantenga su estructura */
+        #tableContainer {
+            position: relative;
+        }
+        
+        /* Mejorar la visibilidad de los filtros de fecha */
+        .custom-dropdown-menu input[type="date"] {
+            width: 100%;
+            padding: 0.375rem 0.75rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .custom-dropdown-menu input[type="date"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: 0;
+        }
+    `;
+    document.head.appendChild(style);
 });
 </script>
 @endsection

@@ -7,6 +7,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('activities/search', [ActivityController::class, 'search'])->name('activities.search');
 Route::resource('activities', ActivityController::class);
 Route::get('activities/{activity}/comments', [ActivityController::class, 'showComments'])->name('activities.comments');
 Route::post('activities/{activity}/comments', [ActivityController::class, 'storeComment'])->name('activities.comments.store');

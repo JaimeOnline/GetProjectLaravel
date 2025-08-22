@@ -12,13 +12,130 @@ use Illuminate\Http\Request;
 
 class ActivityController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Obtener solo las actividades padre (sin parent_id) con sus analistas, correos y subactividades anidadas
         $activities = Activity::whereNull('parent_id')
             ->with(['analistas', 'comments', 'emails', 'subactivities.analistas', 'subactivities.comments', 'subactivities.emails', 'subactivities.subactivities.analistas', 'subactivities.subactivities.comments', 'subactivities.subactivities.emails'])
             ->get();
-        return view('activities.index', compact('activities'));
+
+        // Obtener datos para los filtros
+        $analistas = Analista::all();
+        $statuses = [
+            'en_ejecucion' => 'En Ejecución',
+            'culminada' => 'Culminada',
+            'en_espera_de_insumos' => 'En Espera de Insumos'
+        ];
+
+        return view('activities.index', compact('activities', 'analistas', 'statuses'));
+    }
+
+    /**
+     * Búsqueda AJAX en tiempo real
+     */
+    public function search(Request $request)
+    {
+        $query = $request->get('query', '');
+        
+        // Log para debug
+        \Log::info('Search request', [
+            'query' => $query,
+            'all_params' => $request->all()
+        ]);
+        
+        // Construir la consulta base
+        $activitiesQuery = Activity::with([
+            'analistas', 
+            'comments', 
+            'emails', 
+            'subactivities.analistas', 
+            'subactivities.comments', 
+            'subactivities.emails',
+            'subactivities.subactivities.analistas',
+            'subactivities.subactivities.comments',
+            'subactivities.subactivities.emails'
+        ]);
+
+        // Aplicar búsqueda por texto si existe
+        if (!empty($query)) {
+            $activitiesQuery->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('description', 'LIKE', "%{$query}%")
+                  ->orWhere('caso', 'LIKE', "%{$query}%")
+                  ->orWhere('status', 'LIKE', "%{$query}%")
+                  ->orWhere('fecha_recepcion', 'LIKE', "%{$query}%")
+                  ->orWhereHas('analistas', function($subQ) use ($query) {
+                      $subQ->where('name', 'LIKE', "%{$query}%");
+                  })
+                  ->orWhereHas('comments', function($subQ) use ($query) {
+                      $subQ->where('comment', 'LIKE', "%{$query}%");
+                  })
+                  ->orWhereHas('emails', function($subQ) use ($query) {
+                      $subQ->where('subject', 'LIKE', "%{$query}%")
+                           ->orWhere('content', 'LIKE', "%{$query}%");
+                  });
+            });
+        }
+
+        // Aplicar filtros directamente desde los parámetros de consulta
+        if ($request->has('status') && !empty($request->get('status'))) {
+            $activitiesQuery->where('status', $request->get('status'));
+        }
+
+        if ($request->has('analista_id') && !empty($request->get('analista_id'))) {
+            $activitiesQuery->whereHas('analistas', function($q) use ($request) {
+                $q->where('analistas.id', $request->get('analista_id'));
+            });
+        }
+
+        if ($request->has('fecha_desde') && !empty($request->get('fecha_desde'))) {
+            $activitiesQuery->where('fecha_recepcion', '>=', $request->get('fecha_desde'));
+        }
+
+        if ($request->has('fecha_hasta') && !empty($request->get('fecha_hasta'))) {
+            $activitiesQuery->where('fecha_recepcion', '<=', $request->get('fecha_hasta'));
+        }
+
+        if ($request->has('caso') && !empty($request->get('caso'))) {
+            $activitiesQuery->where('caso', 'LIKE', "%{$request->get('caso')}%");
+        }
+
+        // Obtener resultados
+        $activities = $activitiesQuery->get();
+
+        // También buscar en subactividades si hay query de texto
+        $subactivities = collect();
+        if (!empty($query)) {
+            $subactivitiesQuery = Activity::whereNotNull('parent_id')
+                ->with(['analistas', 'comments', 'emails', 'parent'])
+                ->where(function($q) use ($query) {
+                    $q->where('name', 'LIKE', "%{$query}%")
+                      ->orWhere('description', 'LIKE', "%{$query}%")
+                      ->orWhere('caso', 'LIKE', "%{$query}%")
+                      ->orWhere('status', 'LIKE', "%{$query}%")
+                      ->orWhere('fecha_recepcion', 'LIKE', "%{$query}%")
+                      ->orWhereHas('analistas', function($subQ) use ($query) {
+                          $subQ->where('name', 'LIKE', "%{$query}%");
+                      })
+                      ->orWhereHas('comments', function($subQ) use ($query) {
+                          $subQ->where('comment', 'LIKE', "%{$query}%");
+                      })
+                      ->orWhereHas('emails', function($subQ) use ($query) {
+                          $subQ->where('subject', 'LIKE', "%{$query}%")
+                               ->orWhere('content', 'LIKE', "%{$query}%");
+                      });
+                });
+
+            $subactivities = $subactivitiesQuery->get();
+        }
+
+        return response()->json([
+            'activities' => $activities,
+            'subactivities' => $subactivities,
+            'total_results' => $activities->count() + $subactivities->count()
+        ])->header('Access-Control-Allow-Origin', '*')
+          ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+          ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN');
     }
     public function create(Request $request)
     {
