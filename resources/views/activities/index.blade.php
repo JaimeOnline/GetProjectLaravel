@@ -509,36 +509,33 @@
                                 </td>
                                 <td class="align-middle text-center">
                                     <div class="action-buttons">
-                                        <div class="btn-group-vertical btn-group-sm" role="group">
+                                        <div class="btn-group btn-group-sm" role="group">
                                             <a href="{{ route('activities.edit', $activity) }}" 
-                                               class="btn btn-warning btn-sm" 
-                                               title="Editar actividad">
-                                                <i class="fas fa-edit"></i> Editar
-                                            </a>
-                                            <a href="{{ route('activities.emails', $activity) }}" 
-                                               class="btn btn-info btn-sm"
-                                               title="Ver correos">
-                                                <i class="fas fa-envelope"></i> Correos
+                                               class="btn btn-warning btn-xs action-btn" 
+                                               data-tooltip="Ver/Editar"
+                                               title="Ver/Editar">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}" 
-                                               class="btn btn-secondary btn-sm"
-                                               title="Crear subactividad">
-                                                <i class="fas fa-plus"></i> Subactividad
+                                               class="btn btn-secondary btn-xs action-btn"
+                                               data-tooltip="Crear Subactividad"
+                                               title="Crear Subactividad">
+                                                <i class="fas fa-plus"></i>
                                             </a>
+                                            <form action="{{ route('activities.destroy', $activity) }}" 
+                                                  method="POST" 
+                                                  style="display:inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" 
+                                                        class="btn btn-danger btn-xs action-btn" 
+                                                        data-tooltip="Eliminar"
+                                                        title="Eliminar"
+                                                        onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
-                                        <form action="{{ route('activities.destroy', $activity) }}" 
-                                              method="POST" 
-                                              style="display:inline;" 
-                                              class="mt-2">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" 
-                                                    class="btn btn-danger btn-sm" 
-                                                    title="Eliminar actividad"
-                                                    onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
-                                                <i class="fas fa-trash"></i> Eliminar
-                                            </button>
-                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -1717,6 +1714,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                     subRow.style.display = 'table-row';
                                     icon.className = 'fas fa-chevron-down text-primary';
                                     toggleIcon.classList.add('expanded');
+                                    
+                                    // Inicializar tooltips para las subactividades mostradas
+                                    setTimeout(function() {
+                                        initializeSimpleTooltips();
+                                    }, 200);
                                 }
                             }, index * 50);
                         });
@@ -1748,6 +1750,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                     subRow.style.display = 'table-row';
                                     icon.className = 'fas fa-chevron-down text-primary';
                                     toggle.classList.add('expanded');
+                                    
+                                    // Inicializar tooltips para las subactividades anidadas mostradas
+                                    setTimeout(function() {
+                                        initializeSimpleTooltips();
+                                    }, 200);
                                 }
                             }, index * 50);
                         });
@@ -1800,9 +1807,12 @@ document.addEventListener('DOMContentLoaded', function() {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'childList') {
                 setupToggleHandlers();
-                if (typeof $ !== 'undefined' && $.fn.tooltip) {
-                    $('[data-toggle="tooltip"]').tooltip();
-                }
+                // Reinicializar tooltips después de cambios en el DOM
+                setTimeout(function() {
+                    if (typeof initializeSimpleTooltips === 'function') {
+                        initializeSimpleTooltips();
+                    }
+                }, 300);
             }
         });
     });
@@ -2836,50 +2846,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Configuración completada');
     
-    // Agregar estilos CSS para mejorar la apariencia de los dropdowns
-    const style = document.createElement('style');
-    style.textContent = `
-        /* Asegurar que los dropdowns de filtros sean visibles incluso cuando no hay resultados */
-        .custom-dropdown-menu {
-            min-width: 250px !important;
-            max-height: 400px !important;
-            overflow-y: auto !important;
-            z-index: 9999 !important;
-        }
+    // Implementar tooltips simples usando title nativo
+    function initializeSimpleTooltips() {
+        console.log('Inicializando tooltips simples...');
         
-        /* Mejorar la apariencia del mensaje de no resultados */
-        #no-results-message {
-            pointer-events: none;
-        }
+        // Encontrar todos los botones de acción
+        const actionButtons = document.querySelectorAll('.action-btn');
+        console.log('Botones de acción encontrados:', actionButtons.length);
         
-        #no-results-message .alert {
-            pointer-events: all;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        
-        /* Asegurar que el contenedor de la tabla mantenga su estructura */
-        #tableContainer {
-            position: relative;
-        }
-        
-        /* Mejorar la visibilidad de los filtros de fecha */
-        .custom-dropdown-menu input[type="date"] {
-            width: 100%;
-            padding: 0.375rem 0.75rem;
-            margin-bottom: 0.5rem;
-            border: 1px solid #ced4da;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-        }
-        
-        .custom-dropdown-menu input[type="date"]:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            outline: 0;
-        }
-    `;
-    document.head.appendChild(style);
+        actionButtons.forEach(function(button) {
+            const tooltipText = button.getAttribute('data-tooltip');
+            if (tooltipText && !button.hasAttribute('title')) {
+                button.setAttribute('title', tooltipText);
+                console.log('Tooltip configurado:', tooltipText);
+            }
+        });
+    }
+    
+    // Inicializar tooltips simples
+    initializeSimpleTooltips();
 });
 </script>
+
 @endsection
