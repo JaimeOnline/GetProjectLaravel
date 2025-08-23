@@ -71,6 +71,10 @@
                             </div>
                         </div>
                         <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
+                        <small class="text-muted mt-1 d-block">
+                            <i class="fas fa-keyboard"></i> 
+                            Atajos: <kbd>Ctrl+K</kbd> o <kbd>Ctrl+F</kbd> para buscar, <kbd>Esc</kbd> para limpiar
+                        </small>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -1066,6 +1070,27 @@
     border-radius: 50%;
     border: 2px solid white;
 }
+
+/* Estilos para los atajos de teclado */
+kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #555;
+    background-color: #fcfcfc;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), inset 0 0 0 2px #fff;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-weight: bold;
+    margin: 0 2px;
+}
+
+kbd:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
 </style>
 
 <script>
@@ -1129,6 +1154,39 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape' && isSearchActive) {
             clearSearch();
             searchInput.blur(); // Quitar foco del campo de búsqueda
+        }
+    });
+
+    // Atajo de teclado para enfocar el campo de búsqueda (Ctrl+K)
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+K para enfocar el campo de búsqueda
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault(); // Prevenir comportamiento por defecto del navegador
+            searchInput.focus();
+            searchInput.select(); // Seleccionar todo el texto si hay alguno
+            
+            // Mostrar una pequeña animación visual para indicar que se activó el atajo
+            searchInput.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.25)';
+            setTimeout(function() {
+                searchInput.style.boxShadow = '';
+            }, 300);
+        }
+        
+        // También agregar Ctrl+F como alternativa (más familiar para algunos usuarios)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            // Solo interceptar si no hay texto seleccionado (para no interferir con la búsqueda nativa del navegador)
+            const selection = window.getSelection();
+            if (!selection.toString()) {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+                
+                // Animación visual
+                searchInput.style.boxShadow = '0 0 0 3px rgba(0, 123, 255, 0.25)';
+                setTimeout(function() {
+                    searchInput.style.boxShadow = '';
+                }, 300);
+            }
         }
     });
 
