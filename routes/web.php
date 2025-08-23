@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\RequirementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,4 +26,11 @@ Route::get('activities/{activity}/emails', [ActivityController::class, 'showEmai
 Route::post('activities/{activity}/emails', [ActivityController::class, 'storeEmail'])->name('activities.emails.store');
 Route::delete('emails/{email}', [ActivityController::class, 'destroyEmail'])->name('emails.destroy');
 Route::get('emails/{email}/attachment/{fileIndex}', [ActivityController::class, 'downloadAttachment'])->name('emails.download');
+
+// Rutas para gestión completa de requerimientos
+Route::get('requirements-report', [RequirementController::class, 'report'])->name('requirements.report');
+Route::get('requirements-report/export', [RequirementController::class, 'exportReport'])->name('requirements.report.export');
+Route::resource('requirements', RequirementController::class);
+Route::patch('requirements/{requirement}/mark-received', [RequirementController::class, 'markAsReceived'])->name('requirements.mark-received');
+Route::patch('requirements/{requirement}/mark-pending', [RequirementController::class, 'markAsPending'])->name('requirements.mark-pending');
 

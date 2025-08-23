@@ -320,12 +320,15 @@
                                     </div>
                                 </div>
                             </th>
-                            <th class="border-0">
+                            {{-- <th class="border-0">
                                 <i class="fas fa-comments text-primary"></i> Comentarios
-                            </th>
+                            </th> --}}
                             <th class="border-0">
-                                <i class="fas fa-envelope text-primary"></i> Correos
+                                <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
                             </th>
+                            {{-- <th class="border-0">
+                                <i class="fas fa-envelope text-primary"></i> Correos
+                            </th> --}}
                             <th class="border-0" style="position: relative;">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
@@ -431,7 +434,7 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="align-middle">
+                                {{-- <td class="align-middle">
                                     @if ($activity->comments->count() > 0)
                                         <div class="comments-info">
                                             <a href="{{ route('activities.comments', $activity) }}" class="text-decoration-none">
@@ -451,8 +454,39 @@
                                             <i class="fas fa-comment-slash"></i> Sin comentarios
                                         </span>
                                     @endif
-                                </td>
+                                </td> --}}
                                 <td class="align-middle">
+                                    @if ($activity->requirements->count() > 0)
+                                        <div class="requirements-info">
+                                            <a href="{{ route('requirements.index', ['activity_id' => $activity->id]) }}" class="text-decoration-none">
+                                                <span class="badge badge-warning badge-pill">
+                                                    <i class="fas fa-clipboard-list"></i> {{ $activity->requirements->count() }}
+                                                </span>
+                                            </a>
+                                            <div class="mt-1">
+                                                @php
+                                                    $pendientes = $activity->requirements->where('status', 'pendiente')->count();
+                                                    $recibidos = $activity->requirements->where('status', 'recibido')->count();
+                                                @endphp
+                                                <small class="text-muted d-block">
+                                                    <span class="badge badge-sm badge-warning">{{ $pendientes }} pendientes</span>
+                                                    <span class="badge badge-sm badge-success">{{ $recibidos }} recibidos</span>
+                                                </small>
+                                                @if($activity->requirements->count() > 0)
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-clock"></i> 
+                                                        {{ $activity->requirements->sortByDesc('created_at')->first()->created_at->format('d/m/Y H:i') }}
+                                                    </small>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">
+                                            <i class="fas fa-clipboard"></i> Sin requerimientos
+                                        </span>
+                                    @endif
+                                </td>
+                                {{-- <td class="align-middle">
                                     @if ($activity->emails->count() > 0)
                                         <div class="emails-info">
                                             <a href="{{ route('activities.emails', $activity) }}" class="text-decoration-none">
@@ -487,7 +521,7 @@
                                             <i class="fas fa-envelope-open"></i> Sin correos
                                         </span>
                                     @endif
-                                </td>
+                                </td> --}}
                                 <td class="align-middle">
                                     @if($activity->fecha_recepcion)
                                         <div class="date-info">
@@ -1272,12 +1306,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                         </th>
-                        <th class="border-0">
+                        {{-- <th class="border-0">
                             <i class="fas fa-comments text-primary"></i> Comentarios
-                        </th>
+                        </th> --}}
                         <th class="border-0">
-                            <i class="fas fa-envelope text-primary"></i> Correos
+                            <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
                         </th>
+                        {{-- <th class="border-0">
+                            <i class="fas fa-envelope text-primary"></i> Correos
+                        </th> --}}
                         <th class="border-0" style="position: relative;">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
@@ -1373,12 +1410,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="align-middle">
                     ${generateAnalistasHTML(activity.analistas)}
                 </td>
-                <td class="align-middle">
+                {{-- <td class="align-middle">
                     ${generateCommentsHTML(activity)}
-                </td>
+                </td> --}}
                 <td class="align-middle">
-                    ${generateEmailsHTML(activity)}
+                    ${generateRequirementsHTML(activity)}
                 </td>
+                {{-- <td class="align-middle">
+                    ${generateEmailsHTML(activity)}
+                </td> --}}
                 <td class="align-middle">
                     ${generateDateHTML(activity.fecha_recepcion)}
                 </td>
@@ -1417,12 +1457,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="align-middle">
                     ${generateAnalistasHTML(subactivity.analistas)}
                 </td>
-                <td class="align-middle">
+                {{-- <td class="align-middle">
                     ${generateCommentsHTML(subactivity)}
-                </td>
+                </td> --}}
                 <td class="align-middle">
-                    ${generateEmailsHTML(subactivity)}
+                    ${generateRequirementsHTML(subactivity)}
                 </td>
+                {{-- <td class="align-middle">
+                    ${generateEmailsHTML(subactivity)}
+                </td> --}}
                 <td class="align-middle">
                     ${generateDateHTML(subactivity.fecha_recepcion)}
                 </td>
@@ -1486,6 +1529,31 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="fas fa-comments"></i> ${activity.comments.length}
                     </span>
                 </a>
+            </div>
+        `;
+    }
+
+    function generateRequirementsHTML(activity) {
+        if (!activity.requirements || activity.requirements.length === 0) {
+            return '<span class="text-muted"><i class="fas fa-clipboard"></i> Sin requerimientos</span>';
+        }
+        
+        const pendientes = activity.requirements.filter(req => req.status === 'pendiente').length;
+        const recibidos = activity.requirements.filter(req => req.status === 'recibido').length;
+        
+        return `
+            <div class="requirements-info">
+                <a href="/requirements?activity_id=${activity.id}" class="text-decoration-none">
+                    <span class="badge badge-warning badge-pill">
+                        <i class="fas fa-clipboard-list"></i> ${activity.requirements.length}
+                    </span>
+                </a>
+                <div class="mt-1">
+                    <small class="text-muted d-block">
+                        <span class="badge badge-sm badge-warning">${pendientes} pendientes</span>
+                        <span class="badge badge-sm badge-success">${recibidos} recibidos</span>
+                    </small>
+                </div>
             </div>
         `;
     }

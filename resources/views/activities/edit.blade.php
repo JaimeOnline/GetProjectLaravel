@@ -225,84 +225,193 @@
         <!-- Pestaña: Requerimientos -->
         <div class="tab-pane fade" id="requirements" role="tabpanel">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-list-check"></i> Gestión de Requerimientos</h5>
+                    <div>
+                        <a href="{{ route('requirements.create', ['activity_id' => $activity->id]) }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> Nuevo Requerimiento
+                        </a>
+                        <a href="{{ route('requirements.index', ['activity_id' => $activity->id]) }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-external-link-alt"></i> Ver Todos
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
+                    {{-- Estadísticas rápidas --}}
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ $activity->requirements->count() }}</h4>
+                                    <small>Total Requerimientos</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ $activity->requirements->where('status', 'pendiente')->count() }}</h4>
+                                    <small>Pendientes</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ $activity->requirements->where('status', 'recibido')->count() }}</h4>
+                                    <small>Recibidos</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Mostrar requerimientos existentes --}}
                     @if ($activity->requirements->count() > 0)
                         <div class="form-group">
-                            <label>Requerimientos Existentes</label>
-                            <div class="card">
-                                <div class="card-body">
-                                    @foreach ($activity->requirements as $requirement)
-                                        <div class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-start">
-                                            <div class="flex-grow-1">
-                                                <p class="mb-1">{{ $requirement->description }}</p>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-clock"></i> 
-                                                    {{ $requirement->created_at->format('d/m/Y H:i:s') }}
-                                                    <span class="ml-2">
-                                                        ({{ $requirement->created_at->diffForHumans() }})
-                                                    </span>
-                                                </small>
-                                            </div>
-                                            <div class="ml-2">
-                                                <form action="{{ route('requirements.destroy', $requirement) }}" method="POST" 
-                                                      style="display: inline;" 
-                                                      onsubmit="return confirm('¿Estás seguro de eliminar este requerimiento?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar requerimiento">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
+                            <label class="font-weight-bold">Requerimientos de esta Actividad</label>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Descripción</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Creación</th>
+                                            <th>Fecha Recepción</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($activity->requirements as $requirement)
+                                            <tr>
+                                                <td>
+                                                    <div>
+                                                        {{ Str::limit($requirement->description, 80) }}
+                                                        @if($requirement->notas)
+                                                            <br><small class="text-muted">
+                                                                <i class="fas fa-sticky-note"></i> 
+                                                                {{ Str::limit($requirement->notas, 50) }}
+                                                            </small>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @if($requirement->status === 'pendiente')
+                                                        <span class="badge badge-warning">
+                                                            <i class="fas fa-clock"></i> Pendiente
+                                                        </span>
+                                                    @else
+                                                        <span class="badge badge-success">
+                                                            <i class="fas fa-check-circle"></i> Recibido
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <small>{{ $requirement->created_at->format('d/m/Y H:i') }}</small>
+                                                </td>
+                                                <td>
+                                                    @if($requirement->fecha_recepcion)
+                                                        <small class="text-success">{{ $requirement->fecha_recepcion->format('d/m/Y H:i') }}</small>
+                                                    @else
+                                                        <span class="text-muted">-</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="{{ route('requirements.show', $requirement) }}" 
+                                                           class="btn btn-info btn-xs" title="Ver detalles">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="{{ route('requirements.edit', $requirement) }}" 
+                                                           class="btn btn-warning btn-xs" title="Editar">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        
+                                                        @if($requirement->status === 'pendiente')
+                                                            <form action="{{ route('requirements.mark-received', $requirement) }}" 
+                                                                  method="POST" style="display:inline;">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <input type="hidden" name="from_activity" value="1">
+                                                                <button type="submit" class="btn btn-success btn-xs" 
+                                                                        title="Marcar como recibido">
+                                                                    <i class="fas fa-check"></i>
+                                                                </button>
+                                                            </form>
+                                                        @else
+                                                            <form action="{{ route('requirements.mark-pending', $requirement) }}" 
+                                                                  method="POST" style="display:inline;">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <input type="hidden" name="from_activity" value="1">
+                                                                <button type="submit" class="btn btn-secondary btn-xs" 
+                                                                        title="Marcar como pendiente">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                        
+                                                        <form action="{{ route('requirements.destroy', $requirement) }}" 
+                                                              method="POST" style="display:inline;"
+                                                              onsubmit="return confirm('¿Estás seguro de eliminar este requerimiento?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-danger btn-xs" 
+                                                                    title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
+                        </div>
+                    @else
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay requerimientos</h5>
+                            <p class="text-muted">Esta actividad aún no tiene requerimientos asociados.</p>
+                            <a href="{{ route('requirements.create', ['activity_id' => $activity->id]) }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Crear Primer Requerimiento
+                            </a>
                         </div>
                     @endif
 
-                    <form action="{{ route('activities.requirements.store', $activity) }}" method="POST">
-                        @csrf
-                        <div class="form-group">
-                            <label for="requirements">Agregar Nuevos Requerimientos</label>
-                            <div id="requirements-container">
-                                <div class="requirement-item mb-2">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" name="requirements[]" placeholder="Agrega nuevos requerimientos (deja vacío si no hay)">
-                                        <div class="input-group-append">
-                                            <button type="button" class="btn btn-danger remove-requirement" title="Eliminar requerimiento">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
+                    {{-- Formulario rápido para agregar requerimiento --}}
+                    <div class="mt-4 pt-4 border-top">
+                        <h6 class="mb-3">
+                            <i class="fas fa-plus-circle text-success"></i> Agregar Requerimiento Rápido
+                        </h6>
+                        <form action="{{ route('requirements.store') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="activity_id" value="{{ $activity->id }}">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <textarea class="form-control" name="description" rows="2" 
+                                                  placeholder="Describe el requerimiento..." required></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <select class="form-control" name="status" required>
+                                            <option value="pendiente">Pendiente</option>
+                                            <option value="recibido">Recibido</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-requirement">
-                                <i class="fas fa-plus"></i> Agregar Requerimiento
+                            <div class="form-group">
+                                <textarea class="form-control" name="notas" rows="1" 
+                                          placeholder="Notas adicionales (opcional)"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Agregar Requerimiento
                             </button>
-                            
-                            <!-- Botón de Actualizar para Requerimientos -->
-                            <div class="mt-4 pt-3 border-top">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <button type="submit" class="btn btn-primary btn-lg">
-                                            <i class="fas fa-save"></i> Actualizar Requerimientos
-                                        </button>
-                                    </div>
-                                    <div>
-                                        <small class="text-muted">
-                                            <i class="fas fa-info-circle"></i>
-                                            Los cambios se guardarán al hacer clic en "Actualizar"
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -583,6 +692,26 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Edit form JavaScript loaded');
+    
+    // Activar pestaña específica si viene desde una redirección
+    @if(session('active_tab'))
+        const targetTab = '{{ session('active_tab') }}';
+        const tabLink = document.querySelector(`#activityTabs a[href="#${targetTab}"]`);
+        if (tabLink) {
+            // Remover clases activas de todas las pestañas
+            document.querySelectorAll('#activityTabs .nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('show', 'active');
+            });
+            
+            // Activar la pestaña objetivo
+            tabLink.classList.add('active');
+            const targetPane = document.querySelector(`#${targetTab}`);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+            }
+        }
+    @endif
     
     // ===== FUNCIONALIDAD DE PESTAÑAS =====
     

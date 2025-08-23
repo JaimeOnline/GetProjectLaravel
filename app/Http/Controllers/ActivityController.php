@@ -14,9 +14,9 @@ class ActivityController extends Controller
 {
     public function index(Request $request)
     {
-        // Obtener solo las actividades padre (sin parent_id) con sus analistas, correos y subactividades anidadas
+        // Obtener solo las actividades padre (sin parent_id) con sus analistas, correos, requerimientos y subactividades anidadas
         $activities = Activity::whereNull('parent_id')
-            ->with(['analistas', 'comments', 'emails', 'subactivities.analistas', 'subactivities.comments', 'subactivities.emails', 'subactivities.subactivities.analistas', 'subactivities.subactivities.comments', 'subactivities.subactivities.emails'])
+            ->with(['analistas', 'comments', 'emails', 'requirements', 'subactivities.analistas', 'subactivities.comments', 'subactivities.emails', 'subactivities.requirements', 'subactivities.subactivities.analistas', 'subactivities.subactivities.comments', 'subactivities.subactivities.emails', 'subactivities.subactivities.requirements'])
             ->get();
 
         // Obtener datos para los filtros
@@ -48,12 +48,15 @@ class ActivityController extends Controller
             'analistas', 
             'comments', 
             'emails', 
+            'requirements',
             'subactivities.analistas', 
             'subactivities.comments', 
             'subactivities.emails',
+            'subactivities.requirements',
             'subactivities.subactivities.analistas',
             'subactivities.subactivities.comments',
-            'subactivities.subactivities.emails'
+            'subactivities.subactivities.emails',
+            'subactivities.subactivities.requirements'
         ]);
 
         // Aplicar búsqueda por texto si existe
