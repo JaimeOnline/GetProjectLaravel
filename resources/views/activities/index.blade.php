@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-<div class="container">
+<div class="container-fluid px-4">
     <!-- Header Section -->
     <div class="page-header">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -98,12 +98,14 @@
                             <label for="filterStatus" class="font-weight-bold">
                                 <i class="fas fa-flag text-primary"></i> Estado
                             </label>
-                            <select class="form-control" id="filterStatus">
-                                <option value="">Todos los estados</option>
-                                @foreach($statuses as $key => $label)
-                                    <option value="{{ $key }}">{{ $label }}</option>
+                            <select class="form-control" id="filterStatus" multiple>
+                                @foreach($statuses as $status)
+                                    <option value="{{ $status->name }}" data-color="{{ $status->color }}">
+                                        {{ $status->label }}
+                                    </option>
                                 @endforeach
                             </select>
+                            <small class="text-muted">Mantén Ctrl para seleccionar múltiples estados</small>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -167,7 +169,8 @@
 
     <!-- Statistics Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <!-- Primera fila: 4 columnas principales -->
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
             <div class="stats-card bg-primary">
                 <div class="stats-icon">
                     <i class="fas fa-tasks"></i>
@@ -178,36 +181,121 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card bg-success">
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+            <div class="stats-card bg-secondary">
                 <div class="stats-icon">
-                    <i class="fas fa-check-circle"></i>
+                    <i class="fas fa-clock"></i>
                 </div>
                 <div class="stats-content">
-                    <h3>{{ $activities->where('status', 'culminada')->count() }}</h3>
-                    <p>Culminadas</p>
+                    <h3>{{ $activities->filter(function($activity) { return $activity->hasStatus('no_iniciada'); })->count() }}</h3>
+                    <p>No Iniciadas</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
             <div class="stats-card bg-info">
                 <div class="stats-icon">
                     <i class="fas fa-play-circle"></i>
                 </div>
                 <div class="stats-content">
-                    <h3>{{ $activities->where('status', 'en_ejecucion')->count() }}</h3>
+                    <h3>{{ $activities->filter(function($activity) { return $activity->hasStatus('en_ejecucion'); })->count() }}</h3>
                     <p>En Ejecución</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+            <div class="stats-card bg-success">
+                <div class="stats-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ $activities->filter(function($activity) { return $activity->hasStatus('culminada'); })->count() }}</h3>
+                    <p>Culminadas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Segunda fila: Estados intermedios y especiales -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
             <div class="stats-card bg-warning">
                 <div class="stats-icon">
                     <i class="fas fa-pause-circle"></i>
                 </div>
                 <div class="stats-content">
-                    <h3>{{ $activities->where('status', 'en_espera_de_insumos')->count() }}</h3>
+                    <h3>{{ $activities->filter(function($activity) { return $activity->hasStatus('en_espera_de_insumos'); })->count() }}</h3>
                     <p>En Espera</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+            <div class="stats-card" style="background-color: #fd7e14;">
+                <div class="stats-icon">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ $activities->filter(function($activity) { return $activity->hasStatus('en_certificacion_por_cliente'); })->count() }}</h3>
+                    <p>En Certificación</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+            <div class="stats-card" style="background-color: #20c997;">
+                <div class="stats-icon">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ $activities->filter(function($activity) { return $activity->hasStatus('pases_enviados'); })->count() }}</h3>
+                    <p>Pases Enviados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+            <div class="stats-card bg-dark">
+                <div class="stats-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ number_format(($activities->filter(function($activity) { return $activity->hasStatus('culminada'); })->count() / max($activities->count(), 1)) * 100, 1) }}%</h3>
+                    <p>% Completado</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tercera fila: Estados finales -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
+            <div class="stats-card" style="background-color: #6c757d;">
+                <div class="stats-icon">
+                    <i class="fas fa-pause"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ $activities->filter(function($activity) { return $activity->hasStatus('pausada'); })->count() }}</h3>
+                    <p>Pausadas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
+            <div class="stats-card bg-danger">
+                <div class="stats-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ $activities->filter(function($activity) { return $activity->hasStatus('cancelada'); })->count() }}</h3>
+                    <p>Canceladas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="stats-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ $activities->where('created_at', '>=', now()->startOfMonth())->count() }}</h3>
+                    <p>Este Mes</p>
                 </div>
             </div>
         </div>
@@ -405,23 +493,44 @@
                                     </div>
                                 </td>
                                 <td class="align-middle">
-                                    @php
-                                        $statusClass = match($activity->status) {
-                                            'culminada' => 'success',
-                                            'en_ejecucion' => 'primary',
-                                            'en_espera_de_insumos' => 'warning',
-                                            default => 'secondary'
-                                        };
-                                        $statusIcon = match($activity->status) {
-                                            'culminada' => 'check-circle',
-                                            'en_ejecucion' => 'play-circle',
-                                            'en_espera_de_insumos' => 'pause-circle',
-                                            default => 'circle'
-                                        };
-                                    @endphp
-                                    <span class="badge badge-{{ $statusClass }} badge-pill">
-                                        <i class="fas fa-{{ $statusIcon }}"></i> {{ $activity->status_label }}
-                                    </span>
+                                    <div class="status-cell" data-activity-id="{{ $activity->id }}">
+                                        <div class="status-display">
+                                            @if($activity->statuses->count() > 0)
+                                                @foreach($activity->statuses as $status)
+                                                    <span class="badge badge-pill mr-1 mb-1" 
+                                                          style="background-color: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
+                                                        <i class="{{ $status->icon ?? 'fas fa-circle' }}"></i> {{ $status->label }}
+                                                    </span>
+                                                @endforeach
+                                            @else
+                                                {{-- Fallback al sistema anterior --}}
+                                                @php
+                                                    $statusClass = match($activity->status) {
+                                                        'culminada' => 'success',
+                                                        'en_ejecucion' => 'primary',
+                                                        'en_espera_de_insumos' => 'warning',
+                                                        default => 'secondary'
+                                                    };
+                                                    $statusIcon = match($activity->status) {
+                                                        'culminada' => 'check-circle',
+                                                        'en_ejecucion' => 'play-circle',
+                                                        'en_espera_de_insumos' => 'pause-circle',
+                                                        default => 'circle'
+                                                    };
+                                                @endphp
+                                                <span class="badge badge-{{ $statusClass }} badge-pill">
+                                                    <i class="fas fa-{{ $statusIcon }}"></i> {{ $activity->status_label }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="status-edit-btn">
+                                            <button class="btn btn-sm btn-outline-secondary edit-status-btn" 
+                                                    data-activity-id="{{ $activity->id }}" 
+                                                    title="Editar estados">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="align-middle">
                                     @if ($activity->analistas->isEmpty())
@@ -597,6 +706,67 @@
                         @endforelse
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Estados -->
+    <div class="modal fade" id="statusEditModal" tabindex="-1" role="dialog" aria-labelledby="statusEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="statusEditModalLabel">
+                        <i class="fas fa-edit"></i> Editar Estados de Actividad
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold mb-3">
+                                <i class="fas fa-info-circle text-primary"></i> Información de la Actividad
+                            </h6>
+                            <div class="activity-info">
+                                <p><strong>Caso:</strong> <span id="modalActivityCaso"></span></p>
+                                <p><strong>Nombre:</strong> <span id="modalActivityNombre"></span></p>
+                                <p><strong>Estados Actuales:</strong></p>
+                                <div id="modalCurrentStatuses" class="mb-3"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold mb-3">
+                                <i class="fas fa-tasks text-primary"></i> Seleccionar Estados
+                            </h6>
+                            <div class="status-checkboxes" style="max-height: 400px; overflow-y: auto;">
+                                @foreach($statuses as $status)
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input status-checkbox" 
+                                               type="checkbox" 
+                                               value="{{ $status->id }}" 
+                                               data-status-name="{{ $status->name }}"
+                                               id="status_{{ $status->id }}">
+                                        <label class="form-check-label d-flex align-items-center" for="status_{{ $status->id }}">
+                                            <span class="badge badge-pill mr-2" 
+                                                  style="background-color: {{ $status->color }}; color: white;">
+                                                <i class="fas fa-{{ $status->icon }}"></i> {{ $status->label }}
+                                            </span>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveStatusChanges">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
                 </div>
             </div>
         </div>
@@ -1537,29 +1707,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // Funciones auxiliares para generar HTML
     function getStatusClass(status) {
         const statusClasses = {
-            'culminada': 'success',
+            'no_iniciada': 'secondary',
             'en_ejecucion': 'primary',
-            'en_espera_de_insumos': 'warning'
+            'en_espera_de_insumos': 'warning',
+            'pausada': 'dark',
+            'en_certificacion_por_cliente': 'warning',
+            'pases_enviados': 'info',
+            'culminada': 'success',
+            'cancelada': 'danger',
+            'en_revision': 'warning'
         };
         return statusClasses[status] || 'secondary';
     }
 
     function getStatusIcon(status) {
         const statusIcons = {
-            'culminada': 'check-circle',
+            'no_iniciada': 'clock',
             'en_ejecucion': 'play-circle',
-            'en_espera_de_insumos': 'pause-circle'
+            'en_espera_de_insumos': 'pause-circle',
+            'pausada': 'pause',
+            'en_certificacion_por_cliente': 'certificate',
+            'pases_enviados': 'paper-plane',
+            'culminada': 'check-circle',
+            'cancelada': 'times-circle',
+            'en_revision': 'eye'
         };
         return statusIcons[status] || 'circle';
     }
 
     function getStatusLabel(status) {
         const statusLabels = {
-            'culminada': 'Culminada',
+            'no_iniciada': 'No Iniciada',
             'en_ejecucion': 'En Ejecución',
-            'en_espera_de_insumos': 'En Espera de Insumos'
+            'en_espera_de_insumos': 'En Espera de Insumos',
+            'pausada': 'Pausada',
+            'en_certificacion_por_cliente': 'En Certificación por Cliente',
+            'pases_enviados': 'Pases Enviados',
+            'culminada': 'Culminada',
+            'cancelada': 'Cancelada',
+            'en_revision': 'En Revisión'
         };
-        return statusLabels[status] || status;
+        return statusLabels[status] || status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
     function generateAnalistasHTML(analistas) {
@@ -2710,288 +2898,34 @@ document.addEventListener('DOMContentLoaded', function() {
                             case 'en_espera_de_insumos':
                                 return statusText.includes('espera') || statusText.includes('insumos');
                             case 'en_ejecucion':
-                                return statusText.includes('ejecución') || statusText.includes('ejecucion');
-                            case 'culminada':
-                                return statusText.includes('culminada');
+                                return statusText.includes('ejecución') || statusText.includes('ejecutando');
                             default:
                                 return statusText.includes(status.toLowerCase());
                         }
                     });
-                    if (!statusMatch) shouldShow = false;
                 }
-                
-                // Filtro por analistas (optimizado)
-                if (activeFilters.analistas.length > 0 && cells[4]) {
-                    const analistasText = cells[4].textContent.trim().toLowerCase();
-                    const analistasMatch = activeFilters.analistas.some(analistaId => {
-                        // Cache de nombres de analistas
-                        if (!window.analistasCache) {
-                            window.analistasCache = {};
-                        }
-                        if (!window.analistasCache[analistaId]) {
-                            const analistaElement = document.querySelector(`label[for="analista-${analistaId}"]`);
-                            window.analistasCache[analistaId] = analistaElement?.textContent?.trim().toLowerCase() || '';
-                        }
-                        return analistasText.includes(window.analistasCache[analistaId]);
-                    });
-                    if (!analistasMatch) shouldShow = false;
-                }
-                
-                // Filtro por fechas (optimizado)
-                if ((activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[7]) {
-                    const fechaText = cells[7].textContent.trim();
-                    if (!checkDateFilter(fechaText, activeFilters.fechaDesde, activeFilters.fechaHasta)) {
-                        shouldShow = false;
-                    }
-                }
-                
-                // Aplicar visibilidad
-                row.style.display = shouldShow ? 'table-row' : 'none';
-                if (shouldShow) visibleCount++;
-            }
-            
-            // Continuar con el siguiente lote si hay más filas
-            if (endIndex < rowsCache.length) {
-                requestAnimationFrame(() => processRows(endIndex));
-            } else {
-                // Finalizar procesamiento
-                finishFiltering(visibleCount);
-            }
-        };
-        
-        // Iniciar procesamiento por lotes
-        processRows();
-    }
-    
-    function finishFiltering(visibleCount) {
-        // Actualizar contador y UI
-        const tableTitle = document.getElementById('tableTitle');
-        const clearButton = document.getElementById('clearAllColumnFilters');
-        const hasActiveFilters = activeFilters.status.length > 0 || 
-                                activeFilters.analistas.length > 0 || 
-                                activeFilters.fechaDesde || 
-                                activeFilters.fechaHasta;
-        
-        if (tableTitle) {
-            if (hasActiveFilters && visibleCount < rowsCache.length) {
-                tableTitle.textContent = `Actividades filtradas (${visibleCount} de ${rowsCache.length})`;
-            } else {
-                tableTitle.textContent = 'Lista de Actividades';
-            }
-        }
-        
-        // Mostrar/ocultar botón de limpiar
-        if (clearButton) {
-            clearButton.style.display = hasActiveFilters ? 'inline-block' : 'none';
-        }
-        
-        // Actualizar indicadores visuales de filtros activos
-        updateFilterIndicators();
-        
-        // Manejar caso cuando no hay resultados
-        handleNoResultsDisplay(visibleCount, hasActiveFilters);
-        
-        console.log(`Filtrado completado: ${visibleCount} filas visibles`);
-    }
-    
-    function handleNoResultsDisplay(visibleCount, hasActiveFilters) {
-        const tableContainer = document.getElementById('tableContainer');
-        const tableBody = document.querySelector('#tableContainer tbody');
-        
-        // Remover mensaje anterior si existe
-        const existingMessage = document.getElementById('no-results-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-        
-        if (visibleCount === 0 && hasActiveFilters) {
-            // Asegurar altura mínima del contenedor para que los dropdowns sean visibles
-            if (tableContainer) {
-                tableContainer.style.minHeight = '400px';
-                tableContainer.style.position = 'relative';
-            }
-            
-            // Crear mensaje de "no hay resultados"
-            const noResultsMessage = document.createElement('div');
-            noResultsMessage.id = 'no-results-message';
-            noResultsMessage.className = 'text-center py-5';
-            noResultsMessage.style.position = 'absolute';
-            noResultsMessage.style.top = '50%';
-            noResultsMessage.style.left = '50%';
-            noResultsMessage.style.transform = 'translate(-50%, -50%)';
-            noResultsMessage.style.zIndex = '1';
-            noResultsMessage.innerHTML = `
-                <div class="alert alert-info border-0 shadow-sm" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb);">
-                    <i class="fas fa-search fa-2x text-info mb-3"></i>
-                    <h5 class="text-info mb-2">No se encontraron actividades</h5>
-                    <p class="text-muted mb-3">No hay actividades que coincidan con los filtros seleccionados.</p>
-                    <button class="btn btn-outline-info btn-sm" onclick="clearAllFilters()">
-                        <i class="fas fa-eraser"></i> Limpiar filtros
-                    </button>
-                </div>
-            `;
-            
-            if (tableContainer) {
-                tableContainer.appendChild(noResultsMessage);
-            }
-        } else {
-            // Restaurar altura normal del contenedor
-            if (tableContainer) {
-                tableContainer.style.minHeight = '';
-                tableContainer.style.position = '';
             }
         }
     }
-    
-    // Función para limpiar caches y mejorar rendimiento
-    function clearFilterCaches() {
-        tableBodyCache = null;
-        rowsCache = null;
-        lastTableHTML = '';
-        if (window.analistasCache) {
-            window.analistasCache = {};
-        }
-        console.log('Caches de filtros limpiados');
-    }
-    
-    function checkDateFilter(fechaText, fechaDesde, fechaHasta) {
-        if (!fechaDesde && !fechaHasta) return true;
-        
-        // Extraer fecha del texto (formato esperado: DD/MM/YYYY)
-        const dateMatch = fechaText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-        if (!dateMatch) {
-            console.log('No se pudo extraer fecha del texto:', fechaText);
-            return false;
-        }
-        
-        const [, day, month, year] = dateMatch;
-        // Crear fecha en UTC para evitar problemas de zona horaria
-        const rowDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
-        
-        if (fechaDesde) {
-            // Crear fecha desde en UTC
-            const fromDateParts = fechaDesde.split('-');
-            const fromDate = new Date(Date.UTC(parseInt(fromDateParts[0]), parseInt(fromDateParts[1]) - 1, parseInt(fromDateParts[2])));
-            
-            if (rowDate < fromDate) {
-                return false;
-            }
-        }
-        
-        if (fechaHasta) {
-            // Crear fecha hasta en UTC
-            const toDateParts = fechaHasta.split('-');
-            const toDate = new Date(Date.UTC(parseInt(toDateParts[0]), parseInt(toDateParts[1]) - 1, parseInt(toDateParts[2])));
-            
-            if (rowDate > toDate) {
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    function getStatusLabel(status) {
-        const statusLabels = {
-            'culminada': 'Culminada',
-            'en_ejecucion': 'En Ejecución',
-            'en_espera_de_insumos': 'En Espera de Insumos',
-            'cancelada': 'Cancelada'
-        };
-        return statusLabels[status] || status;
-    }
-    
-    function updateFilterIndicators() {
-        // Indicador para filtro de estado
-        const statusButton = document.querySelector('[data-filter="status"]');
-        if (statusButton) {
-            if (activeFilters.status.length > 0) {
-                statusButton.classList.add('active');
-            } else {
-                statusButton.classList.remove('active');
-            }
-        }
-        
-        // Indicador para filtro de analistas
-        const analistasButton = document.querySelector('[data-filter="analistas"]');
-        if (analistasButton) {
-            if (activeFilters.analistas.length > 0) {
-                analistasButton.classList.add('active');
-            } else {
-                analistasButton.classList.remove('active');
-            }
-        }
-        
-        // Indicador para filtro de fecha
-        const fechaButton = document.querySelector('[data-filter="fecha"]');
-        if (fechaButton) {
-            if (activeFilters.fechaDesde || activeFilters.fechaHasta) {
-                fechaButton.classList.add('active');
-            } else {
-                fechaButton.classList.remove('active');
-            }
-        }
-    }
-    
-    function updateSortIcons(activeColumn, direction) {
-        // Limpiar todos los iconos
-        document.querySelectorAll('.sortable').forEach(header => {
-            header.classList.remove('sort-asc', 'sort-desc');
-        });
-        
-        // Activar el icono correspondiente
-        const activeHeader = document.querySelector(`[data-sort="${activeColumn}"]`);
-        if (activeHeader) {
-            activeHeader.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
-        }
-    }
-    
-    // Configurar ordenamiento y filtros inicial
-    console.log('Iniciando configuración...');
-    setupSortHandlers();
-    
-    // Configurar filtros
-    setupColumnFilters();
-    
-    // Observer para detectar cambios en la tabla y limpiar cache
-    const tableContainer = document.getElementById('tableContainer');
-    if (tableContainer) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    // Se agregaron nuevas filas (probablemente subactividades)
-                    clearFilterCaches();
-                }
-            });
-        });
-        
-        observer.observe(tableContainer, {
-            childList: true,
-            subtree: true
-        });
-    }
-    
-    console.log('Configuración completada');
-    
-    // Implementar tooltips simples usando title nativo
-    function initializeSimpleTooltips() {
-        console.log('Inicializando tooltips simples...');
-        
-        // Encontrar todos los botones de acción
-        const actionButtons = document.querySelectorAll('.action-btn');
-        console.log('Botones de acción encontrados:', actionButtons.length);
-        
-        actionButtons.forEach(function(button) {
-            const tooltipText = button.getAttribute('data-tooltip');
-            if (tooltipText && !button.hasAttribute('title')) {
-                button.setAttribute('title', tooltipText);
-                console.log('Tooltip configurado:', tooltipText);
-            }
-        });
-    }
-    
-    // Inicializar tooltips simples
-    initializeSimpleTooltips();
-});
-</script>
 
+    </script>
+
+    <!-- Script optimizado para modal de estados -->
+    <script src="{{ asset('js/status-modal-optimized.js') }}?v={{ time() }}&fix=button"></script>
+    
+    <!-- Script para cargar datos de actividades -->
+    <script>
+        // Cargar datos de actividades desde PHP
+        document.addEventListener('DOMContentLoaded', function() {
+            const activitiesData = @json($activities);
+            
+            // Procesar datos usando la función del archivo externo
+            if (typeof processActivitiesData === 'function') {
+                processActivitiesData(activitiesData);
+            } else {
+                console.error('Función processActivitiesData no encontrada');
+            }
+        });
+    </script>
+</div>
 @endsection

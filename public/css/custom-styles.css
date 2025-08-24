@@ -20,6 +20,11 @@
     max-width: 1200px;
 }
 
+.container-fluid {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
 .card {
     border: none;
     box-shadow: var(--box-shadow);
@@ -623,5 +628,534 @@ select.form-control option:hover {
     
     .sort-icon {
         display: none; /* Ocultar iconos de ordenamiento en móviles */
+    }
+}
+
+/* ===== SISTEMA DE ESTADOS MÚLTIPLES ===== */
+.status-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-display {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.status-edit-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.status-cell:hover .status-edit-btn {
+    opacity: 1;
+}
+
+.edit-status-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.edit-status-btn:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: scale(1.05);
+}
+
+/* Modal de edición de estados */
+#statusEditModal .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.status-checkboxes {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 2rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.status-checkboxes .custom-control {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    position: relative;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.status-checkboxes .custom-control:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.status-checkboxes .custom-control-input {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+}
+
+.status-checkboxes .custom-control-label {
+    padding-left: 2rem;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+}
+
+.status-checkboxes .custom-control-input:checked ~ .custom-control-label {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+}
+
+.status-checkboxes .badge {
+    font-size: 0.875rem;
+}
+
+/* Estilos para la gestión de estados en la vista edit */
+.status-management-container {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.status-management-container:hover {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.1);
+}
+
+.current-statuses {
+    min-height: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.current-statuses .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.current-statuses .text-muted {
+    font-style: italic;
+    color: #6c757d !important;
+}
+
+#editStatusesBtn {
+    transition: all 0.3s ease;
+}
+
+#editStatusesBtn:hover {
+    background-color: #007bff;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+/* Mejoras para badges de estado */
+.badge-pill {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+    border-radius: 50px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    transition: all 0.2s ease;
+}
+
+.badge-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Filtro múltiple de estados */
+#filterStatus {
+    min-height: 38px;
+}
+
+#filterStatus option {
+    padding: 0.5rem;
+}
+
+/* Alertas flotantes */
+.alert.position-fixed {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Loading spinner personalizado */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 123, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive para estados múltiples */
+@media (max-width: 768px) {
+    .status-cell {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .status-edit-btn {
+        opacity: 1; /* Siempre visible en móviles */
+        align-self: flex-end;
+    }
+    
+    .status-display {
+        width: 100%;
+    }
+    
+    .badge-pill {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    #statusEditModal .modal-dialog {
+        margin: 0.5rem;
+        max-width: none;
+    }
+    
+    .status-checkboxes {
+        max-height: 300px;
+    }
+    
+    .status-checkboxes .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+    }
+}
+
+/* ===== ESTILOS PARA TARJETAS DE ESTADÍSTICAS ===== */
+.stats-card {
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+    color: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.stats-card:hover::before {
+    opacity: 1;
+}
+
+.stats-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+}
+
+.stats-content h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.stats-content p {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Colores específicos para diferentes tipos de tarjetas */
+.stats-card.bg-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.stats-card.bg-secondary {
+    background: linear-gradient(135deg, #6c757d, #545b62);
+}
+
+.stats-card.bg-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.stats-card.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #bd2130);
+}
+
+.stats-card.bg-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #212529;
+}
+
+.stats-card.bg-info {
+    background: linear-gradient(135deg, #17a2b8, #117a8b);
+}
+
+.stats-card.bg-dark {
+    background: linear-gradient(135deg, #343a40, #23272b);
+}
+
+/* Responsive para tarjetas de estadísticas */
+@media (max-width: 1200px) {
+    .stats-card {
+        min-height: 110px;
+        padding: 1.25rem;
+    }
+    
+    .stats-icon {
+        font-size: 2.2rem;
+    }
+    
+    .stats-content h3 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .stats-card {
+        min-height: 100px;
+        padding: 1rem;
+    }
+    
+    .stats-icon {
+        font-size: 2rem;
+    }
+    
+    .stats-content h3 {
+        font-size: 1.6rem;
+    }
+    
+    .stats-content p {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-card {
+        min-height: 90px;
+        padding: 0.875rem;
+    }
+    
+    .stats-icon {
+        font-size: 1.8rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-content h3 {
+        font-size: 1.4rem;
+    }
+    
+    .stats-content p {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-card {
+        min-height: 80px;
+        padding: 0.75rem;
+    }
+    
+    .stats-icon {
+        font-size: 1.5rem;
+    }
+    
+    .stats-content h3 {
+        font-size: 1.2rem;
+    }
+    
+    .stats-content p {
+        font-size: 0.75rem;
+    }
+}
+
+/* ===== ESTILOS PARA FILTROS ACTIVOS ===== */
+.filter-active {
+    border-color: var(--warning-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+}
+
+.btn-warning.filter-indicator {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+/* ===== ESTILOS PARA SELECTOR DE ESTADOS ===== */
+.status-selector {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.status-selector.has-selection {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #f8fff9, #f0fff4);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.status-card {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.status-card.selected {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: var(--dark-color);
+}
+
+.status-card.selected::before {
+    content: "✓";
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    background: var(--success-color);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.status-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 768px) {
+    .status-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .status-card {
+        padding: 0.5rem;
+    }
+    
+    .status-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+    
+    .status-name {
+        font-size: 0.75rem;
     }
 }

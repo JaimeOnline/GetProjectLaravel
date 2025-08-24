@@ -97,15 +97,40 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="form-label" for="status">
-                                        <i class="fas fa-flag text-primary"></i> Estado
+                                    <label class="form-label">
+                                        <i class="fas fa-flag text-primary"></i> Estados
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-control" id="status" name="status" required>
-                                        <option value="en_ejecucion" {{ $activity->status == 'en_ejecucion' ? 'selected' : '' }}>En ejecución</option>
-                                        <option value="culminada" {{ $activity->status == 'culminada' ? 'selected' : '' }}>Culminada</option>
-                                        <option value="en_espera_de_insumos" {{ $activity->status == 'en_espera_de_insumos' ? 'selected' : '' }}>En espera de insumos</option>
-                                    </select>
+                                    <div class="status-management-container">
+                                        <div class="current-statuses" id="currentStatuses">
+                                            @if($activity->statuses && $activity->statuses->count() > 0)
+                                                @foreach($activity->statuses as $status)
+                                                    <span class="badge badge-pill mr-1 mb-1" 
+                                                          style="background-color: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
+                                                        <i class="{{ $status->icon ?? 'fas fa-circle' }}"></i> {{ $status->label }}
+                                                    </span>
+                                                @endforeach
+                                            @else
+                                                @if($activity->status)
+                                                    <span class="badge badge-secondary">
+                                                        <i class="fas fa-circle"></i> {{ ucfirst(str_replace('_', ' ', $activity->status)) }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-exclamation-triangle"></i> Sin estados asignados
+                                                    </span>
+                                                @endif
+                                            @endif
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" 
+                                                id="editStatusesBtn" 
+                                                data-activity-id="{{ $activity->id }}">
+                                            <i class="fas fa-edit"></i> Editar Estados
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Campo oculto para mantener compatibilidad con el sistema anterior -->
+                                    <input type="hidden" name="status" value="{{ $activity->status }}" id="hiddenStatusField">
                                 </div>
                             </div>
                         </div>
@@ -951,6 +976,94 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar analistas seleccionados
     initializeSelectedAnalysts();
+    
+    // ===== SISTEMA DE ESTADOS MÚLTIPLES =====
+    
+    // Event listener para el botón de editar estados
+    document.getElementById('editStatusesBtn').addEventListener('click', function() {
+        const activityId = this.getAttribute('data-activity-id');
+        openStatusEditModal(activityId);
+    });
+    
+    // Función para actualizar la visualización de estados en la vista edit
+    function updateEditStatusDisplay(activityId, statuses) {
+        const statusContainer = document.getElementById('currentStatuses');
+        if (!statusContainer) {
+            console.log('No se encontró el contenedor de estados');
+            return;
+        }
+        
+        let html = '';
+        if (statuses && statuses.length > 0) {
+            statuses.forEach(status => {
+                const contrastColor = getContrastColor(status.color);
+                html += `
+                    <span class="badge badge-pill mr-1 mb-1" 
+                          style="background-color: ${status.color}; color: ${contrastColor};">
+                        <i class="${status.icon || 'fas fa-circle'}"></i> ${status.label}
+                    </span>
+                `;
+            });
+        } else {
+            html = `
+                <span class="text-muted">
+                    <i class="fas fa-exclamation-triangle"></i> Sin estados asignados
+                </span>
+            `;
+        }
+        
+        statusContainer.innerHTML = html;
+        console.log('Estados actualizados en la vista edit para actividad:', activityId);
+    }
+    
+    // Sobrescribir la función updateStatusDisplay para que funcione en la vista edit
+    if (typeof updateStatusDisplay === 'function') {
+        const originalUpdateStatusDisplay = updateStatusDisplay;
+        updateStatusDisplay = function(activityId, statuses) {
+            // Llamar a la función original (para la vista index)
+            originalUpdateStatusDisplay(activityId, statuses);
+            // Llamar a la función específica para la vista edit
+            updateEditStatusDisplay(activityId, statuses);
+        };
+    } else {
+        // Si no existe la función original, crear una nueva
+        window.updateStatusDisplay = updateEditStatusDisplay;
+    }
 });
 </script>
+
+<!-- Scripts adicionales -->
+<script src="{{ asset('js/multiple-statuses.js') }}"></script>
+
+<!-- Modal para editar estados -->
+<div class="modal fade" id="statusEditModal" tabindex="-1" role="dialog" aria-labelledby="statusEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="statusEditModalLabel">
+                    <i class="fas fa-flag"></i> Editar Estados de la Actividad
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="statusModalBody">
+                <!-- El contenido se carga dinámicamente -->
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Cargando estados...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="saveStatusBtn" onclick="saveStatusChanges()">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

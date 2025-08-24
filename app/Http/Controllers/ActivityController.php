@@ -8,24 +8,37 @@ use App\Models\Analista;
 use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
 use App\Models\Comment;
 use App\Models\Email;
+use App\Models\Status;
 use Illuminate\Http\Request;
 
 class ActivityController extends Controller
 {
     public function index(Request $request)
     {
-        // Obtener solo las actividades padre (sin parent_id) con sus analistas, correos, requerimientos y subactividades anidadas
+        // Obtener solo las actividades padre (sin parent_id) con sus analistas, correos, requerimientos, estados y subactividades anidadas
         $activities = Activity::whereNull('parent_id')
-            ->with(['analistas', 'comments', 'emails', 'requirements', 'subactivities.analistas', 'subactivities.comments', 'subactivities.emails', 'subactivities.requirements', 'subactivities.subactivities.analistas', 'subactivities.subactivities.comments', 'subactivities.subactivities.emails', 'subactivities.subactivities.requirements'])
+            ->with([
+                'analistas', 
+                'comments', 
+                'emails', 
+                'requirements', 
+                'statuses',
+                'subactivities.analistas', 
+                'subactivities.comments', 
+                'subactivities.emails', 
+                'subactivities.requirements',
+                'subactivities.statuses',
+                'subactivities.subactivities.analistas', 
+                'subactivities.subactivities.comments', 
+                'subactivities.subactivities.emails', 
+                'subactivities.subactivities.requirements',
+                'subactivities.subactivities.statuses'
+            ])
             ->get();
 
         // Obtener datos para los filtros
         $analistas = Analista::all();
-        $statuses = [
-            'en_ejecucion' => 'En Ejecución',
-            'culminada' => 'Culminada',
-            'en_espera_de_insumos' => 'En Espera de Insumos'
-        ];
+        $statuses = Status::active()->ordered()->get();
 
         return view('activities.index', compact('activities', 'analistas', 'statuses'));
     }
@@ -49,14 +62,17 @@ class ActivityController extends Controller
             'comments', 
             'emails', 
             'requirements',
+            'statuses',
             'subactivities.analistas', 
             'subactivities.comments', 
             'subactivities.emails',
             'subactivities.requirements',
+            'subactivities.statuses',
             'subactivities.subactivities.analistas',
             'subactivities.subactivities.comments',
             'subactivities.subactivities.emails',
-            'subactivities.subactivities.requirements'
+            'subactivities.subactivities.requirements',
+            'subactivities.subactivities.statuses'
         ]);
 
         // Aplicar búsqueda por texto si existe
@@ -76,13 +92,28 @@ class ActivityController extends Controller
                   ->orWhereHas('emails', function($subQ) use ($query) {
                       $subQ->where('subject', 'LIKE', "%{$query}%")
                            ->orWhere('content', 'LIKE', "%{$query}%");
+                  })
+                  ->orWhereHas('statuses', function($subQ) use ($query) {
+                      $subQ->where('name', 'LIKE', "%{$query}%")
+                           ->orWhere('label', 'LIKE', "%{$query}%");
                   });
             });
         }
 
         // Aplicar filtros directamente desde los parámetros de consulta
         if ($request->has('status') && !empty($request->get('status'))) {
-            $activitiesQuery->where('status', $request->get('status'));
+            // Soporte para filtro por múltiples estados
+            $statusFilter = $request->get('status');
+            if (is_array($statusFilter)) {
+                $activitiesQuery->whereHas('statuses', function($q) use ($statusFilter) {
+                    $q->whereIn('name', $statusFilter);
+                });
+            } else {
+                // Mantener compatibilidad con filtro único
+                $activitiesQuery->whereHas('statuses', function($q) use ($statusFilter) {
+                    $q->where('name', $statusFilter);
+                })->orWhere('status', $statusFilter); // Fallback al campo antiguo
+            }
         }
 
         if ($request->has('analista_id') && !empty($request->get('analista_id'))) {
@@ -148,6 +179,9 @@ class ActivityController extends Controller
         // Obtener todas las actividades para el campo de actividad padre
         $activities = Activity::all();
         
+        // Obtener todos los estados
+        $statuses = Status::active()->ordered()->get();
+        
         // Obtener el parentId desde la query string
         $parentId = $request->query('parentId');
         
@@ -155,13 +189,14 @@ class ActivityController extends Controller
         $parentActivity = $parentId ? Activity::findOrFail($parentId) : null;
         
         // Pasar las variables a la vista
-        return view('activities.create', compact('analistas', 'activities', 'parentActivity'));
+        return view('activities.create', compact('analistas', 'activities', 'statuses', 'parentActivity'));
     }
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
-            'status' => 'required',
+            'status_ids' => 'required|array|min:1',
+            'status_ids.*' => 'exists:statuses,id',
             'analista_id' => 'required|array',
             'analista_id.*' => 'exists:analistas,id', // Validar que cada ID de analista exista
             'requirements' => 'nullable|array', // Solo array, permitiendo que esté vacío
@@ -170,10 +205,15 @@ class ActivityController extends Controller
             'caso' => 'required|unique:activities,caso', // Validar que el campo 'caso' sea único en la tabla 'activities'
             'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
         ]);
-        // Crear la actividad
-        $activity = Activity::create($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion', 'parent_id']));
+        
+        // Crear la actividad (sin el campo status ya que ahora usamos la tabla pivot)
+        $activity = Activity::create($request->only(['caso', 'name', 'description', 'fecha_recepcion', 'parent_id']));
+        
         // Asignar analistas a la actividad
         $activity->analistas()->attach($request->analista_id);
+        
+        // Asignar estados a la actividad
+        $activity->statuses()->attach($request->status_ids);
         // Agregar los requerimientos solo si existen
         if ($request->has('requirements')) {
             foreach ($request->requirements as $requirementDescription) {
@@ -206,8 +246,8 @@ class ActivityController extends Controller
         $analistas = Analista::all();
         // Obtener todas las actividades para el campo de actividad padre (excluyendo la actividad actual)
         $activities = Activity::where('id', '!=', $activity->id)->get();
-        // Cargar los comentarios, correos, analistas y requerimientos de la actividad
-        $activity->load(['comments', 'emails', 'analistas', 'requirements']);
+        // Cargar los comentarios, correos, analistas, requerimientos y estados de la actividad
+        $activity->load(['comments', 'emails', 'analistas', 'requirements', 'statuses']);
         // Pasar las variables a la vista
         return view('activities.edit', compact('activity', 'analistas', 'activities'));
     }
@@ -215,7 +255,7 @@ class ActivityController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'status' => 'required|in:en_ejecucion,culminada,en_espera_de_insumos',
+            'status' => 'nullable|in:no_iniciada,en_ejecucion,en_espera_de_insumos,pausada,en_certificacion_por_cliente,pases_enviados,culminada,cancelada,en_revision',
             'analista_id' => 'required|array|min:1',
             'analista_id.*' => 'exists:analistas,id',
             'requirements' => 'nullable|array',
@@ -515,5 +555,64 @@ class ActivityController extends Controller
                 $this->addSubactivityIds($subactivity, $activityIds);
             }
         }
+    }
+
+    /**
+     * Actualizar los estados de una actividad (AJAX)
+     */
+    public function updateStatuses(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'status_ids' => 'required|array',
+            'status_ids.*' => 'exists:statuses,id'
+        ]);
+
+        try {
+            // Sincronizar los estados (esto reemplaza todos los estados existentes)
+            $activity->statuses()->sync($request->status_ids);
+
+            // Cargar los estados actualizados
+            $activity->load('statuses');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Estados actualizados correctamente',
+                'statuses' => $activity->statuses,
+                'status_badges' => $activity->status_badges
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar los estados: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener todos los estados disponibles (AJAX)
+     */
+    public function getStatuses()
+    {
+        $statuses = Status::active()->ordered()->get();
+        
+        return response()->json([
+            'success' => true,
+            'statuses' => $statuses
+        ]);
+    }
+
+    /**
+     * Obtener los estados actuales de una actividad (AJAX)
+     */
+    public function getActivityStatuses(Activity $activity)
+    {
+        $activity->load('statuses');
+        
+        return response()->json([
+            'success' => true,
+            'statuses' => $activity->statuses,
+            'status_badges' => $activity->status_badges
+        ]);
     }
 }

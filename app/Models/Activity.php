@@ -72,15 +72,59 @@ class Activity extends Model
     }
 
     /**
-     * Obtener la etiqueta legible del estado
+     * Estados asignados a la actividad (relación muchos a muchos)
+     */
+    public function statuses()
+    {
+        return $this->belongsToMany(Status::class, 'activity_statuses')
+                    ->withPivot('assigned_at')
+                    ->withTimestamps()
+                    ->orderBy('order');
+    }
+
+    /**
+     * Obtener la etiqueta legible del estado (DEPRECATED - usar statuses())
+     * Mantener para compatibilidad con código existente
      */
     public function getStatusLabelAttribute()
     {
+        // Si tiene estados en la nueva relación, usar el primero
+        if ($this->statuses && $this->statuses->count() > 0) {
+            return $this->statuses->first()->label;
+        }
+        
+        // Fallback al sistema anterior
         $labels = [
             'en_ejecucion' => 'En ejecución',
             'culminada' => 'Culminada',
             'en_espera_de_insumos' => 'En espera de insumos',
         ];
-        return $labels[$this->status] ?? $this->status; // Devuelve el estado legible o el original si no se encuentra
+        return $labels[$this->status] ?? $this->status;
+    }
+
+    /**
+     * Obtener todos los badges HTML de los estados
+     */
+    public function getStatusBadgesAttribute()
+    {
+        return $this->statuses->map(function ($status) {
+            return $status->badge_html;
+        })->implode(' ');
+    }
+
+    /**
+     * Verificar si la actividad tiene un estado específico
+     */
+    public function hasStatus($statusName)
+    {
+        return $this->statuses->contains('name', $statusName);
+    }
+
+    /**
+     * Obtener el estado principal (el primero en orden)
+     */
+    public function getPrimaryStatusAttribute()
+    {
+        return $this->statuses->first();
     }
 }

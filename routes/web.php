@@ -10,6 +10,11 @@ Route::get('/', function () {
 
 Route::get('activities/search', [ActivityController::class, 'search'])->name('activities.search');
 Route::resource('activities', ActivityController::class);
+
+// Rutas para gestión de estados múltiples
+Route::put('activities/{activity}/statuses', [ActivityController::class, 'updateStatuses'])->name('activities.statuses.update');
+Route::get('statuses', [ActivityController::class, 'getStatuses'])->name('statuses.index');
+Route::get('activities/{activity}/statuses', [ActivityController::class, 'getActivityStatuses'])->name('activities.statuses.show');
 Route::get('activities/{activity}/comments', [ActivityController::class, 'showComments'])->name('activities.comments');
 Route::post('activities/{activity}/comments', [ActivityController::class, 'storeComment'])->name('activities.comments.store');
 Route::delete('comments/{comment}', [ActivityController::class, 'destroyComment'])->name('comments.destroy');

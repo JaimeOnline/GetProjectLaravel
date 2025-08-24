@@ -85,9 +85,14 @@
                                 <span class="text-danger">*</span>
                             </label>
                             <select class="form-control" id="status" name="status" required>
-                                <option value="en_ejecucion">En ejecución</option>
+                                <option value="no_iniciada">No Iniciada</option>
+                                <option value="en_ejecucion" selected>En Ejecución</option>
+                                <option value="en_espera_de_insumos">En Espera de Insumos</option>
+                                <option value="pausada">Pausada</option>
+                                <option value="en_certificacion_por_cliente">En Certificación por Cliente</option>
+                                <option value="pases_enviados">Pases Enviados</option>
                                 <option value="culminada">Culminada</option>
-                                <option value="en_espera_de_insumos">En espera de insumos</option>
+                                <option value="cancelada">Cancelada</option>
                             </select>
                         </div>
                     </div>
