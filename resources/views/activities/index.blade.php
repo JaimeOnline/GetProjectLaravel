@@ -167,9 +167,14 @@
         </div>
     </div>
 
+     <!-- Botón para mostrar/ocultar estadísticas -->
+<button class="btn btn-outline-secondary btn-sm mb-3" id="toggleStatistics">
+    <i class="fas fa-chart-bar"></i> <span id="statisticsToggleText">Mostrar Estadísticas</span>
+</button>
     <!-- Statistics Cards -->
-    <div class="row mb-4">
+    <div id="statisticsCards" class="row mb-4">
         <!-- Primera fila: 4 columnas principales -->
+         <div class="row mb-4">
         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
             <div class="stats-card bg-primary">
                 <div class="stats-icon">
@@ -214,9 +219,9 @@
                 </div>
             </div>
         </div>
-    </div>
+        </div>
     
-    <!-- Segunda fila: Estados intermedios y especiales -->
+        <!-- Segunda fila: Estados intermedios y especiales -->
     <div class="row mb-4">
         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
             <div class="stats-card bg-warning">
@@ -300,6 +305,26 @@
             </div>
         </div>
     </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const toggleStatisticsBtn = document.getElementById('toggleStatistics');
+    const statisticsCards = document.getElementById('statisticsCards');
+    const statisticsToggleText = document.getElementById('statisticsToggleText');
+    // Inicialmente ocultar las estadísticas
+    statisticsCards.style.display = 'none';
+    toggleStatisticsBtn.addEventListener('click', function() {
+        if (statisticsCards.style.display === 'none') {
+            statisticsCards.style.display = 'block';
+            statisticsToggleText.textContent = 'Ocultar Estadísticas';
+        } else {
+            statisticsCards.style.display = 'none';
+            statisticsToggleText.textContent = 'Mostrar Estadísticas';
+        }
+    });
+});
+</script>
 
     <!-- Search Results Alert -->
     <div class="alert alert-info" id="searchResultsAlert" style="display: none;">
