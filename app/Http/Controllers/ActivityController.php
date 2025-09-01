@@ -204,10 +204,11 @@ class ActivityController extends Controller
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
             'caso' => 'required|unique:activities,caso', // Validar que el campo 'caso' sea único en la tabla 'activities'
             'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
+            'estatus_operacional' => 'nullable|string|max:1000', // Validar el nuevo campo estatus_operacional
         ]);
         
         // Crear la actividad (sin el campo status ya que ahora usamos la tabla pivot)
-        $activity = Activity::create($request->only(['caso', 'name', 'description', 'fecha_recepcion', 'parent_id']));
+        $activity = Activity::create($request->only(['caso', 'name', 'description', 'estatus_operacional', 'fecha_recepcion', 'parent_id']));
         
         // Asignar analistas a la actividad
         $activity->analistas()->attach($request->analista_id);
@@ -266,11 +267,12 @@ class ActivityController extends Controller
             'caso' => 'required|string|max:255|unique:activities,caso,' . $activity->id,
             'parent_id' => 'nullable|exists:activities,id',
             'description' => 'nullable|string|max:1000',
+            'estatus_operacional' => 'nullable|string|max:1000',
         ]);
 
         try {
             // Actualizar la actividad
-            $activity->update($request->only(['caso', 'name', 'description', 'status', 'fecha_recepcion', 'parent_id']));
+            $activity->update($request->only(['caso', 'name', 'description', 'estatus_operacional', 'status', 'fecha_recepcion', 'parent_id']));
             
             // Asignar analistas a la actividad
             $activity->analistas()->sync($request->analista_id);

@@ -9,6 +9,7 @@ class Activity extends Model
     protected $fillable = [
         'name',
         'description',
+        'estatus_operacional',
         'status',
         'fecha_recepcion',
         'caso',

@@ -151,6 +151,13 @@
                         </div>
                         
                         <div class="form-group">
+                            <label class="form-label" for="estatus_operacional">
+                                <i class="fas fa-cogs text-primary"></i> Estatus Operacional
+                            </label>
+                            <textarea class="form-control" id="estatus_operacional" name="estatus_operacional" rows="3" placeholder="Ingrese el estatus operacional de la actividad...">{{ $activity->estatus_operacional }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
                             <label class="form-label">
                                 <i class="fas fa-users text-primary"></i> Seleccionar Analistas
                                 <span class="text-danger">*</span>
