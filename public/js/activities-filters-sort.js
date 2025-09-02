@@ -1,0 +1,758 @@
+/**
+ * Script para manejar ordenamiento y filtros en la vista de actividades
+ */
+document.addEventListener('DOMContentLoaded', function () {
+    // Variables globales
+    let currentSort = { column: null, direction: 'asc' };
+    let originalRows = null;
+    let activeFilters = {
+        status: [],
+        analistas: [],
+        fechaDesde: null,
+        fechaHasta: null
+    };
+
+    // Formatear etiquetas de estado al cargar
+    formatStatusLabels();
+
+    // Inicializar
+    setupSortHandlers();
+    setupColumnFilters();
+
+    /**
+     * Formatear todas las etiquetas de estado para mostrar nombres legibles
+     */
+    function formatStatusLabels() {
+        document.querySelectorAll('.status-filter').forEach(updateStatusCheckboxLabel);
+    }
+
+    /**
+     * Configurar manejadores de ordenamiento
+     */
+    function setupSortHandlers() {
+        const sortableHeaders = document.querySelectorAll('.sortable');
+        sortableHeaders.forEach(header => {
+            // Eliminar manejadores de eventos anteriores
+            header.removeEventListener('click', handleSortClick);
+
+            // Agregar nuevo event listener
+            header.addEventListener('click', handleSortClick);
+        });
+    }
+
+    /**
+     * Manejador de eventos para el clic en encabezados ordenables
+     */
+
+    function handleSortClick(event) {
+        const header = event.currentTarget;
+        const column = header.getAttribute('data-sort');
+
+        // Guardar las filas originales la primera vez
+        if (!originalRows) {
+            const table = document.querySelector('#tableContainer table');
+            originalRows = Array.from(table.tBodies[0].rows).map(row => row.cloneNode(true));
+        }
+
+        if (currentSort.column === column) {
+            if (currentSort.direction === 'asc') {
+                currentSort.direction = 'desc';
+            } else if (currentSort.direction === 'desc') {
+                // Tercer clic: volver a neutro
+                currentSort = { column: null, direction: null };
+                restoreOriginalOrder();
+                updateSortIcons(null, null);
+                return;
+            } else {
+                currentSort.direction = 'asc';
+            }
+        } else {
+            currentSort = { column: column, direction: 'asc' };
+        }
+
+        sortTable(column);
+        updateSortIcons(currentSort.column, currentSort.direction);
+    }
+
+    function restoreOriginalOrder() {
+        const table = document.querySelector('#tableContainer table');
+        const tbody = table.tBodies[0];
+        tbody.innerHTML = '';
+        originalRows.forEach(row => {
+            tbody.appendChild(row.cloneNode(true));
+        });
+    }
+
+    /**
+     * Ordenar tabla por columna
+     */
+    function sortTable(column) {
+        console.log('Ordenando por columna:', column);
+
+        // Obtener filas de la tabla
+        const tableBody = document.querySelector('#tableContainer tbody');
+        if (!tableBody) {
+            console.error('No se encontró el cuerpo de la tabla');
+            return;
+        }
+
+        const rows = Array.from(tableBody.querySelectorAll('tr.parent-activity'));
+
+        // Ordenar filas
+        rows.sort((a, b) => {
+            let aValue = getSortValue(a, column);
+            let bValue = getSortValue(b, column);
+
+            // Ordenar por fecha
+            if (column === 'fecha_recepcion') {
+                // Si alguna fecha está vacía, ponla al final
+                if (!aValue && !bValue) return 0;
+                if (!aValue) return 1;
+                if (!bValue) return -1;
+
+                // Convertir formato DD/MM/YYYY a objeto Date
+                const aParts = aValue.split('/');
+                const bParts = bValue.split('/');
+                const aDate = aParts.length === 3 ? new Date(aParts[2], aParts[1] - 1, aParts[0]) : null;
+                const bDate = bParts.length === 3 ? new Date(bParts[2], bParts[1] - 1, bParts[0]) : null;
+
+                if (!aDate || isNaN(aDate)) return 1;
+                if (!bDate || isNaN(bDate)) return -1;
+
+                if (aDate < bDate) return currentSort.direction === 'asc' ? -1 : 1;
+                if (aDate > bDate) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            }
+
+            // Ordenar por número si ambos son numéricos
+            const aNum = parseFloat(aValue);
+            const bNum = parseFloat(bValue);
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                if (aNum < bNum) return currentSort.direction === 'asc' ? -1 : 1;
+                if (aNum > bNum) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            }
+
+            // Ordenar por texto
+            if (aValue < bValue) return currentSort.direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        // Reordenar filas en el DOM
+        rows.forEach(row => {
+            tableBody.appendChild(row);
+            // También mover las subactividades si existen
+            const activityId = row.getAttribute('data-activity-id');
+            const subRows = tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`);
+            subRows.forEach(subRow => {
+                tableBody.appendChild(subRow);
+            });
+        });
+    }
+
+    /**
+     * Actualizar iconos de ordenamiento
+     */
+    function updateSortIcons(activeColumn, direction) {
+        document.querySelectorAll('.sortable').forEach(header => {
+            const column = header.getAttribute('data-sort');
+            const icon = header.querySelector('.sort-icon');
+            if (!icon) return;
+
+            if (column === activeColumn) {
+                icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} text-primary ml-1`;
+            } else {
+                icon.className = 'fas fa-sort text-muted ml-1';
+            }
+        });
+    }
+
+    /**
+     * Obtener valor para ordenamiento
+     */
+    function getSortValue(row, column) {
+        const cells = row.querySelectorAll('td');
+        let value = '';
+
+        switch (column) {
+            case 'caso':
+                value = cells[0]?.textContent?.trim() || '';
+                break;
+            case 'nombre':
+                value = cells[1]?.textContent?.trim() || '';
+                break;
+            case 'descripcion':
+                value = cells[2]?.textContent?.trim() || '';
+                break;
+            case 'status':
+                value = cells[3]?.textContent?.trim() || '';
+                break;
+            case 'analistas':
+                value = cells[4]?.textContent?.trim() || '';
+                break;
+            case 'fecha_recepcion':
+                // Extraer solo la fecha del formato "DD/MM/YYYY"
+                const dateText = cells[6]?.textContent?.trim() || '';
+                const dateMatch = dateText.match(/\d{2}\/\d{2}\/\d{4}/);
+                value = dateMatch ? dateMatch[0] : '';
+                return value; // <-- DEVUELVE LA FECHA TAL CUAL
+            default:
+                value = '';
+        }
+
+        return value.toLowerCase();
+    }
+
+    /**
+     * Configurar filtros de columna
+     */
+    function setupColumnFilters() {
+        // Configurar botones de filtro
+        const filterButtons = document.querySelectorAll('.filter-toggle');
+        filterButtons.forEach(button => {
+            // Remover event listeners existentes
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+
+            // Agregar nuevo event listener
+            newButton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const filterType = this.getAttribute('data-filter');
+                toggleFilterMenu(filterType);
+            });
+        });
+
+        // Configurar checkboxes de estado
+        document.querySelectorAll('.status-filter').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                handleStatusChange(this);
+            });
+        });
+
+        // Configurar checkboxes de analista
+        document.querySelectorAll('.analista-filter').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                handleAnalistaChange(this);
+            });
+        });
+
+        // Configurar filtros de fecha
+        setupDateFilters();
+
+        // Configurar botón para limpiar todos los filtros
+        const clearButton = document.getElementById('clearAllColumnFilters');
+        if (clearButton) {
+            clearButton.addEventListener('click', clearAllFilters);
+        }
+
+        // Cerrar dropdowns al hacer clic fuera
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.custom-dropdown') && !e.target.closest('.custom-dropdown-menu')) {
+                document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+    }
+
+    /**
+     * Mostrar/ocultar menú de filtro
+     */
+    function toggleFilterMenu(filterType) {
+        const menu = document.getElementById(`${filterType}-filter-menu`);
+
+        if (menu) {
+            // Cerrar otros dropdowns
+            document.querySelectorAll('.custom-dropdown-menu').forEach(otherMenu => {
+                if (otherMenu.id !== `${filterType}-filter-menu`) {
+                    otherMenu.style.display = 'none';
+                }
+            });
+
+            // Toggle actual
+            const isVisible = menu.style.display === 'block';
+            menu.style.display = isVisible ? 'none' : 'block';
+        }
+    }
+
+    /**
+     * Manejar cambio en filtro de estado
+     */
+    function handleStatusChange(checkbox) {
+        // Actualizar etiqueta del checkbox para mostrar nombre legible
+        updateStatusCheckboxLabel(checkbox);
+
+        if (checkbox.value === '') {
+            // Checkbox "Todos"
+            if (checkbox.checked) {
+                activeFilters.status = [];
+                document.querySelectorAll('.status-filter').forEach(cb => {
+                    if (cb.value !== '' && cb.id !== checkbox.id) cb.checked = false;
+                });
+            }
+        } else {
+            // Checkbox específico
+            document.querySelectorAll('#status-all, #status-all-search').forEach(allCheckbox => {
+                if (allCheckbox) allCheckbox.checked = false;
+            });
+
+            if (checkbox.checked) {
+                if (!activeFilters.status.includes(checkbox.value)) {
+                    activeFilters.status.push(checkbox.value);
+                }
+            } else {
+                activeFilters.status = activeFilters.status.filter(s => s !== checkbox.value);
+            }
+
+            // Si no hay ningún filtro seleccionado, marcar "Todos"
+            if (activeFilters.status.length === 0) {
+                document.querySelectorAll('#status-all, #status-all-search').forEach(allCheckbox => {
+                    if (allCheckbox) allCheckbox.checked = true;
+                });
+            }
+        }
+
+        // Actualizar todas las etiquetas de estado
+        document.querySelectorAll('.status-filter').forEach(updateStatusCheckboxLabel);
+
+        // Sincronizar checkboxes entre diferentes menús
+        syncStatusCheckboxes();
+
+        // Aplicar filtros
+        applyFilters();
+        updateFilterIndicators();
+    }
+
+    /**
+     * Actualizar etiqueta de checkbox de estado para mostrar nombre legible
+     */
+    function updateStatusCheckboxLabel(checkbox) {
+        if (checkbox.value === '') return;
+
+        const label = checkbox.nextElementSibling;
+        if (!label || !label.classList.contains('form-check-label')) return;
+
+        // Si la etiqueta ya tiene el texto formateado, no hacer nada
+        if (label.getAttribute('data-formatted') === 'true') return;
+
+        // Mapeo de códigos a nombres legibles
+        const statusMap = {
+            'no_iniciada': 'No Iniciada',
+            'en_ejecucion': 'En Ejecución',
+            'en_espera_de_insumos': 'En Espera de Insumos',
+            'en_certificacion_por_cliente': 'En Certificación',
+            'pases_enviados': 'Pases Enviados',
+            'culminada': 'Culminada',
+            'pausada': 'Pausada'
+        };
+
+        // Actualizar texto de la etiqueta si existe en el mapeo
+        if (statusMap[checkbox.value]) {
+            label.textContent = statusMap[checkbox.value];
+            label.setAttribute('data-formatted', 'true');
+        }
+    }
+
+
+
+    /**
+     * Sincronizar checkboxes de estado entre diferentes menús
+     */
+    function syncStatusCheckboxes() {
+        // Sincronizar "Todos"
+        const statusAll = document.querySelector('#status-all');
+        const allChecked = statusAll ? statusAll.checked : false;
+        document.querySelectorAll('#status-all, #status-all-search').forEach(cb => {
+            if (cb) cb.checked = allChecked;
+        });
+
+        // Sincronizar checkboxes específicos
+        document.querySelectorAll('.status-filter').forEach(cb => {
+            if (cb.value !== '') {
+                const isChecked = activeFilters.status.includes(cb.value);
+                document.querySelectorAll(`.status-filter[value="${cb.value}"]`).forEach(relatedCb => {
+                    relatedCb.checked = isChecked;
+                });
+            }
+        });
+    }
+
+
+    /**
+     * Manejar cambio en filtro de analista
+     */
+    function handleAnalistaChange(checkbox) {
+        if (checkbox.value === '') {
+            // Checkbox "Todos"
+            if (checkbox.checked) {
+                activeFilters.analistas = [];
+                document.querySelectorAll('.analista-filter').forEach(cb => {
+                    if (cb.value !== '' && cb.id !== checkbox.id) cb.checked = false;
+                });
+            }
+        } else {
+            // Checkbox específico
+            document.querySelectorAll('#analista-all, #analista-all-search').forEach(allCheckbox => {
+                if (allCheckbox) allCheckbox.checked = false;
+            });
+
+            if (checkbox.checked) {
+                if (!activeFilters.analistas.includes(checkbox.value)) {
+                    activeFilters.analistas.push(checkbox.value);
+                }
+            } else {
+                activeFilters.analistas = activeFilters.analistas.filter(a => a !== checkbox.value);
+            }
+
+            // Si no hay ningún filtro seleccionado, marcar "Todos"
+            if (activeFilters.analistas.length === 0) {
+                document.querySelectorAll('#analista-all, #analista-all-search').forEach(allCheckbox => {
+                    if (allCheckbox) allCheckbox.checked = true;
+                });
+            }
+        }
+
+        // Sincronizar checkboxes entre diferentes menús
+        syncAnalistaCheckboxes();
+
+        // Aplicar filtros
+        applyFilters();
+        updateFilterIndicators();
+    }
+
+    /**
+     * Sincronizar checkboxes de analista entre diferentes menús
+     */
+    function syncAnalistaCheckboxes() {
+        // Sincronizar "Todos"
+        const allChecked = document.querySelector('#analista-all')?.checked || false;
+        document.querySelectorAll('#analista-all, #analista-all-search').forEach(cb => {
+            if (cb) cb.checked = allChecked;
+        });
+
+        // Sincronizar checkboxes específicos
+        document.querySelectorAll('.analista-filter').forEach(cb => {
+            if (cb.value !== '') {
+                const isChecked = activeFilters.analistas.includes(cb.value);
+                document.querySelectorAll(`.analista-filter[value="${cb.value}"]`).forEach(relatedCb => {
+                    relatedCb.checked = isChecked;
+                });
+            }
+        });
+    }
+
+    /**
+     * Configurar filtros de fecha
+     */
+    function setupDateFilters() {
+        // Configurar filtrado para campos de fecha
+        const fechaDesdeFilter = document.getElementById('fecha-desde-filter');
+        const fechaHastaFilter = document.getElementById('fecha-hasta-filter');
+
+        if (fechaDesdeFilter) {
+            fechaDesdeFilter.addEventListener('change', function () {
+                // Auto-completar fecha hasta si está vacía
+                if (this.value && fechaHastaFilter && !fechaHastaFilter.value) {
+                    fechaHastaFilter.value = this.value;
+                }
+
+                activeFilters.fechaDesde = this.value || null;
+                syncDateFilters('desde', this.value);
+                applyFilters();
+                updateFilterIndicators();
+            });
+        }
+
+        if (fechaHastaFilter) {
+            fechaHastaFilter.addEventListener('change', function () {
+                activeFilters.fechaHasta = this.value || null;
+                syncDateFilters('hasta', this.value);
+                applyFilters();
+                updateFilterIndicators();
+            });
+        }
+
+        // Configurar botones de aplicar/limpiar filtro de fecha
+        const applyDateFilterBtn = document.getElementById('apply-date-filter');
+        const clearDateFilterBtn = document.getElementById('clear-date-filter');
+
+        if (applyDateFilterBtn) {
+            applyDateFilterBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.getElementById('fecha-filter-menu').style.display = 'none';
+            });
+        }
+
+        if (clearDateFilterBtn) {
+            clearDateFilterBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Limpiar campos
+                document.querySelectorAll('#fecha-desde-filter, #fecha-desde-filter-search, #filterFechaDesde').forEach(input => {
+                    if (input) input.value = '';
+                });
+
+                document.querySelectorAll('#fecha-hasta-filter, #fecha-hasta-filter-search, #filterFechaHasta').forEach(input => {
+                    if (input) input.value = '';
+                });
+
+                // Limpiar filtros activos
+                activeFilters.fechaDesde = null;
+                activeFilters.fechaHasta = null;
+
+                // Aplicar filtros
+                applyFilters();
+                updateFilterIndicators();
+            });
+        }
+    }
+
+    /**
+     * Sincronizar filtros de fecha entre diferentes menús
+     */
+    function syncDateFilters(type, value) {
+        if (type === 'desde') {
+            document.querySelectorAll('#fecha-desde-filter, #fecha-desde-filter-search, #filterFechaDesde').forEach(input => {
+                if (input) input.value = value;
+            });
+        } else if (type === 'hasta') {
+            document.querySelectorAll('#fecha-hasta-filter, #fecha-hasta-filter-search, #filterFechaHasta').forEach(input => {
+                if (input) input.value = value;
+            });
+        }
+    }
+
+    /**
+     * Aplicar todos los filtros activos
+     */
+    function applyFilters() {
+        const rows = document.querySelectorAll('#tableContainer tbody tr');
+        let visibleCount = 0;
+
+        // Asegurar que el contenedor de la tabla mantenga su altura mínima
+        const tableContainer = document.querySelector('#tableContainer');
+        if (tableContainer) {
+            // Guardar la altura actual si es la primera vez
+            if (!tableContainer.getAttribute('data-original-height') && tableContainer.offsetHeight > 300) {
+                tableContainer.setAttribute('data-original-height', tableContainer.offsetHeight + 'px');
+                tableContainer.style.minHeight = tableContainer.offsetHeight + 'px';
+            }
+        }
+
+        rows.forEach(row => {
+            // Ignorar filas que no son actividades ni subactividades
+            if (!row.classList.contains('activity-row')) return;
+
+            let shouldShow = true;
+            const cells = row.querySelectorAll('td');
+
+            // Filtro por estado
+            if (activeFilters.status.length > 0 && cells[3]) {
+                const statusText = cells[3].textContent.trim().toLowerCase();
+                const statusMatch = activeFilters.status.some(status => {
+                    // Mapeo de códigos internos a textos legibles
+                    switch (status) {
+                        case 'no_iniciada':
+                            return statusText.includes('no iniciada');
+                        case 'en_ejecucion':
+                            return statusText.includes('en ejecución') || statusText.includes('ejecutando');
+                        case 'en_espera_de_insumos':
+                            return statusText.includes('en espera') || statusText.includes('insumos');
+                        case 'en_certificacion_por_cliente':
+                            return statusText.includes('certificación') || statusText.includes('certificando');
+                        case 'pases_enviados':
+                            return statusText.includes('pases enviados');
+                        case 'culminada':
+                            return statusText.includes('culminada') || statusText.includes('completada');
+                        case 'pausada':
+                            return statusText.includes('pausada');
+                        default:
+                            return statusText.includes(status.replace(/_/g, ' ').toLowerCase());
+                    }
+                });
+
+                if (!statusMatch) shouldShow = false;
+            }
+
+            // Filtro por analista
+            if (shouldShow && activeFilters.analistas.length > 0 && cells[4]) {
+                const analistaText = cells[4].textContent.trim().toLowerCase();
+                const analistaMatch = activeFilters.analistas.some(analistaId => {
+                    // Busca el nombre del analista por su ID
+                    const analistaLabel = document.querySelector(`.analista-filter[value="${analistaId}"] + label`);
+                    if (!analistaLabel) return false;
+                    const nombre = analistaLabel.textContent.trim().toLowerCase();
+                    return analistaText.includes(nombre);
+                });
+                if (!analistaMatch) shouldShow = false;
+            }
+
+            // Filtro por fecha
+            if (shouldShow && (activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[7]) {
+                const fechaText = cells[6].textContent.trim(); // Columna 7: Fecha de Recepción, 
+                const fechaMatch = fechaText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+
+                if (fechaMatch) {
+                    // Convertir a formato YYYY-MM-DD para comparación
+                    const day = fechaMatch[1];
+                    const month = fechaMatch[2];
+                    const year = fechaMatch[3];
+                    const fechaActividad = new Date(`${year}-${month}-${day}`);
+
+                    if (activeFilters.fechaDesde) {
+                        const fechaDesde = new Date(activeFilters.fechaDesde);
+                        if (fechaActividad < fechaDesde) shouldShow = false;
+                    }
+
+                    if (shouldShow && activeFilters.fechaHasta) {
+                        const fechaHasta = new Date(activeFilters.fechaHasta);
+                        if (fechaActividad > fechaHasta) shouldShow = false;
+                    }
+                } else if (activeFilters.fechaDesde || activeFilters.fechaHasta) {
+                    // Si no se puede extraer la fecha pero hay filtro de fecha, ocultar
+                    shouldShow = false;
+                }
+            }
+
+            // Aplicar visibilidad
+            if (shouldShow) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+
+            // Si es una actividad padre y está oculta, ocultar también sus subactividades
+            if (row.classList.contains('parent-activity') && !shouldShow) {
+                const activityId = row.getAttribute('data-activity-id');
+                document.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`).forEach(subRow => {
+                    subRow.style.display = 'none';
+                });
+            }
+        });
+
+        // Actualizar contador de resultados
+        updateResultsCount(visibleCount);
+    }
+
+    /**
+     * Actualizar contador de resultados
+     */
+    function updateResultsCount(visibleCount) {
+        const totalRows = document.querySelectorAll('#tableContainer tbody tr.activity-row').length;
+
+        // Actualizar título de la tabla si existe
+        const tableTitle = document.getElementById('tableTitle');
+        if (tableTitle) {
+            if (visibleCount === totalRows) {
+                tableTitle.textContent = 'Lista de Actividades';
+            } else {
+                tableTitle.textContent = `Actividades filtradas (${visibleCount} de ${totalRows})`;
+            }
+        }
+    }
+
+    /**
+     * Actualizar indicadores visuales de filtros activos
+     */
+    function updateFilterIndicators() {
+        // Indicador para filtro de estado
+        const statusFilterBtn = document.querySelector('[data-filter="status"]');
+        if (statusFilterBtn) {
+            if (activeFilters.status.length > 0) {
+                statusFilterBtn.classList.add('active', 'btn-primary');
+                statusFilterBtn.classList.remove('btn-outline-secondary');
+            } else {
+                statusFilterBtn.classList.remove('active', 'btn-primary');
+                statusFilterBtn.classList.add('btn-outline-secondary');
+            }
+        }
+
+        // Indicador para filtro de analista
+        const analistaFilterBtn = document.querySelector('[data-filter="analistas"]');
+        if (analistaFilterBtn) {
+            if (activeFilters.analistas.length > 0) {
+                analistaFilterBtn.classList.add('active', 'btn-primary');
+                analistaFilterBtn.classList.remove('btn-outline-secondary');
+            } else {
+                analistaFilterBtn.classList.remove('active', 'btn-primary');
+                analistaFilterBtn.classList.add('btn-outline-secondary');
+            }
+        }
+
+        // Indicador para filtro de fecha
+        const fechaFilterBtn = document.querySelector('[data-filter="fecha"]');
+        if (fechaFilterBtn) {
+            if (activeFilters.fechaDesde || activeFilters.fechaHasta) {
+                fechaFilterBtn.classList.add('active', 'btn-primary');
+                fechaFilterBtn.classList.remove('btn-outline-secondary');
+            } else {
+                fechaFilterBtn.classList.remove('active', 'btn-primary');
+                fechaFilterBtn.classList.add('btn-outline-secondary');
+            }
+        }
+
+        // Mostrar/ocultar botón de limpiar todos los filtros
+        const clearAllBtn = document.getElementById('clearAllColumnFilters');
+        if (clearAllBtn) {
+            const hasActiveFilters = activeFilters.status.length > 0 ||
+                activeFilters.analistas.length > 0 ||
+                activeFilters.fechaDesde ||
+                activeFilters.fechaHasta;
+
+            clearAllBtn.style.display = hasActiveFilters ? 'block' : 'none';
+        }
+    }
+
+    /**
+     * Limpiar todos los filtros
+     */
+    function clearAllFilters() {
+        // Limpiar filtros de estado
+        document.querySelectorAll('.status-filter').forEach(cb => {
+            if (cb.value === '') {
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
+
+        // Limpiar filtros de analistas
+        document.querySelectorAll('.analista-filter').forEach(cb => {
+            if (cb.value === '') {
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
+
+        // Limpiar filtros de fecha
+        document.querySelectorAll('#fecha-desde-filter, #fecha-desde-filter-search, #filterFechaDesde').forEach(input => {
+            if (input) input.value = '';
+        });
+
+        document.querySelectorAll('#fecha-hasta-filter, #fecha-hasta-filter-search, #filterFechaHasta').forEach(input => {
+            if (input) input.value = '';
+        });
+
+        // Resetear filtros activos
+        activeFilters = {
+            status: [],
+            analistas: [],
+            fechaDesde: null,
+            fechaHasta: null
+        };
+
+        // Aplicar filtros para mostrar todas las filas
+        applyFilters();
+
+        // Cerrar todos los dropdowns
+        document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
+            menu.style.display = 'none';
+        });
+
+        // Actualizar indicadores visuales
+        updateFilterIndicators();
+    }
+});
