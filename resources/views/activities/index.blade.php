@@ -452,13 +452,22 @@
                                         <td class="align-middle">
                                             <div class="d-flex align-items-center">
                                                 @if ($activity->subactivities->count() > 0)
-                                                    <span class="toggle-subactivities mr-2" style="cursor: pointer;">
+                                                    <span class="toggle-subactivities mr-2" style="cursor: pointer;"
+                                                        data-activity-id="{{ $activity->id }}">
                                                         <i class="fas fa-chevron-right text-primary"
                                                             id="icon-{{ $activity->id }}"></i>
                                                     </span>
                                                 @endif
                                                 <div>
-                                                    <div class="font-weight-bold text-dark">{{ $activity->name }}</div>
+                                                    <div class="font-weight-bold text-dark small">
+                                                        {{ Str::limit($activity->name, 40) }}
+                                                        @if (strlen($activity->name) > 40)
+                                                            <span class="text-primary" style="cursor: pointer;"
+                                                                title="{{ $activity->name }}" data-toggle="tooltip">
+                                                                <i class="fas fa-info-circle"></i>
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                     @if ($activity->subactivities->count() > 0)
                                                         <small class="text-muted">
                                                             <i class="fas fa-sitemap"></i>
@@ -466,12 +475,13 @@
                                                         </small>
                                                     @endif
                                                 </div>
+
                                             </div>
                                         </td>
                                         <td class="align-middle">
                                             <div class="description-cell">
-                                                {{ Str::limit($activity->description, 80) }}
-                                                @if (strlen($activity->description) > 80)
+                                                {{ Str::limit($activity->description, 30) }}
+                                                @if (strlen($activity->description) > 30)
                                                     <span class="text-primary" style="cursor: pointer;"
                                                         title="{{ $activity->description }}" data-toggle="tooltip">
                                                         <i class="fas fa-info-circle"></i>
@@ -654,12 +664,12 @@
                                             <div class="action-buttons">
                                                 <div class="btn-group btn-group-sm" role="group">
                                                     <a href="{{ route('activities.edit', $activity) }}"
-                                                        class="btn btn-warning btn-xs action-btn"
+                                                        class="btn btn-warning btn-sm action-btn"
                                                         data-tooltip="Ver/Editar" title="Ver/Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                     <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}"
-                                                        class="btn btn-secondary btn-xs action-btn"
+                                                        class="btn btn-secondary btn-sm action-btn"
                                                         data-tooltip="Crear Subactividad" title="Crear Subactividad">
                                                         <i class="fas fa-plus"></i>
                                                     </a>
@@ -667,7 +677,7 @@
                                                         method="POST" style="display:inline;">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger btn-xs action-btn"
+                                                        <button type="submit" class="btn btn-danger btn-sm action-btn"
                                                             data-tooltip="Eliminar" title="Eliminar"
                                                             onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
                                                             <i class="fas fa-trash"></i>
@@ -918,11 +928,11 @@
         }
 
         /* Botones de acción */
-        .action-buttons .btn {
+        .action-buttons .btn.btn-sm {
             margin: 0.1rem 0;
             border-radius: 6px;
             font-size: 0.8rem;
-            padding: 0.4rem 0.8rem;
+            padding: 0.2rem 0.4rem;
             transition: all 0.2s ease;
         }
 

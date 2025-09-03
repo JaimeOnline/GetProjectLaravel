@@ -19,6 +19,68 @@ document.addEventListener('DOMContentLoaded', function () {
     setupSortHandlers();
     setupColumnFilters();
 
+    // Toggle subactividades usando event delegation sobre el tbody
+    const tableBody = document.querySelector('#tableContainer tbody');
+    if (tableBody) {
+        tableBody.addEventListener('click', function (e) {
+            // Asegura que el click fue en el toggle o en su icono
+            let btn = e.target;
+            if (!btn.classList.contains('toggle-subactivities')) {
+                btn = btn.closest('.toggle-subactivities');
+            }
+            if (!btn) return;
+
+            // DEPURACIÓN: Verifica si el evento se dispara y qué botón es
+            console.log('Toggle click:', btn);
+
+            // El id de la actividad está en el data-activity-id del span
+            const parentId = btn.getAttribute('data-activity-id');
+            if (!parentId) {
+                console.log('No data-activity-id en el toggle');
+                return;
+            }
+            const icon = btn.querySelector('i');
+            const subRows = tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`);
+
+            const isExpanded = btn.classList.contains('expanded');
+            if (!isExpanded) {
+                btn.classList.add('expanded');
+                if (icon) {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-down');
+                }
+                // Mostrar subactividades directas
+                subRows.forEach(row => {
+                    row.style.display = 'table-row';
+                });
+            } else {
+                btn.classList.remove('expanded');
+                if (icon) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-right');
+                }
+                // Ocultar subactividades directas y sus descendientes recursivamente
+                function hideSubtree(parentId) {
+                    tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`).forEach(row => {
+                        row.style.display = 'none';
+                        // Si la subactividad tiene su propio toggle expandido, colapsar también
+                        const subBtn = row.querySelector('.toggle-subactivities.expanded');
+                        if (subBtn) {
+                            subBtn.classList.remove('expanded');
+                            const subIcon = subBtn.querySelector('i');
+                            if (subIcon) {
+                                subIcon.classList.remove('fa-chevron-down');
+                                subIcon.classList.add('fa-chevron-right');
+                            }
+                        }
+                        hideSubtree(row.getAttribute('data-activity-id'));
+                    });
+                }
+                hideSubtree(parentId);
+            }
+        });
+    }
+
     /**
      * Formatear todas las etiquetas de estado para mostrar nombres legibles
      */
