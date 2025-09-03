@@ -10,6 +10,7 @@ use App\Models\Comment;
 use App\Models\Email;
 use App\Models\Status;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ActivityController extends Controller
 {
@@ -81,7 +82,7 @@ class ActivityController extends Controller
         $query = $request->get('query', '');
 
         // Log para debug
-        \Log::info('Search request', [
+        Log::info('Search request', [
             'query' => $query,
             'all_params' => $request->all()
         ]);
