@@ -15,64 +15,64 @@ use Illuminate\Support\Facades\Log;
 class ActivityController extends Controller
 {
     public function index(Request $request)
-{
-    // Obtener solo las actividades padre (sin parent_id) con sus relaciones
-    $activities = Activity::whereNull('parent_id')
-        ->with([
+    {
+        // Obtener solo las actividades padre (sin parent_id) con sus relaciones
+        $activities = Activity::whereNull('parent_id')
+            ->with([
+                'analistas',
+                'comments',
+                'emails',
+                'requirements',
+                'statuses',
+                'subactivities.analistas',
+                'subactivities.comments',
+                'subactivities.emails',
+                'subactivities.requirements',
+                'subactivities.statuses',
+                'subactivities.subactivities.analistas',
+                'subactivities.subactivities.comments',
+                'subactivities.subactivities.emails',
+                'subactivities.subactivities.requirements',
+                'subactivities.subactivities.statuses'
+            ])
+            ->get();
+
+        // Analistas para el filtro
+        $analistas = Analista::all();
+
+        // Filtros de estado (array asociativo para la tabla)
+        $statusLabels = [
+            'no_iniciada' => 'No Iniciada',
+            'en_ejecucion' => 'En Ejecución',
+            'en_espera_de_insumos' => 'En Espera de Insumos',
+            'en_certificacion_por_cliente' => 'En Certificación',
+            'pases_enviados' => 'Pases Enviados',
+            'culminada' => 'Culminada',
+            'pausada' => 'Pausada'
+        ];
+
+        // Colores de estado para los filtros
+        $statusColors = [
+            'no_iniciada' => '#6c757d',
+            'en_ejecucion' => '#17a2b8',
+            'en_espera_de_insumos' => '#ffc107',
+            'en_certificacion_por_cliente' => '#fd7e14',
+            'pases_enviados' => '#20c997',
+            'culminada' => '#28a745',
+            'pausada' => '#343a40'
+        ];
+
+        // Estados para el modal (colección de objetos)
+        $statuses = Status::orderBy('order')->get();
+
+        return view('activities.index', compact(
+            'activities',
             'analistas',
-            'comments',
-            'emails',
-            'requirements',
-            'statuses',
-            'subactivities.analistas',
-            'subactivities.comments',
-            'subactivities.emails',
-            'subactivities.requirements',
-            'subactivities.statuses',
-            'subactivities.subactivities.analistas',
-            'subactivities.subactivities.comments',
-            'subactivities.subactivities.emails',
-            'subactivities.subactivities.requirements',
-            'subactivities.subactivities.statuses'
-        ])
-        ->get();
-
-    // Analistas para el filtro
-    $analistas = Analista::all();
-
-    // Filtros de estado (array asociativo para la tabla)
-    $statusLabels = [
-        'no_iniciada' => 'No Iniciada',
-        'en_ejecucion' => 'En Ejecución',
-        'en_espera_de_insumos' => 'En Espera de Insumos',
-        'en_certificacion_por_cliente' => 'En Certificación',
-        'pases_enviados' => 'Pases Enviados',
-        'culminada' => 'Culminada',
-        'pausada' => 'Pausada'
-    ];
-
-    // Colores de estado para los filtros
-    $statusColors = [
-        'no_iniciada' => '#6c757d',
-        'en_ejecucion' => '#17a2b8',
-        'en_espera_de_insumos' => '#ffc107',
-        'en_certificacion_por_cliente' => '#fd7e14',
-        'pases_enviados' => '#20c997',
-        'culminada' => '#28a745',
-        'pausada' => '#343a40'
-    ];
-
-    // Estados para el modal (colección de objetos)
-    $statuses = Status::orderBy('order')->get();
-
-    return view('activities.index', compact(
-        'activities',
-        'analistas',
-        'statusLabels',
-        'statusColors',
-        'statuses'
-    ));
-}
+            'statusLabels',
+            'statusColors',
+            'statuses'
+        ));
+    }
 
     /**
      * Búsqueda AJAX en tiempo real
@@ -224,7 +224,7 @@ class ActivityController extends Controller
     }
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'name' => 'required',
             'status_ids' => 'required|array|min:1',
             'status_ids.*' => 'exists:statuses,id',
@@ -233,10 +233,18 @@ class ActivityController extends Controller
             'requirements' => 'nullable|array', // Solo array, permitiendo que esté vacío
             'comments' => 'nullable|array', // Validar comentarios como array
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
-            'caso' => 'required|unique:activities,caso', // Validar que el campo 'caso' sea único en la tabla 'activities'
             'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
             'estatus_operacional' => 'nullable|string|max:1000', // Validar el nuevo campo estatus_operacional
-        ]);
+        ];
+
+        // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
+        if (is_null($request->input('parent_id'))) {
+            $rules['caso'] = 'required|unique:activities,caso';
+        } else {
+            $rules['caso'] = 'required';
+        }
+
+        $request->validate($rules);
 
         // Crear la actividad (sin el campo status ya que ahora usamos la tabla pivot)
         $activity = Activity::create($request->only(['caso', 'name', 'description', 'estatus_operacional', 'fecha_recepcion', 'parent_id']));
@@ -285,7 +293,7 @@ class ActivityController extends Controller
     }
     public function update(Request $request, Activity $activity)
     {
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'status' => 'nullable|in:no_iniciada,en_ejecucion,en_espera_de_insumos,pausada,en_certificacion_por_cliente,pases_enviados,culminada,cancelada,en_revision',
             'analista_id' => 'required|array|min:1',
@@ -295,11 +303,19 @@ class ActivityController extends Controller
             'comments' => 'nullable|array',
             'comments.*' => 'nullable|string|max:1000',
             'fecha_recepcion' => 'nullable|date',
-            'caso' => 'required|string|max:255|unique:activities,caso,' . $activity->id,
             'parent_id' => 'nullable|exists:activities,id',
             'description' => 'nullable|string|max:1000',
             'estatus_operacional' => 'nullable|string|max:1000',
-        ]);
+        ];
+
+        // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
+        if (is_null($request->input('parent_id'))) {
+            $rules['caso'] = 'required|string|max:255|unique:activities,caso,' . $activity->id;
+        } else {
+            $rules['caso'] = 'required|string|max:255';
+        }
+
+        $request->validate($rules);
 
         try {
             // Actualizar la actividad

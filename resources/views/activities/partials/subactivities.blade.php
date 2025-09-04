@@ -156,12 +156,12 @@
         <td class="align-middle text-center">
             <div class="action-buttons">
                 <div class="btn-group btn-group-sm" role="group">
-                    <a href="{{ route('activities.edit', $subactivity) }}" class="btn btn-warning btn-xs action-btn"
+                    <a href="{{ route('activities.edit', $subactivity) }}" class="btn btn-warning btn-sm action-btn"
                         data-tooltip="Ver/Editar" title="Ver/Editar">
                         <i class="fas fa-edit"></i>
                     </a>
                     <a href="{{ route('activities.create', ['parentId' => $subactivity->id]) }}"
-                        class="btn btn-secondary btn-xs action-btn" data-tooltip="Crear Subactividad"
+                        class="btn btn-secondary btn-sm action-btn" data-tooltip="Crear Subactividad"
                         title="Crear Subactividad">
                         <i class="fas fa-plus"></i>
                     </a>
@@ -169,7 +169,7 @@
                         style="display:inline;">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-xs action-btn" data-tooltip="Eliminar"
+                        <button type="submit" class="btn btn-danger btn-sm action-btn" data-tooltip="Eliminar"
                             title="Eliminar"
                             onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
                             <i class="fas fa-trash"></i>
@@ -187,3 +187,15 @@
         ])
     @endif
 @endforeach
+
+<style>
+    /* Botones de acción */
+    .action-buttons .btn.btn-sm {
+        margin: 0.1rem 0;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        padding: 0.2rem 0.4rem;
+        transition: all 0.2s ease;
+    }
+</style>
+
