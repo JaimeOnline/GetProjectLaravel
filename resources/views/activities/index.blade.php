@@ -87,6 +87,35 @@
                     </div>
                 </div>
             </div>
+            <!-- Filtros avanzados (inicialmente ocultos) -->
+            <div id="filtersSection" style="display: none; margin-bottom: 1rem;">
+                <div class="card card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="filterEstado">Estado:</label>
+                            <select class="form-control" id="filterEstado">
+                                <option value="">Todos</option>
+                                @foreach ($statusLabels as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="filterAnalista">Analista:</label>
+                            <select class="form-control" id="filterAnalista">
+                                <option value="">Todos</option>
+                                @foreach ($analistas as $analista)
+                                    <option value="{{ $analista->id }}">{{ $analista->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="filterFecha">Fecha de Recepción:</label>
+                            <input type="date" class="form-control" id="filterFecha">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Botón para mostrar/ocultar estadísticas -->
@@ -1328,6 +1357,89 @@
         border-color: #adb5bd;
     }
 </style>
+
+<!-- Script para mostrar Filtros avanzados (inicialmente ocultos) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle de filtros avanzados
+        const toggleFiltersBtn = document.getElementById('toggleFilters');
+        const filtersSection = document.getElementById('filtersSection');
+        const filterToggleText = document.getElementById('filterToggleText');
+
+        toggleFiltersBtn.addEventListener('click', function() {
+            if (filtersSection.style.display === 'none' || filtersSection.style.display === '') {
+                filtersSection.style.display = 'block';
+                filterToggleText.textContent = 'Ocultar Filtros';
+            } else {
+                filtersSection.style.display = 'none';
+                filterToggleText.textContent = 'Mostrar Filtros';
+            }
+        });
+
+        // Filtros avanzados
+        const estadoSelect = document.getElementById('filterEstado');
+        const analistaSelect = document.getElementById('filterAnalista');
+        const fechaInput = document.getElementById('filterFecha');
+        const tableRows = document.querySelectorAll('#tableContainer tbody tr.activity-row');
+
+        function filtrarTabla() {
+            const estado = estadoSelect.value;
+            const analista = analistaSelect.value;
+            const fecha = fechaInput.value;
+
+            tableRows.forEach(row => {
+                let mostrar = true;
+                const cells = row.querySelectorAll('td');
+
+                // Filtro por estado (columna 4)
+                if (estado && cells[3]) {
+                    const statusText = cells[3].textContent.trim().toLowerCase();
+                    mostrar = mostrar && statusText.includes(estado.replace(/_/g, ' ').toLowerCase());
+                }
+
+                // Filtro por analista (columna 5)
+                if (analista && cells[4]) {
+                    const analistaText = cells[4].textContent.trim();
+                    mostrar = mostrar && analistaText.includes(analistaSelect.options[analistaSelect
+                        .selectedIndex].text);
+                }
+
+                // Filtro por fecha (columna 7)
+                if (fecha && cells[6]) {
+                    const fechaText = cells[6].textContent.trim();
+                    // Convierte fecha de YYYY-MM-DD a DD/MM/YYYY para comparar
+                    const [yyyy, mm, dd] = fecha.split('-');
+                    const fechaFormateada = `${dd}/${mm}/${yyyy}`;
+                    mostrar = mostrar && fechaText.includes(fechaFormateada);
+                }
+
+                row.style.display = mostrar ? '' : 'none';
+            });
+
+            // Llama a la función que actualiza los indicadores visuales de filtros
+            if (typeof updateFilterIndicators === 'function') {
+                updateFilterIndicators();
+            }
+        }
+
+
+        if (estadoSelect) estadoSelect.addEventListener('change', filtrarTabla);
+        if (analistaSelect) analistaSelect.addEventListener('change', filtrarTabla);
+        if (fechaInput) fechaInput.addEventListener('change', filtrarTabla);
+
+        // LIMPIAR FILTROS AVANZADOS AL USAR EL BOTÓN "Limpiar Filtros"
+        const clearAllBtn = document.getElementById('clearAllColumnFilters');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', function() {
+                if (estadoSelect) estadoSelect.value = '';
+                if (analistaSelect) analistaSelect.value = '';
+                if (fechaInput) fechaInput.value = '';
+                filtrarTabla();
+            });
+        }
+    });
+</script>
+
 
 
 

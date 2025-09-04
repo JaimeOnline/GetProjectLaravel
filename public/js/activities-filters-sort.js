@@ -758,14 +758,28 @@ document.addEventListener('DOMContentLoaded', function () {
         // Mostrar/ocultar botón de limpiar todos los filtros
         const clearAllBtn = document.getElementById('clearAllColumnFilters');
         if (clearAllBtn) {
-            const hasActiveFilters = activeFilters.status.length > 0 ||
+            // Filtros de columna
+            let hasActiveFilters = activeFilters.status.length > 0 ||
                 activeFilters.analistas.length > 0 ||
                 activeFilters.fechaDesde ||
                 activeFilters.fechaHasta;
 
+            // Filtros avanzados
+            const estadoSelect = document.getElementById('filterEstado');
+            const analistaSelect = document.getElementById('filterAnalista');
+            const fechaInput = document.getElementById('filterFecha');
+            if (
+                (estadoSelect && estadoSelect.value) ||
+                (analistaSelect && analistaSelect.value) ||
+                (fechaInput && fechaInput.value)
+            ) {
+                hasActiveFilters = true;
+            }
+
             clearAllBtn.style.display = hasActiveFilters ? 'block' : 'none';
         }
     }
+
 
     /**
      * Limpiar todos los filtros
@@ -798,6 +812,23 @@ document.addEventListener('DOMContentLoaded', function () {
             if (input) input.value = '';
         });
 
+        // Limpiar filtros avanzados
+        const estadoSelect = document.getElementById('filterEstado');
+        const analistaSelect = document.getElementById('filterAnalista');
+        const fechaInput = document.getElementById('filterFecha');
+        if (estadoSelect) {
+            estadoSelect.value = '';
+            estadoSelect.dispatchEvent(new Event('change'));
+        }
+        if (analistaSelect) {
+            analistaSelect.value = '';
+            analistaSelect.dispatchEvent(new Event('change'));
+        }
+        if (fechaInput) {
+            fechaInput.value = '';
+            fechaInput.dispatchEvent(new Event('change'));
+        }
+
         // Resetear filtros activos
         activeFilters = {
             status: [],
@@ -817,4 +848,39 @@ document.addEventListener('DOMContentLoaded', function () {
         // Actualizar indicadores visuales
         updateFilterIndicators();
     }
+
+    // --- INICIO: Actualización de indicadores al usar filtros avanzados ---
+    const estadoSelect = document.getElementById('filterEstado');
+    const analistaSelect = document.getElementById('filterAnalista');
+    const fechaInput = document.getElementById('filterFecha');
+
+    function filtrarAvanzado() {
+        // Estado
+        if (estadoSelect && estadoSelect.value) {
+            activeFilters.status = [estadoSelect.value];
+        } else {
+            activeFilters.status = [];
+        }
+        // Analista
+        if (analistaSelect && analistaSelect.value) {
+            activeFilters.analistas = [analistaSelect.value];
+        } else {
+            activeFilters.analistas = [];
+        }
+        // Fecha
+        if (fechaInput && fechaInput.value) {
+            activeFilters.fechaDesde = fechaInput.value;
+            activeFilters.fechaHasta = fechaInput.value;
+        } else {
+            activeFilters.fechaDesde = null;
+            activeFilters.fechaHasta = null;
+        }
+        applyFilters();
+        updateFilterIndicators();
+    }
+
+    if (estadoSelect) estadoSelect.addEventListener('change', filtrarAvanzado);
+    if (analistaSelect) analistaSelect.addEventListener('change', filtrarAvanzado);
+    if (fechaInput) fechaInput.addEventListener('change', filtrarAvanzado);
+    // --- FIN: Actualización de indicadores al usar filtros avanzados ---
 });
