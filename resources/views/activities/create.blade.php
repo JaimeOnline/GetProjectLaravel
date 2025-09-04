@@ -87,7 +87,9 @@
                                 </label>
                                 <select class="form-control" id="status_ids" name="status_ids[]" multiple required>
                                     @foreach ($statuses as $status)
-                                        <option value="{{ $status->id }}">{{ $status->label }}</option>
+                                        <option value="{{ $status->id }}" {{ $status->id == 7 ? 'selected' : '' }}>
+                                            {{ $status->label }}
+                                        </option>
                                     @endforeach
                                 </select>
                                 <small class="form-text text-muted">Selecciona al menos un estado para la actividad.</small>
@@ -134,8 +136,8 @@
 
                             <div class="analysts-grid">
                                 @foreach ($analistas as $analista)
-                                    <div class="analyst-card" data-analyst-id="{{ $analista->id }}"
-                                        data-analyst-name="{{ $analista->name }}">
+                                    <div class="analyst-card{{ $analista->id == 7 ? ' selected' : '' }}"
+                                        data-analyst-id="{{ $analista->id }}" data-analyst-name="{{ $analista->name }}">
                                         <div class="analyst-avatar">
                                             {{ strtoupper(substr($analista->name, 0, 2)) }}
                                         </div>
@@ -211,8 +213,17 @@
         </form>
 
         <script>
+            @php
+                $defaultAnalyst = $analistas->firstWhere('id', 7);
+            @endphp
             // ===== FUNCIONALIDAD DE SELECCIÓN DE ANALISTAS =====
             let selectedAnalysts = [];
+            @if ($defaultAnalyst)
+                selectedAnalysts.push({
+                    id: "{{ $defaultAnalyst->id }}",
+                    name: "{{ $defaultAnalyst->name }}"
+                });
+            @endif
 
             // Manejar clicks en las tarjetas de analistas
             document.addEventListener('click', function(e) {
@@ -269,5 +280,6 @@
                     summary.style.display = 'none';
                 }
             }
+            updateAnalystsDisplay();
         </script>
     @endsection
