@@ -337,8 +337,16 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th class="border-0">
-                                        <i class="fas fa-file-alt text-primary"></i> Nombre
+                                    <th class="border-0" style="position: relative;">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-file-alt text-primary"></i> Nombre
+                                            <button type="button" class="btn btn-sm btn-outline-secondary ml-2"
+                                                id="toggleAllSubactivitiesBtn"
+                                                title="Expandir/Colapsar todas las subactividades"
+                                                style="margin-left: 8px; padding: 2px 8px;">
+                                                <i class="fas fa-chevron-down" id="toggleAllSubactivitiesIcon"></i>
+                                            </button>
+                                        </div>
                                     </th>
                                     <th class="border-0">
                                         <i class="fas fa-align-left text-primary"></i> Descripción

@@ -35,6 +35,58 @@ document.addEventListener('DOMContentLoaded', function () {
     setupSortHandlers();
     setupColumnFilters();
 
+    // --- Expandir/Colapsar todas las subactividades ---
+    const toggleAllBtn = document.getElementById('toggleAllSubactivitiesBtn');
+    const toggleAllIcon = document.getElementById('toggleAllSubactivitiesIcon');
+    let allExpanded = false;
+
+    if (toggleAllBtn) {
+        toggleAllBtn.addEventListener('click', function () {
+            const tableBody = document.querySelector('#tableContainer tbody');
+            if (!tableBody) return;
+
+            // Todas las filas de subactividad
+            const subRows = tableBody.querySelectorAll('tr.subactivity-row');
+            // Todos los toggles de actividades padre
+            const toggles = tableBody.querySelectorAll('.toggle-subactivities');
+
+            if (!allExpanded) {
+                // Expandir todas
+                subRows.forEach(row => row.style.display = 'table-row');
+                toggles.forEach(toggle => {
+                    toggle.classList.add('expanded');
+                    const icon = toggle.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-right');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                });
+                if (toggleAllIcon) {
+                    toggleAllIcon.classList.remove('fa-chevron-down');
+                    toggleAllIcon.classList.add('fa-chevron-up');
+                }
+                allExpanded = true;
+            } else {
+                // Colapsar todas
+                subRows.forEach(row => row.style.display = 'none');
+                toggles.forEach(toggle => {
+                    toggle.classList.remove('expanded');
+                    const icon = toggle.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-right');
+                    }
+                });
+                if (toggleAllIcon) {
+                    toggleAllIcon.classList.remove('fa-chevron-up');
+                    toggleAllIcon.classList.add('fa-chevron-down');
+                }
+                allExpanded = false;
+            }
+        });
+    }
+
+
     // Toggle subactividades usando event delegation sobre el tbody
     const tableBody = document.querySelector('#tableContainer tbody');
     if (tableBody) {
