@@ -11,6 +11,8 @@ use App\Models\Email;
 use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+
 
 class ActivityController extends Controller
 {
@@ -310,12 +312,19 @@ class ActivityController extends Controller
 
         // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
         if (is_null($request->input('parent_id'))) {
-            $rules['caso'] = 'required|string|max:255|unique:activities,caso,' . $activity->id;
+            $rules['caso'] = [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('activities', 'caso')
+                    ->whereNull('parent_id')
+                    ->ignore($activity->id)
+            ];
         } else {
             $rules['caso'] = 'required|string|max:255';
         }
-
         $request->validate($rules);
+
 
         try {
             // Actualizar la actividad

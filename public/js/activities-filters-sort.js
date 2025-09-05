@@ -1,7 +1,23 @@
 /**
- * Script para manejar ordenamiento y filtros en la vista de actividades
+ * Script para manejar ordenamiento y filtros avanzados en la vista de actividades
  */
 document.addEventListener('DOMContentLoaded', function () {
+    // --- Toggle de filtros avanzados ---
+    const toggleFiltersBtn = document.getElementById('toggleFilters');
+    const filtersSection = document.getElementById('filtersSection');
+    const filterToggleText = document.getElementById('filterToggleText');
+
+    if (toggleFiltersBtn && filtersSection && filterToggleText) {
+        toggleFiltersBtn.addEventListener('click', function () {
+            if (filtersSection.style.display === 'none' || filtersSection.style.display === '') {
+                filtersSection.style.display = 'block';
+                filterToggleText.textContent = 'Ocultar Filtros';
+            } else {
+                filtersSection.style.display = 'none';
+                filterToggleText.textContent = 'Mostrar Filtros';
+            }
+        });
+    }
     // Variables globales
     let currentSort = { column: null, direction: 'asc' };
     let originalRows = null;
