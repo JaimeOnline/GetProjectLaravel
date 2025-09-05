@@ -899,4 +899,260 @@ document.addEventListener('DOMContentLoaded', function () {
     if (analistaSelect) analistaSelect.addEventListener('change', filtrarAvanzado);
     if (fechaInput) fechaInput.addEventListener('change', filtrarAvanzado);
     // --- FIN: Actualización de indicadores al usar filtros avanzados ---
+
+    // --- BÚSQUEDA Y FILTRO AJAX (como en la versión anterior) ---
+
+    const searchInput = document.getElementById('searchInput');
+    const searchSpinner = document.getElementById('searchSpinner');
+    const searchResultsCount = document.getElementById('searchResultsCount');
+    const resultsNumber = document.getElementById('resultsNumber');
+    const searchResultsAlert = document.getElementById('searchResultsAlert');
+    const searchResultsText = document.getElementById('searchResultsText');
+    const tableTitle = document.getElementById('tableTitle');
+
+    let searchTimeout;
+    let isSearchActive = false;
+    let currentSearchQuery = '';
+
+    // Guardar el HTML original de la tabla al cargar la página
+    let originalTableContent = '';
+    const tableContainer = document.getElementById('tableContainer');
+    if (tableContainer) {
+        originalTableContent = tableContainer.innerHTML;
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const query = this.value.trim();
+            currentSearchQuery = query;
+
+            clearTimeout(searchTimeout);
+
+            if (query.length === 0) {
+                clearSearch();
+                return;
+            }
+
+            searchSpinner.style.display = 'inline-block';
+            searchResultsCount.style.display = 'none';
+
+            searchTimeout = setTimeout(function () {
+                performSearch(query, getCurrentFilters());
+            }, 300);
+        });
+    }
+
+
+    function getCurrentFilters() {
+        // Devuelve los filtros en el formato que espera el backend
+        return {
+            status: activeFilters.status,
+            analista_id: activeFilters.analistas.length > 0 ? activeFilters.analistas[0] : '',
+            fecha_desde: activeFilters.fechaDesde,
+            fecha_hasta: activeFilters.fechaHasta
+        };
+    }
+
+    function performSearch(query, filters = {}) {
+        const data = { query: query };
+        Object.keys(filters).forEach(key => {
+            if (filters[key]) {
+                data[key] = filters[key];
+            }
+        });
+
+        $.ajax({
+            url: '/activities/search',
+            method: 'GET',
+            data: data,
+            dataType: 'json',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function (data) {
+                displaySearchResults(data, query);
+                searchSpinner.style.display = 'none';
+            },
+            error: function () {
+                searchSpinner.style.display = 'none';
+                showErrorMessage('Error al realizar la búsqueda. Inténtalo de nuevo.');
+            }
+        });
+    }
+
+    function displaySearchResults(data, query) {
+        resultsNumber.textContent = data.total_results;
+        searchResultsCount.style.display = 'inline-block';
+
+        if (data.total_results > 0) {
+            searchResultsText.textContent = `Se encontraron ${data.total_results} resultado(s) para "${query}"`;
+            searchResultsAlert.style.display = 'block';
+            tableTitle.textContent = `Resultados de búsqueda (${data.total_results})`;
+        } else {
+            searchResultsText.textContent = `No se encontraron resultados para "${query}"`;
+            searchResultsAlert.style.display = 'block';
+            tableTitle.textContent = 'Sin resultados';
+        }
+
+        // Renderizar resultados en la tabla
+        let html = `
+            <table class="table table-hover mb-0 modern-table">
+                <thead class="thead-light">
+                    <tr>
+                        <th class="border-0"><i class="fas fa-hashtag text-primary"></i> Caso</th>
+                        <th class="border-0"><i class="fas fa-file-alt text-primary"></i> Nombre</th>
+                        <th class="border-0"><i class="fas fa-align-left text-primary"></i> Descripción</th>
+                        <th class="border-0"><i class="fas fa-flag text-primary"></i> Estado</th>
+                        <th class="border-0"><i class="fas fa-users text-primary"></i> Analistas</th>
+                        <th class="border-0"><i class="fas fa-clipboard-list text-primary"></i> Requerimientos</th>
+                        <th class="border-0"><i class="fas fa-calendar text-primary"></i> Fecha</th>
+                        <th class="border-0 text-center"><i class="fas fa-cogs text-primary"></i> Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        // Renderizar actividades principales
+        data.activities.forEach(activity => {
+            html += renderActivityRow(activity);
+        });
+
+        // Renderizar subactividades (si las hay)
+        if (data.subactivities && data.subactivities.length > 0) {
+            data.subactivities.forEach(subactivity => {
+                html += renderActivityRow(subactivity, true);
+            });
+        }
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        document.getElementById('tableContainer').innerHTML = html;
+    }
+
+    // Renderiza una fila de actividad (puedes mejorar el HTML según tu diseño)
+    function renderActivityRow(activity, isSub = false) {
+        // Estado
+        let statusHtml = '';
+        if (activity.statuses && activity.statuses.length > 0) {
+            activity.statuses.forEach(status => {
+                statusHtml += `<span class="badge badge-pill mr-1 mb-1" style="background-color: ${status.color}; color: #fff;">
+                    <i class="${status.icon || 'fas fa-circle'}"></i> ${status.label}
+                </span>`;
+            });
+        } else {
+            statusHtml = `<span class="badge badge-secondary badge-pill">${activity.status_label || activity.status || ''}</span>`;
+        }
+
+        // Analistas
+        let analistasHtml = '';
+        if (activity.analistas && activity.analistas.length > 0) {
+            analistasHtml = activity.analistas.map(a => `<span class="badge badge-light mr-1 mb-1"><i class="fas fa-user"></i> ${a.name}</span>`).join('');
+        } else {
+            analistasHtml = '<span class="text-muted"><i class="fas fa-user-slash"></i> Sin asignar</span>';
+        }
+
+        // Requerimientos
+        let reqHtml = '';
+        if (activity.requirements && activity.requirements.length > 0) {
+            reqHtml = `<span class="badge badge-warning badge-pill"><i class="fas fa-clipboard-list"></i> ${activity.requirements.length}</span>`;
+        } else {
+            reqHtml = '<span class="text-muted"><i class="fas fa-clipboard"></i> Sin requerimientos</span>';
+        }
+
+        // Fecha
+        let fechaHtml = '';
+        if (activity.fecha_recepcion) {
+            const fecha = new Date(activity.fecha_recepcion);
+            const day = String(fecha.getDate()).padStart(2, '0');
+            const month = String(fecha.getMonth() + 1).padStart(2, '0');
+            const year = fecha.getFullYear();
+            fechaHtml = `<span class="badge badge-outline-info"><i class="fas fa-calendar-alt"></i> ${day}/${month}/${year}</span>`;
+        } else {
+            fechaHtml = '<span class="text-muted"><i class="fas fa-calendar-times"></i> No asignada</span>';
+        }
+
+        // Acciones
+        let actionsHtml = `
+            <div class="action-buttons">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="/activities/${activity.id}/edit" class="btn btn-warning btn-sm action-btn" title="Ver/Editar">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="/activities/create?parentId=${activity.id}" class="btn btn-secondary btn-sm action-btn" title="Crear Subactividad">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                    <form action="/activities/${activity.id}" method="POST" style="display:inline;">
+                        <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="btn btn-danger btn-sm action-btn" title="Eliminar"
+                            onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        return `
+            <tr class="${isSub ? 'subactivity-row' : 'parent-activity activity-row'}">
+                <td class="align-middle">${activity.caso || ''}</td>
+                <td class="align-middle">${activity.name || ''}</td>
+                <td class="align-middle">${activity.description ? activity.description.substring(0, 30) : ''}</td>
+                <td class="align-middle">${statusHtml}</td>
+                <td class="align-middle">${analistasHtml}</td>
+                <td class="align-middle">${reqHtml}</td>
+                <td class="align-middle">${fechaHtml}</td>
+                <td class="align-middle text-center">${actionsHtml}</td>
+            </tr>
+        `;
+    }
+
+
+    function clearSearch() {
+        if (searchInput) {
+            searchInput.value = '';
+            // Mantener el foco y seleccionar el input para nueva búsqueda
+            searchInput.focus();
+            searchInput.select();
+        }
+        currentSearchQuery = '';
+        searchSpinner.style.display = 'none';
+        searchResultsCount.style.display = 'none';
+        searchResultsAlert.style.display = 'none';
+        // Restaurar la tabla original
+        const tableContainer = document.getElementById('tableContainer');
+        if (tableContainer && originalTableContent) {
+            tableContainer.innerHTML = originalTableContent;
+        }
+        tableTitle.textContent = 'Lista de Actividades';
+        isSearchActive = false;
+        // Vuelve a aplicar filtros locales si quieres
+        applyFilters();
+    }
+
+    // Puedes agregar eventos para limpiar búsqueda con el botón o ESC
+    const clearSearchBtn = document.getElementById('clearSearch');
+    if (clearSearchBtn) clearSearchBtn.addEventListener('click', clearSearch);
+
+    document.addEventListener('keydown', function (e) {
+        // Ctrl+K o Ctrl+F: enfocar el input de búsqueda
+        if ((e.ctrlKey && (e.key === 'k' || e.key === 'K' || e.key === 'f' || e.key === 'F'))) {
+            if (searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+        // Esc: limpiar búsqueda si está activa o si el input tiene texto
+        if (e.key === 'Escape') {
+            if (isSearchActive || (searchInput && searchInput.value.length > 0)) {
+                clearSearch();
+                // No quitar el foco, así puedes seguir escribiendo
+            }
+        }
+    });
 });

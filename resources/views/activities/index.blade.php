@@ -92,8 +92,8 @@
                 <div class="card card-body">
                     <div class="row">
                         <div class="col-md-4">
-                            <label for="filterEstado">Estado:</label>
-                            <select class="form-control" id="filterEstado">
+                            <label for="filterStatus">Estado:</label>
+                            <select class="form-control" id="filterStatus">
                                 <option value="">Todos</option>
                                 @foreach ($statusLabels as $key => $label)
                                     <option value="{{ $key }}">{{ $label }}</option>
@@ -110,8 +110,10 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label for="filterFecha">Fecha de Recepción:</label>
-                            <input type="date" class="form-control" id="filterFecha">
+                            <label for="filterFechaDesde">Fecha Desde:</label>
+                            <input type="date" class="form-control" id="filterFechaDesde">
+                            <label for="filterFechaHasta" class="mt-2">Fecha Hasta:</label>
+                            <input type="date" class="form-control" id="filterFechaHasta">
                         </div>
                     </div>
                 </div>
@@ -293,12 +295,12 @@
                 <div>
                     <strong>Resultados de búsqueda:</strong>
                     <span id="searchResultsText"></span>
-                    <button class="btn btn-sm btn-outline-info ml-2" id="showAllResults">
+                    {{-- <button class="btn btn-sm btn-outline-info ml-2" id="showAllResults">
                         <i class="fas fa-eye"></i> Ver todos los resultados
                     </button>
                     <button class="btn btn-sm btn-outline-secondary ml-1" id="clearSearchResults">
                         <i class="fas fa-times"></i> Limpiar búsqueda
-                    </button>
+                    </button> --}}
                 </div>
             </div>
         </div>
