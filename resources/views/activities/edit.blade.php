@@ -432,9 +432,6 @@
                                                     </div>
                                                 </div>
                                             </th>
-                                            <th class="border-0 text-center">
-                                                <i class="fas fa-cogs text-primary"></i> Acciones
-                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>

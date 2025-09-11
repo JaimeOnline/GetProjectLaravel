@@ -1075,38 +1075,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Acciones
         let actionsHtml = `
-            <div class="action-buttons">
-                <div class="btn-group btn-group-sm" role="group">
-                    <a href="/activities/${activity.id}/edit" class="btn btn-warning btn-sm action-btn" title="Ver/Editar">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <a href="/activities/create?parentId=${activity.id}" class="btn btn-secondary btn-sm action-btn" title="Crear Subactividad">
-                        <i class="fas fa-plus"></i>
-                    </a>
-                    <form action="/activities/${activity.id}" method="POST" style="display:inline;">
-                        <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="submit" class="btn btn-danger btn-sm action-btn" title="Eliminar"
-                            onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </form>
-                </div>
+        <div class="action-buttons" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="/activities/${activity.id}/edit" class="btn btn-warning btn-sm action-btn" title="Ver/Editar">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <a href="/activities/create?parentId=${activity.id}" class="btn btn-secondary btn-sm action-btn" title="Crear Subactividad">
+                    <i class="fas fa-plus"></i>
+                </a>
+                <form action="/activities/${activity.id}" method="POST" style="display:inline;">
+                    <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger btn-sm action-btn" title="Eliminar"
+                        onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
             </div>
-        `;
+        </div>
+    `;
 
         return `
-            <tr class="${isSub ? 'subactivity-row' : 'parent-activity activity-row'}">
-                <td class="align-middle">${activity.caso || ''}</td>
-                <td class="align-middle">${activity.name || ''}</td>
-                <td class="align-middle">${activity.description ? activity.description.substring(0, 30) : ''}</td>
-                <td class="align-middle">${statusHtml}</td>
-                <td class="align-middle">${analistasHtml}</td>
-                <td class="align-middle">${reqHtml}</td>
-                <td class="align-middle">${fechaHtml}</td>
-                <td class="align-middle text-center">${actionsHtml}</td>
-            </tr>
-        `;
+        <tr class="${isSub ? 'subactivity-row' : 'parent-activity activity-row'}">
+            <td class="align-middle">${activity.caso || ''}</td>
+            <td class="align-middle position-relative" style="position: relative;">
+                <div class="d-flex align-items-center">
+                    ${activity.subactivities && activity.subactivities.length > 0
+                ? `<span class="toggle-subactivities mr-2" style="cursor: pointer;" data-activity-id="${activity.id}">
+                                <i class="fas fa-chevron-right text-primary" id="icon-${activity.id}"></i>
+                            </span>`
+                : ''
+            }
+                    <a href="/activities/${activity.id}/edit" class="font-weight-bold text-dark small" title="Ver/Editar subactividad">
+                        ${activity.name ? activity.name.substring(0, 40) : ''}
+                    </a>
+                    ${activity.name && activity.name.length > 40
+                ? `<span class="text-primary" style="cursor: pointer;" title="${activity.name}" data-toggle="tooltip">
+                                <i class="fas fa-info-circle"></i>
+                            </span>`
+                : ''
+            }
+                    ${activity.subactivities && activity.subactivities.length > 0
+                ? `<small class="text-muted ml-2">
+                                <i class="fas fa-sitemap"></i>
+                                ${activity.subactivities.length} subactividad(es)
+                            </small>`
+                : ''
+            }
+                </div>
+                ${actionsHtml}
+            </td>
+            <td class="align-middle">${activity.description ? activity.description.substring(0, 30) : ''}</td>
+            <td class="align-middle">${statusHtml}</td>
+            <td class="align-middle">${analistasHtml}</td>
+            <td class="align-middle">${reqHtml}</td>
+            <td class="align-middle">${fechaHtml}</td>
+        </tr>
+    `;
     }
 
 

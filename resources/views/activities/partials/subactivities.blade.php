@@ -12,7 +12,7 @@
                 {{ $subactivity->caso }}
             </span>
         </td>
-        <td class="align-middle">
+        <td class="align-middle position-relative" style="position: relative;">
             <div class="d-flex align-items-center">
                 @if ($subactivity->subactivities->count() > 0)
                     <span class="toggle-subactivities mr-2" style="cursor: pointer;"
@@ -36,6 +36,30 @@
                         {{ $subactivity->subactivities->count() }} subactividad(es)
                     </small>
                 @endif
+            </div>
+            <div class="action-buttons"
+                style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ route('activities.edit', $subactivity) }}" class="btn btn-warning btn-sm action-btn"
+                        data-tooltip="Ver/Editar" title="Ver/Editar">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{{ route('activities.create', ['parentId' => $subactivity->id]) }}"
+                        class="btn btn-secondary btn-sm action-btn" data-tooltip="Crear Subactividad"
+                        title="Crear Subactividad">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                    <form action="{{ route('activities.destroy', $subactivity) }}" method="POST"
+                        style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm action-btn" data-tooltip="Eliminar"
+                            title="Eliminar"
+                            onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
         </td>
         <td class="align-middle">
@@ -157,31 +181,7 @@
                 </span>
             @endif
         </td>
-        <td class="align-middle text-center">
-            <div class="action-buttons">
-                <div class="btn-group btn-group-sm" role="group">
-                    <a href="{{ route('activities.edit', $subactivity) }}" class="btn btn-warning btn-sm action-btn"
-                        data-tooltip="Ver/Editar" title="Ver/Editar">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <a href="{{ route('activities.create', ['parentId' => $subactivity->id]) }}"
-                        class="btn btn-secondary btn-sm action-btn" data-tooltip="Crear Subactividad"
-                        title="Crear Subactividad">
-                        <i class="fas fa-plus"></i>
-                    </a>
-                    <form action="{{ route('activities.destroy', $subactivity) }}" method="POST"
-                        style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm action-btn" data-tooltip="Eliminar"
-                            title="Eliminar"
-                            onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </td>
+
     </tr>
     @if ($subactivity->subactivities->count() > 0)
         @include('activities.partials.subactivities', [
@@ -200,5 +200,14 @@
         font-size: 0.8rem;
         padding: 0.2rem 0.4rem;
         transition: all 0.2s ease;
+    }
+
+    .action-buttons {
+        display: none;
+    }
+
+    .activity-row:hover .action-buttons,
+    .subactivity-row:hover .action-buttons {
+        display: block !important;
     }
 </style>

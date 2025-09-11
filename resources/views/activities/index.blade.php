@@ -431,14 +431,14 @@
                                         </div>
                                     </th>
                                     {{-- <th class="border-0">
-                                <i class="fas fa-comments text-primary"></i> Comentarios
-                            </th> --}}
+    <i class="fas fa-comments text-primary"></i> Comentarios
+</th> --}}
                                     <th class="border-0">
                                         <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
                                     </th>
                                     {{-- <th class="border-0">
-                                <i class="fas fa-envelope text-primary"></i> Correos
-                            </th> --}}
+    <i class="fas fa-envelope text-primary"></i> Correos
+</th> --}}
                                     <th class="border-0" style="position: relative;">
                                         <div class="d-flex align-items-center justify-content-between">
                                             <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
@@ -475,9 +475,9 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th class="border-0 text-center">
-                                        <i class="fas fa-cogs text-primary"></i> Acciones
-                                    </th>
+                                    {{-- <th class="border-0 text-center">
+            <i class="fas fa-cogs text-primary"></i> Acciones
+        </th> --}}
                                 </tr>
                             </thead>
                             <tbody>
@@ -488,7 +488,7 @@
                                                 {{ $activity->caso }}
                                             </span>
                                         </td>
-                                        <td class="align-middle">
+                                        <td class="align-middle position-relative" style="position: relative;">
                                             <div class="d-flex align-items-center">
                                                 @if ($activity->subactivities->count() > 0)
                                                     <span class="toggle-subactivities mr-2" style="cursor: pointer;"
@@ -514,7 +514,31 @@
                                                         </small>
                                                     @endif
                                                 </div>
-
+                                            </div>
+                                            <div class="action-buttons"
+                                                style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ route('activities.edit', $activity) }}"
+                                                        class="btn btn-warning btn-sm action-btn"
+                                                        data-tooltip="Ver/Editar" title="Ver/Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}"
+                                                        class="btn btn-secondary btn-sm action-btn"
+                                                        data-tooltip="Crear Subactividad" title="Crear Subactividad">
+                                                        <i class="fas fa-plus"></i>
+                                                    </a>
+                                                    <form action="{{ route('activities.destroy', $activity) }}"
+                                                        method="POST" style="display:inline;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm action-btn"
+                                                            data-tooltip="Eliminar" title="Eliminar"
+                                                            onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </td>
                                         <td class="align-middle">
@@ -699,32 +723,7 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        <td class="align-middle text-center">
-                                            <div class="action-buttons">
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <a href="{{ route('activities.edit', $activity) }}"
-                                                        class="btn btn-warning btn-sm action-btn"
-                                                        data-tooltip="Ver/Editar" title="Ver/Editar">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}"
-                                                        class="btn btn-secondary btn-sm action-btn"
-                                                        data-tooltip="Crear Subactividad" title="Crear Subactividad">
-                                                        <i class="fas fa-plus"></i>
-                                                    </a>
-                                                    <form action="{{ route('activities.destroy', $activity) }}"
-                                                        method="POST" style="display:inline;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger btn-sm action-btn"
-                                                            data-tooltip="Eliminar" title="Eliminar"
-                                                            onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </td>
+
                                     </tr>
                                     {{-- Mostrar subactividades (inicialmente ocultas) --}}
                                     @if ($activity->subactivities->count() > 0)
@@ -980,6 +979,17 @@
     .action-buttons .btn:hover {
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Oculta los botones de acción por defecto */
+    .action-buttons {
+        display: none;
+    }
+
+    /* Muestra los botones de acción al hacer hover sobre la fila */
+    .activity-row:hover .action-buttons,
+    .subactivity-row:hover .action-buttons {
+        display: block !important;
     }
 
     /* Subactividades */
