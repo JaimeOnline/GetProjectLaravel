@@ -612,8 +612,8 @@ document.addEventListener('DOMContentLoaded', function () {
          */
     function applyFilters() {
         [
-            { container: '#tableContainer', rowSelector: 'tr.activity-row', count: true },
-            { container: '#subactivitiesTableContainer', rowSelector: 'tr.activity-row', count: false }
+            { container: '#tableContainer', rowSelector: 'tr.activity-row, tr.subactivity-row', count: true },
+            { container: '#subactivitiesTableContainer', rowSelector: 'tr.activity-row, tr.subactivity-row', count: false }
         ].forEach(cfg => {
             const tableBody = document.querySelector(`${cfg.container} tbody`);
             if (!tableBody) return;
@@ -626,25 +626,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Filtro por estado
                 if (activeFilters.status.length > 0 && cells[3]) {
-                    const statusText = cells[3].textContent.trim().toLowerCase();
+                    // Extraer todos los textos de los badges dentro de la celda de estado
+                    const badgeTexts = Array.from(cells[3].querySelectorAll('.badge'))
+                        .map(badge => badge.textContent.trim().toLowerCase());
+
                     const statusMatch = activeFilters.status.some(status => {
                         switch (status) {
                             case 'no_iniciada':
-                                return statusText.includes('no iniciada');
+                                return badgeTexts.some(text => text.includes('no iniciada'));
                             case 'en_ejecucion':
-                                return statusText.includes('en ejecución') || statusText.includes('ejecutando');
+                                return badgeTexts.some(text => text.includes('en ejecución') || text.includes('ejecutando'));
                             case 'en_espera_de_insumos':
-                                return statusText.includes('en espera') || statusText.includes('insumos');
+                                return badgeTexts.some(text => text.includes('en espera') || text.includes('insumos'));
                             case 'en_certificacion_por_cliente':
-                                return statusText.includes('certificación') || statusText.includes('certificando');
+                                return badgeTexts.some(text => text.includes('certificación') || text.includes('certificando'));
                             case 'pases_enviados':
-                                return statusText.includes('pases enviados');
+                                return badgeTexts.some(text => text.includes('pases enviados'));
                             case 'culminada':
-                                return statusText.includes('culminada') || statusText.includes('completada');
+                                return badgeTexts.some(text => text.includes('culminada') || text.includes('completada'));
                             case 'pausada':
-                                return statusText.includes('pausada');
+                                return badgeTexts.some(text => text.includes('pausada'));
                             default:
-                                return statusText.includes(status.replace(/_/g, ' ').toLowerCase());
+                                return badgeTexts.some(text => text.includes(status.replace(/_/g, ' ').toLowerCase()));
                         }
                     });
 
@@ -689,19 +692,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // Aplicar visibilidad
-                if (shouldShow) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = shouldShow ? '' : 'none';
+                if (shouldShow) visibleCount++;
+            });
 
-                // Si es una actividad padre y está oculta, ocultar también sus subactividades
-                if (row.classList.contains('parent-activity') && !shouldShow) {
-                    const activityId = row.getAttribute('data-activity-id');
-                    tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`).forEach(subRow => {
-                        subRow.style.display = 'none';
-                    });
+            // Al aplicar filtros, fuerza la expansión visual de todas las subactividades visibles
+            const allSubRows = document.querySelectorAll('#tableContainer tbody tr.subactivity-row');
+            allSubRows.forEach(subRow => {
+                if (subRow.style.display !== 'none') {
+                    subRow.style.display = 'table-row';
                 }
             });
 
@@ -716,7 +715,8 @@ document.addEventListener('DOMContentLoaded', function () {
      * Actualizar contador de resultados
      */
     function updateResultsCount(visibleCount) {
-        const totalRows = document.querySelectorAll('#tableContainer tbody tr.activity-row').length;
+        // Contar todas las filas (actividades y subactividades)
+        const totalRows = document.querySelectorAll('#tableContainer tbody tr.activity-row, #tableContainer tbody tr.subactivity-row').length;
 
         // Actualizar título de la tabla si existe
         const tableTitle = document.getElementById('tableTitle');
