@@ -1,526 +1,257 @@
 @extends('layouts.app')
 
 @section('styles')
-<link href="{{ asset('css/custom-styles.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/custom-styles.css') }}" rel="stylesheet">
 @endsection
 
 @section('content')
-<div class="container">
-    <!-- Breadcrumbs -->
-    <div class="breadcrumb-container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('activities.index') }}">Actividades</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Ver: {{ $activity->name }}</li>
-            </ol>
-        </nav>
-    </div>
-
-    <!-- Barra de Acciones -->
-    <div class="action-bar">
-        <div class="action-group">
-            <h1 class="text-gradient mb-0">Ver Actividad</h1>
+    <div class="container" id="edit-activity-page">
+        <!-- Breadcrumbs -->
+        <div class="breadcrumb-container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ route('activities.index') }}">Actividades</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Ver: {{ $activity->name }}</li>
+                </ol>
+            </nav>
         </div>
-        <div class="action-group">
-            <div class="quick-nav">
-                <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-left"></i> Volver
-                </a>
-                <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-plus"></i> Crear Sub Actividad
-                </a>
-                <a href="{{ route('activities.comments', $activity) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-comments"></i> Comentarios
-                </a>
-                <a href="{{ route('activities.emails', $activity) }}" class="btn btn-success btn-sm">
-                    <i class="fas fa-envelope"></i> Correos
-                </a>
+
+        <!-- Barra de Acciones -->
+        <div class="action-bar">
+            <div class="action-group">
+                <h1 class="text-gradient mb-0">Ver Actividad</h1>
+            </div>
+            <div class="action-group">
+                <div class="quick-nav">
+                    <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}"
+                        class="btn btn-warning btn-sm">
+                        <i class="fas fa-plus"></i> Crear Sub Actividad
+                    </a>
+                    <a href="{{ route('activities.comments', $activity) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-comments"></i> Comentarios
+                    </a>
+                    <a href="{{ route('activities.emails', $activity) }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-envelope"></i> Correos
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-    
-    @if ($errors->any())
-        <div class="alert alert-danger fade-in">
-            <h6><i class="fas fa-exclamation-triangle"></i> Por favor corrige los siguientes errores:</h6>
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
 
-    <!-- Pestañas de Navegación -->
-    <ul class="nav nav-tabs section-tabs" id="activityTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab">
-                <i class="fas fa-info-circle"></i> Información Básica
-            </a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="requirements-tab" data-toggle="tab" href="#requirements" role="tab">
-                <i class="fas fa-list-check"></i> Requerimientos
-            </a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="comments-tab" data-toggle="tab" href="#comments" role="tab">
-                <i class="fas fa-comments"></i> Comentarios
-            </a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="emails-tab" data-toggle="tab" href="#emails" role="tab">
-                <i class="fas fa-envelope"></i> Correos
-            </a>
-        </li>
-    </ul>
+        @if ($errors->any())
+            <div class="alert alert-danger fade-in">
+                <h6><i class="fas fa-exclamation-triangle"></i> Por favor corrige los siguientes errores:</h6>
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-    <div class="tab-content" id="activityTabsContent">
-        <!-- Pestaña: Información Básica -->
-        <div class="tab-pane fade show active" id="basic" role="tabpanel">
-            <form action="{{ route('activities.update', $activity) }}" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información Básica de la Actividad</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label" for="caso">
-                                        <i class="fas fa-hashtag text-primary"></i> Caso
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="caso" name="caso" value="{{ $activity->caso }}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-flag text-primary"></i> Estados
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="status-management-container">
-                                        <div class="current-statuses" id="currentStatuses">
-                                            @if($activity->statuses && $activity->statuses->count() > 0)
-                                                @foreach($activity->statuses as $status)
-                                                    <span class="badge badge-pill mr-1 mb-1" 
-                                                          style="background-color: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
-                                                        <i class="{{ $status->icon ?? 'fas fa-circle' }}"></i> {{ $status->label }}
-                                                    </span>
-                                                @endforeach
-                                            @else
-                                                @if($activity->status)
-                                                    <span class="badge badge-secondary">
-                                                        <i class="fas fa-circle"></i> {{ ucfirst(str_replace('_', ' ', $activity->status)) }}
-                                                    </span>
-                                                @else
-                                                    <span class="text-muted">
-                                                        <i class="fas fa-exclamation-triangle"></i> Sin estados asignados
-                                                    </span>
-                                                @endif
-                                            @endif
-                                        </div>
-                                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" 
-                                                id="editStatusesBtn" 
-                                                data-activity-id="{{ $activity->id }}">
-                                            <i class="fas fa-edit"></i> Editar Estados
-                                        </button>
+        <!-- Pestañas de Navegación -->
+        <ul class="nav nav-tabs section-tabs" id="activityTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab">
+                    <i class="fas fa-info-circle"></i> Información Básica
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="requirements-tab" data-toggle="tab" href="#requirements" role="tab">
+                    <i class="fas fa-list-check"></i> Requerimientos
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="comments-tab" data-toggle="tab" href="#comments" role="tab">
+                    <i class="fas fa-comments"></i> Comentarios
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="emails-tab" data-toggle="tab" href="#emails" role="tab">
+                    <i class="fas fa-envelope"></i> Correos
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="activityTabsContent">
+            <!-- Pestaña: Información Básica -->
+            <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                <form action="{{ route('activities.update', $activity) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información Básica de la Actividad</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="caso">
+                                            <i class="fas fa-hashtag text-primary"></i> Caso
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="caso" name="caso"
+                                            value="{{ $activity->caso }}" required>
                                     </div>
-                                    
-                                    <!-- Campo oculto para mantener compatibilidad con el sistema anterior -->
-                                    <input type="hidden" name="status" value="{{ $activity->status }}" id="hiddenStatusField">
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="name">
-                                <i class="fas fa-tag text-primary"></i> Nombre de la Actividad
-                                <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" id="name" name="name" value="{{ $activity->name }}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="description">
-                                <i class="fas fa-align-left text-primary"></i> Descripción
-                            </label>
-                            <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe los detalles de la actividad...">{{ $activity->description }}</textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="estatus_operacional">
-                                <i class="fas fa-cogs text-primary"></i> Estatus Operacional
-                            </label>
-                            <textarea class="form-control" id="estatus_operacional" name="estatus_operacional" rows="3" placeholder="Ingrese el estatus operacional de la actividad...">{{ $activity->estatus_operacional }}</textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-users text-primary"></i> Seleccionar Analistas
-                                <span class="text-danger">*</span>
-                            </label>
-                            
-                            <div class="analysts-selector" id="analysts-selector">
-                                <div class="text-center mb-2">
-                                    <i class="fas fa-user-friends fa-2x text-muted"></i>
-                                    <p class="mb-1 font-weight-bold">Selecciona los analistas para esta actividad</p>
-                                    <p class="text-muted mb-0">Haz clic en las tarjetas para seleccionar/deseleccionar</p>
-                                </div>
-                                
-                                <div class="analysts-grid">
-                                    @foreach ($analistas as $analista)
-                                        <div class="analyst-card" 
-                                             data-analyst-id="{{ $analista->id }}"
-                                             data-analyst-name="{{ $analista->name }}">
-                                            <div class="analyst-avatar">
-                                                {{ strtoupper(substr($analista->name, 0, 2)) }}
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-flag text-primary"></i> Estados
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="status-management-container">
+                                            <div class="current-statuses" id="currentStatuses">
+                                                @if ($activity->statuses && $activity->statuses->count() > 0)
+                                                    @foreach ($activity->statuses as $status)
+                                                        <span class="badge badge-pill mr-1 mb-1"
+                                                            style="background-color: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
+                                                            <i class="{{ $status->icon ?? 'fas fa-circle' }}"></i>
+                                                            {{ $status->label }}
+                                                        </span>
+                                                    @endforeach
+                                                @else
+                                                    @if ($activity->status)
+                                                        <span class="badge badge-secondary">
+                                                            <i class="fas fa-circle"></i>
+                                                            {{ ucfirst(str_replace('_', ' ', $activity->status)) }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted">
+                                                            <i class="fas fa-exclamation-triangle"></i> Sin estados
+                                                            asignados
+                                                        </span>
+                                                    @endif
+                                                @endif
                                             </div>
-                                            <p class="analyst-name">{{ $analista->name }}</p>
+                                            <button type="button" class="btn btn-outline-primary btn-sm mt-2"
+                                                id="editStatusesBtn" data-activity-id="{{ $activity->id }}">
+                                                <i class="fas fa-edit"></i> Editar Estados
+                                            </button>
                                         </div>
-                                    @endforeach
+
+                                        <!-- Campo oculto para mantener compatibilidad con el sistema anterior -->
+                                        <input type="hidden" name="status" value="{{ $activity->status }}"
+                                            id="hiddenStatusField">
+                                    </div>
                                 </div>
-                                
-                                <!-- Inputs ocultos para enviar los datos -->
-                                <div id="selected-analysts-inputs">
-                                    @if($activity->analistas)
-                                        @foreach($activity->analistas as $analista)
-                                            <input type="hidden" name="analista_id[]" value="{{ $analista->id }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">
+                                    <i class="fas fa-tag text-primary"></i> Nombre de la Actividad
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="name" name="name"
+                                    value="{{ $activity->name }}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="description">
+                                    <i class="fas fa-align-left text-primary"></i> Descripción
+                                </label>
+                                <textarea class="form-control" id="description" name="description" rows="4"
+                                    placeholder="Describe los detalles de la actividad...">{{ $activity->description }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="estatus_operacional">
+                                    <i class="fas fa-cogs text-primary"></i> Estatus Operacional
+                                </label>
+                                <textarea class="form-control" id="estatus_operacional" name="estatus_operacional" rows="3"
+                                    placeholder="Ingrese el estatus operacional de la actividad...">{{ $activity->estatus_operacional }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-users text-primary"></i> Seleccionar Analistas
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <div class="analysts-selector" id="analysts-selector">
+                                    <div class="text-center mb-2">
+                                        <i class="fas fa-user-friends fa-2x text-muted"></i>
+                                        <p class="mb-1 font-weight-bold">Selecciona los analistas para esta actividad</p>
+                                        <p class="text-muted mb-0">Haz clic en las tarjetas para seleccionar/deseleccionar
+                                        </p>
+                                    </div>
+
+                                    <div class="analysts-grid">
+                                        @foreach ($analistas as $analista)
+                                            <div class="analyst-card" data-analyst-id="{{ $analista->id }}"
+                                                data-analyst-name="{{ $analista->name }}">
+                                                <div class="analyst-avatar">
+                                                    {{ strtoupper(substr($analista->name, 0, 2)) }}
+                                                </div>
+                                                <p class="analyst-name">{{ $analista->name }}</p>
+                                            </div>
                                         @endforeach
-                                    @endif
+                                    </div>
+
+                                    <!-- Inputs ocultos para enviar los datos -->
+                                    <div id="selected-analysts-inputs">
+                                        @if ($activity->analistas)
+                                            @foreach ($activity->analistas as $analista)
+                                                <input type="hidden" name="analista_id[]" value="{{ $analista->id }}">
+                                            @endforeach
+                                        @endif
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div id="selected-analysts-summary" class="mt-2" style="display: none;">
-                                <small class="text-success">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span id="selected-count">0</span> analista(s) seleccionado(s):
-                                    <span id="selected-names" class="font-weight-bold"></span>
-                                </small>
-                            </div>
-                            
-                            @if($activity->analistas && $activity->analistas->count() == 0)
-                                <small class="form-text text-warning">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    Esta actividad no tiene analistas asignados. Debes seleccionar al menos uno.
-                                </small>
-                            @endif
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label" for="parent_id">
-                                        <i class="fas fa-sitemap text-primary"></i> Actividad Padre
-                                    </label>
-                                    <select class="form-control" id="parent_id" name="parent_id">
-                                        <option value="">Ninguna</option>
-                                        @foreach ($activities as $parentActivity)
-                                            <option value="{{ $parentActivity->id }}" {{ $activity->parent_id == $parentActivity->id ? 'selected' : '' }}>{{ $parentActivity->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label" for="fecha_recepcion">
-                                        <i class="fas fa-calendar text-primary"></i> Fecha de Recepción
-                                    </label>
-                                    <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion" value="{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('Y-m-d') : '' }}">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Botón de Actualizar para Información Básica -->
-                        <div class="mt-4 pt-3 border-top">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-save"></i> Actualizar Información Básica
-                                    </button>
-                                </div>
-                                <div>
-                                    <small class="text-muted">
-                                        <i class="fas fa-info-circle"></i>
-                                        Los cambios se guardarán al hacer clic en "Actualizar"
+
+                                <div id="selected-analysts-summary" class="mt-2" style="display: none;">
+                                    <small class="text-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span id="selected-count">0</span> analista(s) seleccionado(s):
+                                        <span id="selected-names" class="font-weight-bold"></span>
                                     </small>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
 
-        <!-- Pestaña: Requerimientos -->
-        <div class="tab-pane fade" id="requirements" role="tabpanel">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-list-check"></i> Gestión de Requerimientos</h5>
-                    <div>
-                        <a href="{{ route('requirements.create', ['activity_id' => $activity->id]) }}" class="btn btn-success btn-sm">
-                            <i class="fas fa-plus"></i> Nuevo Requerimiento
-                        </a>
-                        <a href="{{ route('requirements.index', ['activity_id' => $activity->id]) }}" class="btn btn-info btn-sm">
-                            <i class="fas fa-external-link-alt"></i> Ver Todos
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    {{-- Estadísticas rápidas --}}
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="card bg-primary text-white">
-                                <div class="card-body text-center">
-                                    <h4>{{ $activity->requirements->count() }}</h4>
-                                    <small>Total Requerimientos</small>
-                                </div>
+                                @if ($activity->analistas && $activity->analistas->count() == 0)
+                                    <small class="form-text text-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        Esta actividad no tiene analistas asignados. Debes seleccionar al menos uno.
+                                    </small>
+                                @endif
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-warning text-white">
-                                <div class="card-body text-center">
-                                    <h4>{{ $activity->requirements->where('status', 'pendiente')->count() }}</h4>
-                                    <small>Pendientes</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-success text-white">
-                                <div class="card-body text-center">
-                                    <h4>{{ $activity->requirements->where('status', 'recibido')->count() }}</h4>
-                                    <small>Recibidos</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    {{-- Mostrar requerimientos existentes --}}
-                    @if ($activity->requirements->count() > 0)
-                        <div class="form-group">
-                            <label class="font-weight-bold">Requerimientos de esta Actividad</label>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover">
-                                    <thead class="thead-light">
-                                        <tr>
-                                            <th>Descripción</th>
-                                            <th>Estado</th>
-                                            <th>Fecha Creación</th>
-                                            <th>Fecha Recepción</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($activity->requirements as $requirement)
-                                            <tr>
-                                                <td>
-                                                    <div>
-                                                        {{ Str::limit($requirement->description, 80) }}
-                                                        @if($requirement->notas)
-                                                            <br><small class="text-muted">
-                                                                <i class="fas fa-sticky-note"></i> 
-                                                                {{ Str::limit($requirement->notas, 50) }}
-                                                            </small>
-                                                        @endif
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    @if($requirement->status === 'pendiente')
-                                                        <span class="badge badge-warning">
-                                                            <i class="fas fa-clock"></i> Pendiente
-                                                        </span>
-                                                    @else
-                                                        <span class="badge badge-success">
-                                                            <i class="fas fa-check-circle"></i> Recibido
-                                                        </span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <small>{{ $requirement->created_at->format('d/m/Y H:i') }}</small>
-                                                </td>
-                                                <td>
-                                                    @if($requirement->fecha_recepcion)
-                                                        <small class="text-success">{{ $requirement->fecha_recepcion->format('d/m/Y H:i') }}</small>
-                                                    @else
-                                                        <span class="text-muted">-</span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group btn-group-sm">
-                                                        <a href="{{ route('requirements.show', $requirement) }}" 
-                                                           class="btn btn-info btn-xs" title="Ver detalles">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        <a href="{{ route('requirements.edit', $requirement) }}" 
-                                                           class="btn btn-warning btn-xs" title="Editar">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        
-                                                        @if($requirement->status === 'pendiente')
-                                                            <form action="{{ route('requirements.mark-received', $requirement) }}" 
-                                                                  method="POST" style="display:inline;">
-                                                                @csrf
-                                                                @method('PATCH')
-                                                                <input type="hidden" name="from_activity" value="1">
-                                                                <button type="submit" class="btn btn-success btn-xs" 
-                                                                        title="Marcar como recibido">
-                                                                    <i class="fas fa-check"></i>
-                                                                </button>
-                                                            </form>
-                                                        @else
-                                                            <form action="{{ route('requirements.mark-pending', $requirement) }}" 
-                                                                  method="POST" style="display:inline;">
-                                                                @csrf
-                                                                @method('PATCH')
-                                                                <input type="hidden" name="from_activity" value="1">
-                                                                <button type="submit" class="btn btn-secondary btn-xs" 
-                                                                        title="Marcar como pendiente">
-                                                                    <i class="fas fa-undo"></i>
-                                                                </button>
-                                                            </form>
-                                                        @endif
-                                                        
-                                                        <form action="{{ route('requirements.destroy', $requirement) }}" 
-                                                              method="POST" style="display:inline;"
-                                                              onsubmit="return confirm('¿Estás seguro de eliminar este requerimiento?')">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-danger btn-xs" 
-                                                                    title="Eliminar">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    @else
-                        <div class="text-center py-4">
-                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No hay requerimientos</h5>
-                            <p class="text-muted">Esta actividad aún no tiene requerimientos asociados.</p>
-                            <a href="{{ route('requirements.create', ['activity_id' => $activity->id]) }}" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Crear Primer Requerimiento
-                            </a>
-                        </div>
-                    @endif
-
-                    {{-- Formulario rápido para agregar requerimiento --}}
-                    <div class="mt-4 pt-4 border-top">
-                        <h6 class="mb-3">
-                            <i class="fas fa-plus-circle text-success"></i> Agregar Requerimiento Rápido
-                        </h6>
-                        <form action="{{ route('requirements.store') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="activity_id" value="{{ $activity->id }}">
                             <div class="row">
-                                <div class="col-md-8">
+                                <div class="col-md-6">
                                     <div class="form-group">
-                                        <textarea class="form-control" name="description" rows="2" 
-                                                  placeholder="Describe el requerimiento..." required></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <select class="form-control" name="status" required>
-                                            <option value="pendiente">Pendiente</option>
-                                            <option value="recibido">Recibido</option>
+                                        <label class="form-label" for="parent_id">
+                                            <i class="fas fa-sitemap text-primary"></i> Actividad Padre
+                                        </label>
+                                        <select class="form-control" id="parent_id" name="parent_id">
+                                            <option value="">Ninguna</option>
+                                            @foreach ($activities as $parentActivity)
+                                                <option value="{{ $parentActivity->id }}"
+                                                    {{ $activity->parent_id == $parentActivity->id ? 'selected' : '' }}>
+                                                    {{ $parentActivity->name }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="form-group">
-                                <textarea class="form-control" name="notas" rows="1" 
-                                          placeholder="Notas adicionales (opcional)"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> Agregar Requerimiento
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pestaña: Comentarios -->
-        <div class="tab-pane fade" id="comments" role="tabpanel">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-comments"></i> Gestión de Comentarios</h5>
-                </div>
-                <div class="card-body">
-                    {{-- Mostrar comentarios existentes --}}
-                    @if ($activity->comments->count() > 0)
-                        <div class="form-group">
-                            <label>Comentarios Existentes</label>
-                            <div class="card">
-                                <div class="card-body">
-                                    @foreach ($activity->comments as $comment)
-                                        <div class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-start">
-                                            <div class="flex-grow-1">
-                                                <p class="mb-1">{{ $comment->comment }}</p>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-clock"></i> 
-                                                    {{ $comment->created_at->format('d/m/Y H:i:s') }}
-                                                    <span class="ml-2">
-                                                        ({{ $comment->created_at->diffForHumans() }})
-                                                    </span>
-                                                </small>
-                                            </div>
-                                            <div class="ml-2">
-                                                <form action="{{ route('comments.destroy', $comment) }}" method="POST" 
-                                                      style="display: inline;" 
-                                                      onsubmit="return confirm('¿Estás seguro de eliminar este comentario?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar comentario">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <form action="{{ route('activities.comments.tab.store', $activity) }}" method="POST">
-                        @csrf
-                        <div class="form-group">
-                            <label for="comments">Agregar Nuevos Comentarios</label>
-                            <div id="comments-container">
-                                <div class="comment-item mb-2">
-                                    <div class="input-group">
-                                        <textarea class="form-control" name="comments[]" placeholder="Agrega nuevos comentarios (deja vacío si no hay)"></textarea>
-                                        <div class="input-group-append">
-                                            <button type="button" class="btn btn-danger remove-comment" title="Eliminar comentario">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="fecha_recepcion">
+                                            <i class="fas fa-calendar text-primary"></i> Fecha de Recepción
+                                        </label>
+                                        <input type="date" class="form-control" id="fecha_recepcion"
+                                            name="fecha_recepcion"
+                                            value="{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('Y-m-d') : '' }}">
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-secondary" id="add-comment">
-                                <i class="fas fa-plus"></i> Agregar Comentario
-                            </button>
-                            
-                            <!-- Botón de Actualizar para Comentarios -->
+
+                            <!-- Botón de Actualizar para Información Básica -->
                             <div class="mt-4 pt-3 border-top">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <button type="submit" class="btn btn-primary btn-lg">
-                                            <i class="fas fa-save"></i> Actualizar Comentarios
+                                            <i class="fas fa-save"></i> Actualizar Información Básica
                                         </button>
-                                        <a href="{{ route('activities.comments', $activity) }}" class="btn btn-info btn-lg ml-2">
-                                            <i class="fas fa-eye"></i> Ver Página de Comentarios
-                                        </a>
                                     </div>
                                     <div>
                                         <small class="text-muted">
@@ -531,293 +262,829 @@
                                 </div>
                             </div>
                         </div>
-                    </form>
+                    </div>
+                </form>
+
+                @if ($activity->subactivities->count() > 0)
+                    <div class="card mt-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-sitemap text-primary"></i>
+                                Subactividades de <strong>{{ $activity->name }}</strong>
+                            </span>
+
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" id="subactivitiesTableContainer">
+                                <table class="table table-hover mb-0 modern-table">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="sortable" data-sort="caso" style="cursor: pointer;">
+                                                        <i class="fas fa-hashtag text-primary"></i> Caso
+                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-file-alt text-primary"></i> Nombre
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary ml-2"
+                                                        id="toggleAllSubactivitiesBtnEdit"
+                                                        title="Expandir/Colapsar todas las subactividades"
+                                                        style="margin-left: 8px; padding: 2px 8px;">
+                                                        <i class="fas fa-chevron-down"
+                                                            id="toggleAllSubactivitiesIconEdit"></i>
+                                                    </button>
+                                                </div>
+                                            </th>
+                                            <th class="border-0">
+                                                <i class="fas fa-align-left text-primary"></i> Descripción
+                                            </th>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="sortable" data-sort="status" style="cursor: pointer;">
+                                                        <i class="fas fa-flag text-primary"></i> Estado
+                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                    </div>
+                                                    <!-- Filtro de Estado -->
+                                                    <div class="custom-dropdown ml-2">
+                                                        <button class="btn btn-sm btn-outline-secondary filter-toggle"
+                                                            type="button" data-filter="status"
+                                                            style="padding: 2px 6px;">
+                                                            <i class="fas fa-filter"></i>
+                                                        </button>
+                                                        <div class="custom-dropdown-menu" id="status-filter-menu"
+                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                                                            <h6 class="dropdown-header"
+                                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                                Filtrar por Estado</h6>
+                                                            <div class="px-3 py-2">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input status-filter"
+                                                                        type="checkbox" value="" id="status-all"
+                                                                        checked>
+                                                                    <label class="form-check-label"
+                                                                        for="status-all">Todos</label>
+                                                                </div>
+                                                                @foreach ($statusLabels as $key => $label)
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input status-filter"
+                                                                            type="checkbox" value="{{ $key }}"
+                                                                            id="status-{{ $key }}">
+                                                                        <label
+                                                                            class="form-check-label d-flex align-items-center"
+                                                                            for="status-{{ $key }}">
+                                                                            <span class="badge badge-pill mr-2"
+                                                                                style="background-color: {{ $statusColors[$key] ?? '#6c757d' }}; color: white; width: 18px; height: 18px; display: inline-block; text-align: center; line-height: 18px; font-size: 0.8em; border-radius: 50%;">
+                                                                                &nbsp;
+                                                                            </span>
+                                                                            {{ $label }}
+                                                                        </label>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="sortable" data-sort="analistas" style="cursor: pointer;">
+                                                        <i class="fas fa-users text-primary"></i> Analistas
+                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                    </div>
+                                                    <!-- Filtro de Analistas -->
+                                                    <div class="custom-dropdown ml-2">
+                                                        <button class="btn btn-sm btn-outline-secondary filter-toggle"
+                                                            type="button" data-filter="analistas"
+                                                            style="padding: 2px 6px;">
+                                                            <i class="fas fa-filter"></i>
+                                                        </button>
+                                                        <div class="custom-dropdown-menu" id="analistas-filter-menu"
+                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                                                            <h6 class="dropdown-header"
+                                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                                Filtrar por Analista</h6>
+                                                            <div class="px-3 py-2">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input analista-filter"
+                                                                        type="checkbox" value="" id="analista-all"
+                                                                        checked>
+                                                                    <label class="form-check-label"
+                                                                        for="analista-all">Todos</label>
+                                                                </div>
+                                                                @foreach ($analistas as $analista)
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input analista-filter"
+                                                                            type="checkbox" value="{{ $analista->id }}"
+                                                                            id="analista-{{ $analista->id }}">
+                                                                        <label class="form-check-label"
+                                                                            for="analista-{{ $analista->id }}">{{ $analista->name }}</label>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th class="border-0">
+                                                <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
+                                            </th>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="sortable" data-sort="fecha_recepcion"
+                                                        style="cursor: pointer;">
+                                                        <i class="fas fa-calendar text-primary"></i> Fecha
+                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                    </div>
+                                                    <!-- Filtro de Fecha -->
+                                                    <div class="custom-dropdown ml-2">
+                                                        <button class="btn btn-sm btn-outline-secondary filter-toggle"
+                                                            type="button" data-filter="fecha" style="padding: 2px 6px;">
+                                                            <i class="fas fa-filter"></i>
+                                                        </button>
+                                                        <div class="custom-dropdown-menu" id="fecha-filter-menu"
+                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 250px;">
+                                                            <h6 class="dropdown-header"
+                                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                                Filtrar por Fecha</h6>
+                                                            <div class="px-3 py-2">
+                                                                <div class="form-group mb-2">
+                                                                    <label class="small">Desde:</label>
+                                                                    <input type="date"
+                                                                        class="form-control form-control-sm"
+                                                                        id="fecha-desde-filter">
+                                                                </div>
+                                                                <div class="form-group mb-2">
+                                                                    <label class="small">Hasta:</label>
+                                                                    <input type="date"
+                                                                        class="form-control form-control-sm"
+                                                                        id="fecha-hasta-filter">
+                                                                </div>
+                                                                <button class="btn btn-sm btn-primary btn-block"
+                                                                    id="apply-date-filter">Aplicar</button>
+                                                                <button class="btn btn-sm btn-outline-secondary btn-block"
+                                                                    id="clear-date-filter">Limpiar</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            <th class="border-0 text-center">
+                                                <i class="fas fa-cogs text-primary"></i> Acciones
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @include('activities.partials.subactivities', [
+                                            'subactivities' => $activity->subactivities,
+                                            'parentId' => $activity->id,
+                                            'level' => 0,
+                                            'editMode' => true,
+                                        ])
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Pestaña: Requerimientos -->
+            <div class="tab-pane fade" id="requirements" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-list-check"></i> Gestión de Requerimientos</h5>
+                        <div>
+                            <a href="{{ route('requirements.create', ['activity_id' => $activity->id]) }}"
+                                class="btn btn-success btn-sm">
+                                <i class="fas fa-plus"></i> Nuevo Requerimiento
+                            </a>
+                            <a href="{{ route('requirements.index', ['activity_id' => $activity->id]) }}"
+                                class="btn btn-info btn-sm">
+                                <i class="fas fa-external-link-alt"></i> Ver Todos
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {{-- Estadísticas rápidas --}}
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h4>{{ $activity->requirements->count() }}</h4>
+                                        <small>Total Requerimientos</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h4>{{ $activity->requirements->where('status', 'pendiente')->count() }}</h4>
+                                        <small>Pendientes</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h4>{{ $activity->requirements->where('status', 'recibido')->count() }}</h4>
+                                        <small>Recibidos</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Mostrar requerimientos existentes --}}
+                        @if ($activity->requirements->count() > 0)
+                            <div class="form-group">
+                                <label class="font-weight-bold">Requerimientos de esta Actividad</label>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Descripción
+                                                    <div class="custom-dropdown ml-2">
+                                                        <button class="btn btn-sm btn-outline-secondary filter-toggle"
+                                                            type="button" data-filter="status"
+                                                            style="padding: 2px 6px;">
+                                                            <i class="fas fa-filter"></i>
+                                                        </button>
+                                                        <div class="custom-dropdown-menu" id="status-filter-menu"
+                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                                                            <h6 class="dropdown-header"
+                                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                                Filtrar por Estado</h6>
+                                                            <div class="px-3 py-2">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input status-filter"
+                                                                        type="checkbox" value="" id="status-all"
+                                                                        checked>
+                                                                    <label class="form-check-label"
+                                                                        for="status-all">Todos</label>
+                                                                </div>
+                                                                @foreach ($statusLabels as $key => $label)
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input status-filter"
+                                                                            type="checkbox" value="{{ $key }}"
+                                                                            id="status-{{ $key }}">
+                                                                        <label
+                                                                            class="form-check-label d-flex align-items-center"
+                                                                            for="status-{{ $key }}">
+                                                                            <span class="badge badge-pill mr-2"
+                                                                                style="background-color: {{ $statusColors[$key] ?? '#6c757d' }}; color: white; width: 18px; height: 18px; display: inline-block; text-align: center; line-height: 18px; font-size: 0.8em; border-radius: 50%;">
+                                                                                &nbsp;
+                                                                            </span>
+                                                                            {{ $label }}
+                                                                        </label>
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </th>
+                                                <th>Estado</th>
+                                                <th>Fecha Creación</th>
+                                                <th>Fecha Recepción</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($activity->requirements as $requirement)
+                                                <tr>
+                                                    <td>
+                                                        <div>
+                                                            {{ Str::limit($requirement->description, 80) }}
+                                                            @if ($requirement->notas)
+                                                                <br><small class="text-muted">
+                                                                    <i class="fas fa-sticky-note"></i>
+                                                                    {{ Str::limit($requirement->notas, 50) }}
+                                                                </small>
+                                                            @endif
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        @if ($requirement->status === 'pendiente')
+                                                            <span class="badge badge-warning">
+                                                                <i class="fas fa-clock"></i> Pendiente
+                                                            </span>
+                                                        @else
+                                                            <span class="badge badge-success">
+                                                                <i class="fas fa-check-circle"></i> Recibido
+                                                            </span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <small>{{ $requirement->created_at->format('d/m/Y H:i') }}</small>
+                                                    </td>
+                                                    <td>
+                                                        @if ($requirement->fecha_recepcion)
+                                                            <small
+                                                                class="text-success">{{ $requirement->fecha_recepcion->format('d/m/Y H:i') }}</small>
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ route('requirements.show', $requirement) }}"
+                                                                class="btn btn-info btn-xs" title="Ver detalles">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                            <a href="{{ route('requirements.edit', $requirement) }}"
+                                                                class="btn btn-warning btn-xs" title="Editar">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+
+                                                            @if ($requirement->status === 'pendiente')
+                                                                <form
+                                                                    action="{{ route('requirements.mark-received', $requirement) }}"
+                                                                    method="POST" style="display:inline;">
+                                                                    @csrf
+                                                                    @method('PATCH')
+                                                                    <input type="hidden" name="from_activity"
+                                                                        value="1">
+                                                                    <button type="submit" class="btn btn-success btn-xs"
+                                                                        title="Marcar como recibido">
+                                                                        <i class="fas fa-check"></i>
+                                                                    </button>
+                                                                </form>
+                                                            @else
+                                                                <form
+                                                                    action="{{ route('requirements.mark-pending', $requirement) }}"
+                                                                    method="POST" style="display:inline;">
+                                                                    @csrf
+                                                                    @method('PATCH')
+                                                                    <input type="hidden" name="from_activity"
+                                                                        value="1">
+                                                                    <button type="submit"
+                                                                        class="btn btn-secondary btn-xs"
+                                                                        title="Marcar como pendiente">
+                                                                        <i class="fas fa-undo"></i>
+                                                                    </button>
+                                                                </form>
+                                                            @endif
+
+                                                            <form
+                                                                action="{{ route('requirements.destroy', $requirement) }}"
+                                                                method="POST" style="display:inline;"
+                                                                onsubmit="return confirm('¿Estás seguro de eliminar este requerimiento?')">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-danger btn-xs"
+                                                                    title="Eliminar">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-center py-4">
+                                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No hay requerimientos</h5>
+                                <p class="text-muted">Esta actividad aún no tiene requerimientos asociados.</p>
+                                <a href="{{ route('requirements.create', ['activity_id' => $activity->id]) }}"
+                                    class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Crear Primer Requerimiento
+                                </a>
+                            </div>
+                        @endif
+
+                        {{-- Formulario rápido para agregar requerimiento --}}
+                        <div class="mt-4 pt-4 border-top">
+                            <h6 class="mb-3">
+                                <i class="fas fa-plus-circle text-success"></i> Agregar Requerimiento Rápido
+                            </h6>
+                            <form action="{{ route('requirements.store') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="activity_id" value="{{ $activity->id }}">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <textarea class="form-control" name="description" rows="2" placeholder="Describe el requerimiento..."
+                                                required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <select class="form-control" name="status" required>
+                                                <option value="pendiente">Pendiente</option>
+                                                <option value="recibido">Recibido</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <textarea class="form-control" name="notas" rows="1" placeholder="Notas adicionales (opcional)"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> Agregar Requerimiento
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Pestaña: Correos -->
-        <div class="tab-pane fade" id="emails" role="tabpanel">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-envelope"></i> Gestión de Correos</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Mostrar correos existentes -->
-                    @if ($activity->emails->count() > 0)
-                        <div class="mb-4">
-                            <h6>Correos Existentes ({{ $activity->emails->count() }} total)</h6>
-                            <div class="card">
-                                <div class="card-body">
-                                    @foreach ($activity->emails->sortByDesc('created_at')->take(5) as $email)
-                                        <div class="border rounded p-3 mb-3 {{ $email->type == 'sent' ? 'border-primary' : 'border-success' }}">
-                                            <div class="row">
-                                                <div class="col-md-8">
-                                                    <div class="d-flex align-items-center mb-2">
-                                                        <span class="badge badge-{{ $email->type == 'sent' ? 'primary' : 'success' }} mr-2">
-                                                            <i class="fas fa-{{ $email->type == 'sent' ? 'paper-plane' : 'inbox' }}"></i>
-                                                            {{ $email->type == 'sent' ? 'Enviado' : 'Recibido' }}
+            <!-- Pestaña: Comentarios -->
+            <div class="tab-pane fade" id="comments" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-comments"></i> Gestión de Comentarios</h5>
+                    </div>
+                    <div class="card-body">
+                        {{-- Mostrar comentarios existentes --}}
+                        @if ($activity->comments->count() > 0)
+                            <div class="form-group">
+                                <label>Comentarios Existentes</label>
+                                <div class="card">
+                                    <div class="card-body">
+                                        @foreach ($activity->comments as $comment)
+                                            <div
+                                                class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <p class="mb-1">{{ $comment->comment }}</p>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-clock"></i>
+                                                        {{ $comment->created_at->format('d/m/Y H:i:s') }}
+                                                        <span class="ml-2">
+                                                            ({{ $comment->created_at->diffForHumans() }})
                                                         </span>
-                                                        <h6 class="mb-0">{{ $email->subject }}</h6>
-                                                    </div>
-                                                    
-                                                    <div class="mb-2">
-                                                        <strong>{{ $email->type == 'sent' ? 'Para:' : 'De:' }}</strong> 
-                                                        {{ $email->sender_recipient ?: 'No especificado' }}
-                                                    </div>
-                                                    
-                                                    <div class="mb-2">
-                                                        <strong>Contenido:</strong>
-                                                        <div class="bg-light p-2 rounded mt-1" style="max-height: 150px; overflow-y: auto;">
-                                                            {!! nl2br(e($email->content)) !!}
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    @if($email->attachments && count($email->attachments) > 0)
-                                                        <div class="mb-2">
-                                                            <strong>Archivos Adjuntos:</strong>
-                                                            <ul class="list-unstyled mb-0 ml-3">
-                                                                @foreach($email->attachments as $index => $attachment)
-                                                                    <li class="mb-1">
-                                                                        <i class="fas fa-paperclip text-primary"></i>
-                                                                        @if(is_array($attachment))
-                                                                            <a href="{{ route('emails.download', [$email, $index]) }}" 
-                                                                               class="text-decoration-none" target="_blank">
-                                                                                {{ $attachment['original_name'] }}
-                                                                            </a>
-                                                                            <small class="text-muted">
-                                                                                ({{ number_format($attachment['file_size'] / 1024, 1) }} KB)
-                                                                            </small>
-                                                                        @else
-                                                                            <span class="text-muted">{{ $attachment }}</span>
-                                                                        @endif
-                                                                    </li>
-                                                                @endforeach
-                                                            </ul>
-                                                        </div>
-                                                    @endif
+                                                    </small>
                                                 </div>
-                                                
-                                                <div class="col-md-4 text-right">
-                                                    <div class="mb-2">
-                                                        <small class="text-muted">
-                                                            <i class="fas fa-clock"></i> 
-                                                            {{ $email->created_at->format('d/m/Y H:i:s') }}
-                                                        </small>
-                                                        <br>
-                                                        <small class="text-muted">
-                                                            ({{ $email->created_at->diffForHumans() }})
-                                                        </small>
-                                                    </div>
-                                                    
-                                                    <form action="{{ route('emails.destroy', $email) }}" method="POST" 
-                                                          style="display: inline;" 
-                                                          onsubmit="return confirm('¿Estás seguro de eliminar este correo?')">
+                                                <div class="ml-2">
+                                                    <form action="{{ route('comments.destroy', $comment) }}"
+                                                        method="POST" style="display: inline;"
+                                                        onsubmit="return confirm('¿Estás seguro de eliminar este comentario?')">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar correo">
+                                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                            title="Eliminar comentario">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </form>
                                                 </div>
                                             </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <form action="{{ route('activities.comments.tab.store', $activity) }}" method="POST">
+                            @csrf
+                            <div class="form-group">
+                                <label for="comments">Agregar Nuevos Comentarios</label>
+                                <div id="comments-container">
+                                    <div class="comment-item mb-2">
+                                        <div class="input-group">
+                                            <textarea class="form-control" name="comments[]" placeholder="Agrega nuevos comentarios (deja vacío si no hay)"></textarea>
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-danger remove-comment"
+                                                    title="Eliminar comentario">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                    @endforeach
-                                    @if ($activity->emails->count() > 5)
-                                        <div class="text-center mt-2">
-                                            <a href="{{ route('activities.emails', $activity) }}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-eye"></i> Ver todos los correos ({{ $activity->emails->count() }})
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary" id="add-comment">
+                                    <i class="fas fa-plus"></i> Agregar Comentario
+                                </button>
+
+                                <!-- Botón de Actualizar para Comentarios -->
+                                <div class="mt-4 pt-3 border-top">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-save"></i> Actualizar Comentarios
+                                            </button>
+                                            <a href="{{ route('activities.comments', $activity) }}"
+                                                class="btn btn-info btn-lg ml-2">
+                                                <i class="fas fa-eye"></i> Ver Página de Comentarios
                                             </a>
                                         </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Formulario para agregar nuevo correo -->
-                    <form action="{{ route('activities.emails.store', $activity) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="form-group">
-                            <label>Agregar Nuevo Correo</label>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="type">
-                                            <i class="fas fa-exchange-alt text-primary"></i> Tipo de Correo
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <select class="form-control" id="type" name="type" required>
-                                            <option value="">Seleccionar tipo</option>
-                                            <option value="received">Correo Recibido</option>
-                                            <option value="sent">Correo Enviado</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="sender_recipient">
-                                            <i class="fas fa-user text-primary"></i> De/Para
-                                        </label>
-                                        <input type="email" class="form-control" id="sender_recipient" name="sender_recipient" 
-                                               placeholder="correo@ejemplo.com">
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                Los cambios se guardarán al hacer clic en "Actualizar"
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="form-group">
-                                <label for="subject">
-                                    <i class="fas fa-tag text-primary"></i> Asunto
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="subject" name="subject" 
-                                       placeholder="Asunto del correo" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="content">
-                                    <i class="fas fa-align-left text-primary"></i> Contenido
-                                    <span class="text-danger">*</span>
-                                </label>
-                                <textarea class="form-control" id="content" name="content" rows="4" 
-                                          placeholder="Contenido del correo..." required></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="attachments">
-                                    <i class="fas fa-paperclip text-primary"></i> Archivos Adjuntos
-                                </label>
-                                <input type="file" class="form-control-file" id="attachments" name="attachments[]" multiple
-                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
-                                <small class="form-text text-muted">
-                                    Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, GIF, ZIP, RAR
-                                </small>
-                            </div>
-                            
-                            <!-- Botón de Agregar Correo -->
-                            <div class="mt-4 pt-3 border-top">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <button type="submit" class="btn btn-success btn-lg">
-                                            <i class="fas fa-plus"></i> Agregar Correo
-                                        </button>
-                                        <a href="{{ route('activities.emails', $activity) }}" class="btn btn-info btn-lg ml-2">
-                                            <i class="fas fa-eye"></i> Ver Todos los Correos
-                                        </a>
-                                    </div>
-                                    <div>
-                                        <small class="text-muted">
-                                            <i class="fas fa-info-circle"></i>
-                                            El correo se agregará al hacer clic en "Agregar Correo"
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
-    </div>
-</div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Edit form JavaScript loaded');
-    
-    // Activar pestaña específica si viene desde una redirección
-    @if(session('active_tab'))
-        const targetTab = '{{ session('active_tab') }}';
-        const tabLink = document.querySelector(`#activityTabs a[href="#${targetTab}"]`);
-        if (tabLink) {
-            // Remover clases activas de todas las pestañas
-            document.querySelectorAll('#activityTabs .nav-link').forEach(link => link.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(pane => {
-                pane.classList.remove('show', 'active');
-            });
-            
-            // Activar la pestaña objetivo
-            tabLink.classList.add('active');
-            const targetPane = document.querySelector(`#${targetTab}`);
-            if (targetPane) {
-                targetPane.classList.add('show', 'active');
-            }
-        }
-    @endif
-    
-    // ===== FUNCIONALIDAD DE PESTAÑAS =====
-    
-    // Inicializar pestañas de Bootstrap
-    const tabLinks = document.querySelectorAll('#activityTabs .nav-link');
-    const tabPanes = document.querySelectorAll('.tab-pane');
-    
-    // Manejar clicks en las pestañas
-    tabLinks.forEach(function(tabLink) {
-        tabLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Remover clases activas de todas las pestañas
-            tabLinks.forEach(link => link.classList.remove('active'));
-            tabPanes.forEach(pane => {
-                pane.classList.remove('show', 'active');
-            });
-            
-            // Activar la pestaña clickeada
-            this.classList.add('active');
-            
-            // Mostrar el contenido correspondiente
-            const targetId = this.getAttribute('href').substring(1);
-            const targetPane = document.getElementById(targetId);
-            if (targetPane) {
-                targetPane.classList.add('show', 'active');
-            }
-        });
-    });
-    
-    // Función para activar una pestaña específica
-    function activateTab(tabId) {
-        // Remover clases activas
-        tabLinks.forEach(link => link.classList.remove('active'));
-        tabPanes.forEach(pane => {
-            pane.classList.remove('show', 'active');
-        });
-        
-        // Activar la pestaña específica
-        const tabLink = document.querySelector(`#activityTabs .nav-link[href="#${tabId}"]`);
-        const tabPane = document.getElementById(tabId);
-        
-        if (tabLink && tabPane) {
-            tabLink.classList.add('active');
-            tabPane.classList.add('show', 'active');
-        }
-    }
-    
-    // Verificar si hay una pestaña activa desde el servidor
-    @if(session('active_tab'))
-        activateTab('{{ session('active_tab') }}');
-    @endif
-    
-    // Verificar si hay un hash en la URL para activar una pestaña específica
-    if (window.location.hash) {
-        const hashTab = window.location.hash.substring(1);
-        if (['basic', 'requirements', 'comments', 'emails'].includes(hashTab)) {
-            activateTab(hashTab);
-        }
-    }
-    
-    // ===== FUNCIONALIDAD DE REQUERIMIENTOS =====
-    
-    // Agregar requerimiento
-    const addRequirementBtn = document.getElementById('add-requirement');
-    if (addRequirementBtn) {
-        addRequirementBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const container = document.getElementById('requirements-container');
-            const newRequirement = document.createElement('div');
-            newRequirement.classList.add('requirement-item', 'mb-2');
-            newRequirement.innerHTML = `
+            <!-- Pestaña: Correos -->
+            <div class="tab-pane fade" id="emails" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-envelope"></i> Gestión de Correos</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mostrar correos existentes -->
+                        @if ($activity->emails->count() > 0)
+                            <div class="mb-4">
+                                <h6>Correos Existentes ({{ $activity->emails->count() }} total)</h6>
+                                <div class="card">
+                                    <div class="card-body">
+                                        @foreach ($activity->emails->sortByDesc('created_at')->take(5) as $email)
+                                            <div
+                                                class="border rounded p-3 mb-3 {{ $email->type == 'sent' ? 'border-primary' : 'border-success' }}">
+                                                <div class="row">
+                                                    <div class="col-md-8">
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            <span
+                                                                class="badge badge-{{ $email->type == 'sent' ? 'primary' : 'success' }} mr-2">
+                                                                <i
+                                                                    class="fas fa-{{ $email->type == 'sent' ? 'paper-plane' : 'inbox' }}"></i>
+                                                                {{ $email->type == 'sent' ? 'Enviado' : 'Recibido' }}
+                                                            </span>
+                                                            <h6 class="mb-0">{{ $email->subject }}</h6>
+                                                        </div>
+
+                                                        <div class="mb-2">
+                                                            <strong>{{ $email->type == 'sent' ? 'Para:' : 'De:' }}</strong>
+                                                            {{ $email->sender_recipient ?: 'No especificado' }}
+                                                        </div>
+
+                                                        <div class="mb-2">
+                                                            <strong>Contenido:</strong>
+                                                            <div class="bg-light p-2 rounded mt-1"
+                                                                style="max-height: 150px; overflow-y: auto;">
+                                                                {!! nl2br(e($email->content)) !!}
+                                                            </div>
+                                                        </div>
+
+                                                        @if ($email->attachments && count($email->attachments) > 0)
+                                                            <div class="mb-2">
+                                                                <strong>Archivos Adjuntos:</strong>
+                                                                <ul class="list-unstyled mb-0 ml-3">
+                                                                    @foreach ($email->attachments as $index => $attachment)
+                                                                        <li class="mb-1">
+                                                                            <i class="fas fa-paperclip text-primary"></i>
+                                                                            @if (is_array($attachment))
+                                                                                <a href="{{ route('emails.download', [$email, $index]) }}"
+                                                                                    class="text-decoration-none"
+                                                                                    target="_blank">
+                                                                                    {{ $attachment['original_name'] }}
+                                                                                </a>
+                                                                                <small class="text-muted">
+                                                                                    ({{ number_format($attachment['file_size'] / 1024, 1) }}
+                                                                                    KB)
+                                                                                </small>
+                                                                            @else
+                                                                                <span
+                                                                                    class="text-muted">{{ $attachment }}</span>
+                                                                            @endif
+                                                                        </li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    <div class="col-md-4 text-right">
+                                                        <div class="mb-2">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-clock"></i>
+                                                                {{ $email->created_at->format('d/m/Y H:i:s') }}
+                                                            </small>
+                                                            <br>
+                                                            <small class="text-muted">
+                                                                ({{ $email->created_at->diffForHumans() }})
+                                                            </small>
+                                                        </div>
+
+                                                        <form action="{{ route('emails.destroy', $email) }}"
+                                                            method="POST" style="display: inline;"
+                                                            onsubmit="return confirm('¿Estás seguro de eliminar este correo?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-danger btn-sm"
+                                                                title="Eliminar correo">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                        @if ($activity->emails->count() > 5)
+                                            <div class="text-center mt-2">
+                                                <a href="{{ route('activities.emails', $activity) }}"
+                                                    class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> Ver todos los correos
+                                                    ({{ $activity->emails->count() }})
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Formulario para agregar nuevo correo -->
+                        <form action="{{ route('activities.emails.store', $activity) }}" method="POST"
+                            enctype="multipart/form-data">
+                            @csrf
+                            <div class="form-group">
+                                <label>Agregar Nuevo Correo</label>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="type">
+                                                <i class="fas fa-exchange-alt text-primary"></i> Tipo de Correo
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <select class="form-control" id="type" name="type" required>
+                                                <option value="">Seleccionar tipo</option>
+                                                <option value="received">Correo Recibido</option>
+                                                <option value="sent">Correo Enviado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="sender_recipient">
+                                                <i class="fas fa-user text-primary"></i> De/Para
+                                            </label>
+                                            <input type="email" class="form-control" id="sender_recipient"
+                                                name="sender_recipient" placeholder="correo@ejemplo.com">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="subject">
+                                        <i class="fas fa-tag text-primary"></i> Asunto
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="subject" name="subject"
+                                        placeholder="Asunto del correo" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="content">
+                                        <i class="fas fa-align-left text-primary"></i> Contenido
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control" id="content" name="content" rows="4" placeholder="Contenido del correo..."
+                                        required></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="attachments">
+                                        <i class="fas fa-paperclip text-primary"></i> Archivos Adjuntos
+                                    </label>
+                                    <input type="file" class="form-control-file" id="attachments"
+                                        name="attachments[]" multiple
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                                    <small class="form-text text-muted">
+                                        Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG,
+                                        PNG, GIF, ZIP, RAR
+                                    </small>
+                                </div>
+
+                                <!-- Botón de Agregar Correo -->
+                                <div class="mt-4 pt-3 border-top">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <button type="submit" class="btn btn-success btn-lg">
+                                                <i class="fas fa-plus"></i> Agregar Correo
+                                            </button>
+                                            <a href="{{ route('activities.emails', $activity) }}"
+                                                class="btn btn-info btn-lg ml-2">
+                                                <i class="fas fa-eye"></i> Ver Todos los Correos
+                                            </a>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                El correo se agregará al hacer clic en "Agregar Correo"
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Edit form JavaScript loaded');
+
+                // Activar pestaña específica si viene desde una redirección
+                @if (session('active_tab'))
+                    const targetTab = '{{ session('active_tab') }}';
+                    const tabLink = document.querySelector(`#activityTabs a[href="#${targetTab}"]`);
+                    if (tabLink) {
+                        // Remover clases activas de todas las pestañas
+                        document.querySelectorAll('#activityTabs .nav-link').forEach(link => link.classList.remove(
+                            'active'));
+                        document.querySelectorAll('.tab-pane').forEach(pane => {
+                            pane.classList.remove('show', 'active');
+                        });
+
+                        // Activar la pestaña objetivo
+                        tabLink.classList.add('active');
+                        const targetPane = document.querySelector(`#${targetTab}`);
+                        if (targetPane) {
+                            targetPane.classList.add('show', 'active');
+                        }
+                    }
+                @endif
+
+                // ===== FUNCIONALIDAD DE PESTAÑAS =====
+
+                // Inicializar pestañas de Bootstrap
+                const tabLinks = document.querySelectorAll('#activityTabs .nav-link');
+                const tabPanes = document.querySelectorAll('.tab-pane');
+
+                // Manejar clicks en las pestañas
+                tabLinks.forEach(function(tabLink) {
+                    tabLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+
+                        // Remover clases activas de todas las pestañas
+                        tabLinks.forEach(link => link.classList.remove('active'));
+                        tabPanes.forEach(pane => {
+                            pane.classList.remove('show', 'active');
+                        });
+
+                        // Activar la pestaña clickeada
+                        this.classList.add('active');
+
+                        // Mostrar el contenido correspondiente
+                        const targetId = this.getAttribute('href').substring(1);
+                        const targetPane = document.getElementById(targetId);
+                        if (targetPane) {
+                            targetPane.classList.add('show', 'active');
+                        }
+                    });
+                });
+
+                // Función para activar una pestaña específica
+                function activateTab(tabId) {
+                    // Remover clases activas
+                    tabLinks.forEach(link => link.classList.remove('active'));
+                    tabPanes.forEach(pane => {
+                        pane.classList.remove('show', 'active');
+                    });
+
+                    // Activar la pestaña específica
+                    const tabLink = document.querySelector(`#activityTabs .nav-link[href="#${tabId}"]`);
+                    const tabPane = document.getElementById(tabId);
+
+                    if (tabLink && tabPane) {
+                        tabLink.classList.add('active');
+                        tabPane.classList.add('show', 'active');
+                    }
+                }
+
+                // Verificar si hay una pestaña activa desde el servidor
+                @if (session('active_tab'))
+                    activateTab('{{ session('active_tab') }}');
+                @endif
+
+                // Verificar si hay un hash en la URL para activar una pestaña específica
+                if (window.location.hash) {
+                    const hashTab = window.location.hash.substring(1);
+                    if (['basic', 'requirements', 'comments', 'emails'].includes(hashTab)) {
+                        activateTab(hashTab);
+                    }
+                }
+
+                // ===== FUNCIONALIDAD DE REQUERIMIENTOS =====
+
+                // Agregar requerimiento
+                const addRequirementBtn = document.getElementById('add-requirement');
+                if (addRequirementBtn) {
+                    addRequirementBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const container = document.getElementById('requirements-container');
+                        const newRequirement = document.createElement('div');
+                        newRequirement.classList.add('requirement-item', 'mb-2');
+                        newRequirement.innerHTML = `
                 <div class="input-group">
                     <input type="text" class="form-control" name="requirements[]" placeholder="Descripción del requerimiento">
                     <div class="input-group-append">
@@ -827,22 +1094,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
-            container.appendChild(newRequirement);
-            attachRemoveHandlers();
-        });
-    }
+                        container.appendChild(newRequirement);
+                        attachRemoveHandlers();
+                    });
+                }
 
-    // Agregar comentario
-    const addCommentBtn = document.getElementById('add-comment');
-    if (addCommentBtn) {
-        addCommentBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const container = document.getElementById('comments-container');
-            const newComment = document.createElement('div');
-            newComment.classList.add('comment-item', 'mb-2');
-            newComment.innerHTML = `
+                // Agregar comentario
+                const addCommentBtn = document.getElementById('add-comment');
+                if (addCommentBtn) {
+                    addCommentBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const container = document.getElementById('comments-container');
+                        const newComment = document.createElement('div');
+                        newComment.classList.add('comment-item', 'mb-2');
+                        newComment.innerHTML = `
                 <div class="input-group">
                     <textarea class="form-control" name="comments[]" placeholder="Descripción del comentario"></textarea>
                     <div class="input-group-append">
@@ -852,225 +1119,237 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
-            container.appendChild(newComment);
-            attachRemoveHandlers();
-        });
-    }
+                        container.appendChild(newComment);
+                        attachRemoveHandlers();
+                    });
+                }
 
-    // Función para adjuntar manejadores de eliminación
-    function attachRemoveHandlers() {
-        // Eliminar requerimientos - SOLO botones dentro de requirements-container
-        const requirementsContainer = document.getElementById('requirements-container');
-        if (requirementsContainer) {
-            requirementsContainer.querySelectorAll('.remove-requirement').forEach(function(button) {
-                // Remover listeners existentes para evitar duplicados
-                button.removeEventListener('click', removeRequirement);
-                button.addEventListener('click', removeRequirement);
-            });
-        }
+                // Función para adjuntar manejadores de eliminación
+                function attachRemoveHandlers() {
+                    // Eliminar requerimientos - SOLO botones dentro de requirements-container
+                    const requirementsContainer = document.getElementById('requirements-container');
+                    if (requirementsContainer) {
+                        requirementsContainer.querySelectorAll('.remove-requirement').forEach(function(button) {
+                            // Remover listeners existentes para evitar duplicados
+                            button.removeEventListener('click', removeRequirement);
+                            button.addEventListener('click', removeRequirement);
+                        });
+                    }
 
-        // Eliminar comentarios - SOLO botones dentro de comments-container
-        const commentsContainer = document.getElementById('comments-container');
-        if (commentsContainer) {
-            commentsContainer.querySelectorAll('.remove-comment').forEach(function(button) {
-                // Remover listeners existentes para evitar duplicados
-                button.removeEventListener('click', removeComment);
-                button.addEventListener('click', removeComment);
-            });
-        }
-    }
+                    // Eliminar comentarios - SOLO botones dentro de comments-container
+                    const commentsContainer = document.getElementById('comments-container');
+                    if (commentsContainer) {
+                        commentsContainer.querySelectorAll('.remove-comment').forEach(function(button) {
+                            // Remover listeners existentes para evitar duplicados
+                            button.removeEventListener('click', removeComment);
+                            button.addEventListener('click', removeComment);
+                        });
+                    }
+                }
 
-    function removeRequirement(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const container = document.getElementById('requirements-container');
-        if (container.children.length > 1) {
-            const item = e.target.closest('.requirement-item');
-            if (item) {
-                item.remove();
-            }
-        } else {
-            alert('Debe mantener al menos un campo de requerimiento.');
-        }
-    }
+                function removeRequirement(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-    function removeComment(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const container = document.getElementById('comments-container');
-        if (container.children.length > 1) {
-            const item = e.target.closest('.comment-item');
-            if (item) {
-                item.remove();
-            }
-        } else {
-            alert('Debe mantener al menos un campo de comentario.');
-        }
-    }
+                    const container = document.getElementById('requirements-container');
+                    if (container.children.length > 1) {
+                        const item = e.target.closest('.requirement-item');
+                        if (item) {
+                            item.remove();
+                        }
+                    } else {
+                        alert('Debe mantener al menos un campo de requerimiento.');
+                    }
+                }
 
-    // ===== FUNCIONALIDAD DE SELECCIÓN DE ANALISTAS =====
-    let selectedAnalysts = [];
-    
-    // Inicializar analistas seleccionados desde el servidor
-    function initializeSelectedAnalysts() {
-        const existingInputs = document.querySelectorAll('#selected-analysts-inputs input[name="analista_id[]"]');
-        existingInputs.forEach(input => {
-            const analystId = input.value;
-            const analystCard = document.querySelector(`[data-analyst-id="${analystId}"]`);
-            if (analystCard) {
-                const analystName = analystCard.dataset.analystName;
-                selectedAnalysts.push({ id: analystId, name: analystName });
-                analystCard.classList.add('selected');
-            }
-        });
-        updateAnalystsDisplay();
-    }
-    
-    // Manejar clicks en las tarjetas de analistas
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.analyst-card')) {
-            const card = e.target.closest('.analyst-card');
-            const analystId = card.dataset.analystId;
-            const analystName = card.dataset.analystName;
-            
-            if (card.classList.contains('selected')) {
-                // Deseleccionar
-                card.classList.remove('selected');
-                selectedAnalysts = selectedAnalysts.filter(a => a.id !== analystId);
-            } else {
-                // Seleccionar
-                card.classList.add('selected');
-                selectedAnalysts.push({ id: analystId, name: analystName });
-            }
-            
-            updateAnalystsDisplay();
-        }
-    });
-    
-    // Actualizar la visualización y los inputs ocultos
-    function updateAnalystsDisplay() {
-        const container = document.getElementById('selected-analysts-inputs');
-        const summary = document.getElementById('selected-analysts-summary');
-        const countSpan = document.getElementById('selected-count');
-        const namesSpan = document.getElementById('selected-names');
-        
-        // Limpiar inputs existentes
-        container.innerHTML = '';
-        
-        // Crear nuevos inputs
-        selectedAnalysts.forEach(analyst => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'analista_id[]';
-            input.value = analyst.id;
-            container.appendChild(input);
-        });
-        
-        // Actualizar resumen
-        if (selectedAnalysts.length > 0) {
-            countSpan.textContent = selectedAnalysts.length;
-            namesSpan.textContent = selectedAnalysts.map(a => a.name).join(', ');
-            summary.style.display = 'block';
-        } else {
-            summary.style.display = 'none';
-        }
-    }
+                function removeComment(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-    // Inicializar manejadores para elementos existentes
-    attachRemoveHandlers();
-    
-    // Inicializar analistas seleccionados
-    initializeSelectedAnalysts();
-    
-    // ===== SISTEMA DE ESTADOS MÚLTIPLES =====
-    
-    // Event listener para el botón de editar estados
-    document.getElementById('editStatusesBtn').addEventListener('click', function() {
-        const activityId = this.getAttribute('data-activity-id');
-        openStatusEditModal(activityId);
-    });
-    
-    // Función para actualizar la visualización de estados en la vista edit
-    function updateEditStatusDisplay(activityId, statuses) {
-        const statusContainer = document.getElementById('currentStatuses');
-        if (!statusContainer) {
-            console.log('No se encontró el contenedor de estados');
-            return;
-        }
-        
-        let html = '';
-        if (statuses && statuses.length > 0) {
-            statuses.forEach(status => {
-                const contrastColor = getContrastColor(status.color);
-                html += `
+                    const container = document.getElementById('comments-container');
+                    if (container.children.length > 1) {
+                        const item = e.target.closest('.comment-item');
+                        if (item) {
+                            item.remove();
+                        }
+                    } else {
+                        alert('Debe mantener al menos un campo de comentario.');
+                    }
+                }
+
+                // ===== FUNCIONALIDAD DE SELECCIÓN DE ANALISTAS =====
+                let selectedAnalysts = [];
+
+                // Inicializar analistas seleccionados desde el servidor
+                function initializeSelectedAnalysts() {
+                    const existingInputs = document.querySelectorAll(
+                        '#selected-analysts-inputs input[name="analista_id[]"]');
+                    existingInputs.forEach(input => {
+                        const analystId = input.value;
+                        const analystCard = document.querySelector(`[data-analyst-id="${analystId}"]`);
+                        if (analystCard) {
+                            const analystName = analystCard.dataset.analystName;
+                            selectedAnalysts.push({
+                                id: analystId,
+                                name: analystName
+                            });
+                            analystCard.classList.add('selected');
+                        }
+                    });
+                    updateAnalystsDisplay();
+                }
+
+                // Manejar clicks en las tarjetas de analistas
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.analyst-card')) {
+                        const card = e.target.closest('.analyst-card');
+                        const analystId = card.dataset.analystId;
+                        const analystName = card.dataset.analystName;
+
+                        if (card.classList.contains('selected')) {
+                            // Deseleccionar
+                            card.classList.remove('selected');
+                            selectedAnalysts = selectedAnalysts.filter(a => a.id !== analystId);
+                        } else {
+                            // Seleccionar
+                            card.classList.add('selected');
+                            selectedAnalysts.push({
+                                id: analystId,
+                                name: analystName
+                            });
+                        }
+
+                        updateAnalystsDisplay();
+                    }
+                });
+
+                // Actualizar la visualización y los inputs ocultos
+                function updateAnalystsDisplay() {
+                    const container = document.getElementById('selected-analysts-inputs');
+                    const summary = document.getElementById('selected-analysts-summary');
+                    const countSpan = document.getElementById('selected-count');
+                    const namesSpan = document.getElementById('selected-names');
+
+                    // Limpiar inputs existentes
+                    container.innerHTML = '';
+
+                    // Crear nuevos inputs
+                    selectedAnalysts.forEach(analyst => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'analista_id[]';
+                        input.value = analyst.id;
+                        container.appendChild(input);
+                    });
+
+                    // Actualizar resumen
+                    if (selectedAnalysts.length > 0) {
+                        countSpan.textContent = selectedAnalysts.length;
+                        namesSpan.textContent = selectedAnalysts.map(a => a.name).join(', ');
+                        summary.style.display = 'block';
+                    } else {
+                        summary.style.display = 'none';
+                    }
+                }
+
+                // Inicializar manejadores para elementos existentes
+                attachRemoveHandlers();
+
+                // Inicializar analistas seleccionados
+                initializeSelectedAnalysts();
+
+                // ===== SISTEMA DE ESTADOS MÚLTIPLES =====
+
+                // Event listener para el botón de editar estados
+                document.getElementById('editStatusesBtn').addEventListener('click', function() {
+                    const activityId = this.getAttribute('data-activity-id');
+                    openStatusEditModal(activityId);
+                });
+
+                // Función para actualizar la visualización de estados en la vista edit
+                function updateEditStatusDisplay(activityId, statuses) {
+                    const statusContainer = document.getElementById('currentStatuses');
+                    if (!statusContainer) {
+                        console.log('No se encontró el contenedor de estados');
+                        return;
+                    }
+
+                    let html = '';
+                    if (statuses && statuses.length > 0) {
+                        statuses.forEach(status => {
+                            const contrastColor = getContrastColor(status.color);
+                            html += `
                     <span class="badge badge-pill mr-1 mb-1" 
                           style="background-color: ${status.color}; color: ${contrastColor};">
                         <i class="${status.icon || 'fas fa-circle'}"></i> ${status.label}
                     </span>
                 `;
-            });
-        } else {
-            html = `
+                        });
+                    } else {
+                        html = `
                 <span class="text-muted">
                     <i class="fas fa-exclamation-triangle"></i> Sin estados asignados
                 </span>
             `;
-        }
-        
-        statusContainer.innerHTML = html;
-        console.log('Estados actualizados en la vista edit para actividad:', activityId);
-    }
-    
-    // Sobrescribir la función updateStatusDisplay para que funcione en la vista edit
-    if (typeof updateStatusDisplay === 'function') {
-        const originalUpdateStatusDisplay = updateStatusDisplay;
-        updateStatusDisplay = function(activityId, statuses) {
-            // Llamar a la función original (para la vista index)
-            originalUpdateStatusDisplay(activityId, statuses);
-            // Llamar a la función específica para la vista edit
-            updateEditStatusDisplay(activityId, statuses);
-        };
-    } else {
-        // Si no existe la función original, crear una nueva
-        window.updateStatusDisplay = updateEditStatusDisplay;
-    }
-});
-</script>
+                    }
 
-<!-- Scripts adicionales -->
-<script src="{{ asset('js/multiple-statuses.js') }}"></script>
+                    statusContainer.innerHTML = html;
+                    console.log('Estados actualizados en la vista edit para actividad:', activityId);
+                }
 
-<!-- Modal para editar estados -->
-<div class="modal fade" id="statusEditModal" tabindex="-1" role="dialog" aria-labelledby="statusEditModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="statusEditModalLabel">
-                    <i class="fas fa-flag"></i> Editar Estados de la Actividad
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="statusModalBody">
-                <!-- El contenido se carga dinámicamente -->
-                <div class="text-center py-4">
-                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
-                    <p class="mt-2">Cargando estados...</p>
+                // Sobrescribir la función updateStatusDisplay para que funcione en la vista edit
+                if (typeof updateStatusDisplay === 'function') {
+                    const originalUpdateStatusDisplay = updateStatusDisplay;
+                    updateStatusDisplay = function(activityId, statuses) {
+                        // Llamar a la función original (para la vista index)
+                        originalUpdateStatusDisplay(activityId, statuses);
+                        // Llamar a la función específica para la vista edit
+                        updateEditStatusDisplay(activityId, statuses);
+                    };
+                } else {
+                    // Si no existe la función original, crear una nueva
+                    window.updateStatusDisplay = updateEditStatusDisplay;
+                }
+            });
+        </script>
+
+        <!-- Scripts adicionales -->
+        <script src="{{ asset('js/multiple-statuses.js') }}"></script>
+
+        <!-- Modal para editar estados -->
+        <div class="modal fade" id="statusEditModal" tabindex="-1" role="dialog"
+            aria-labelledby="statusEditModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="statusEditModalLabel">
+                            <i class="fas fa-flag"></i> Editar Estados de la Actividad
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="statusModalBody">
+                        <!-- El contenido se carga dinámicamente -->
+                        <div class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                            <p class="mt-2">Cargando estados...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" id="saveStatusBtn" onclick="saveStatusChanges()">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fas fa-times"></i> Cancelar
-                </button>
-                <button type="button" class="btn btn-primary" id="saveStatusBtn" onclick="saveStatusChanges()">
-                    <i class="fas fa-save"></i> Guardar Cambios
-                </button>
             </div>
         </div>
     </div>
-</div>
 
 @endsection
+
+<script src="{{ asset('js/activities-edit-subactivities.js') }}"></script>
+<script src="{{ asset('js/activities-filters-sort.js') }}"></script>

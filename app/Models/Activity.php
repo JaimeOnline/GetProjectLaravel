@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class Activity extends Model
 {
     use HasFactory;
@@ -47,7 +50,7 @@ class Activity extends Model
      */
     public function subactivities()
     {
-        return $this->hasMany(Activity::class, 'parent_id');
+        return $this->hasMany(Activity::class, 'parent_id')->with('subactivities');
     }
     /**
      * Actividad padre (si existe)
@@ -78,9 +81,9 @@ class Activity extends Model
     public function statuses()
     {
         return $this->belongsToMany(Status::class, 'activity_statuses')
-                    ->withPivot('assigned_at')
-                    ->withTimestamps()
-                    ->orderBy('order');
+            ->withPivot('assigned_at')
+            ->withTimestamps()
+            ->orderBy('order');
     }
 
     /**
@@ -93,7 +96,7 @@ class Activity extends Model
         if ($this->statuses && $this->statuses->count() > 0) {
             return $this->statuses->first()->label;
         }
-        
+
         // Fallback al sistema anterior
         $labels = [
             'en_ejecucion' => 'En ejecución',

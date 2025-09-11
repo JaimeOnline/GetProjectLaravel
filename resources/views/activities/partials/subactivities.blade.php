@@ -1,7 +1,12 @@
 {{-- Partial para mostrar subactividades de forma recursiva --}}
+@php
+    $level = $level ?? 0;
+@endphp
+
 @foreach ($subactivities as $subactivity)
     <tr class="subactivity-row activity-row level-{{ $level }}" data-parent-id="{{ $parentId }}"
-        data-activity-id="{{ $subactivity->id }}" style="display: none;">
+        data-activity-id="{{ $subactivity->id }}"
+        @if ($level == 0) style="display: table-row;" @else style="display: none;" @endif>
         <td class="align-middle">
             <span class="badge badge-outline-primary font-weight-bold">
                 {{ $subactivity->caso }}
@@ -15,23 +20,22 @@
                         <i class="fas fa-chevron-right text-primary" id="icon-{{ $subactivity->id }}"></i>
                     </span>
                 @endif
-                <div>
-                    <div class="font-weight-bold text-dark small">
-                        {{ Str::limit($subactivity->name, 40) }}
-                        @if (strlen($subactivity->name) > 40)
-                            <span class="text-primary" style="cursor: pointer;" title="{{ $subactivity->name }}"
-                                data-toggle="tooltip">
-                                <i class="fas fa-info-circle"></i>
-                            </span>
-                        @endif
-                    </div>
-                    @if ($subactivity->subactivities->count() > 0)
-                        <small class="text-muted">
-                            <i class="fas fa-sitemap"></i>
-                            {{ $subactivity->subactivities->count() }} subactividad(es)
-                        </small>
-                    @endif
-                </div>
+                <a href="{{ route('activities.edit', $subactivity) }}" class="font-weight-bold text-dark small"
+                    title="Ver/Editar subactividad">
+                    {{ Str::limit($subactivity->name, 40) }}
+                </a>
+                @if (strlen($subactivity->name) > 40)
+                    <span class="text-primary" style="cursor: pointer;" title="{{ $subactivity->name }}"
+                        data-toggle="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                    </span>
+                @endif
+                @if ($subactivity->subactivities->count() > 0)
+                    <small class="text-muted ml-2">
+                        <i class="fas fa-sitemap"></i>
+                        {{ $subactivity->subactivities->count() }} subactividad(es)
+                    </small>
+                @endif
             </div>
         </td>
         <td class="align-middle">
@@ -198,4 +202,3 @@
         transition: all 0.2s ease;
     }
 </style>
-

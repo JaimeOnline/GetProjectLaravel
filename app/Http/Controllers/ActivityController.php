@@ -288,11 +288,51 @@ class ActivityController extends Controller
         $analistas = Analista::all();
         // Obtener todas las actividades para el campo de actividad padre (excluyendo la actividad actual)
         $activities = Activity::where('id', '!=', $activity->id)->get();
-        // Cargar los comentarios, correos, analistas, requerimientos y estados de la actividad
-        $activity->load(['comments', 'emails', 'analistas', 'requirements', 'statuses']);
+        // Cargar la actividad con subactividades y todas sus relaciones recursivas
+        $activity->load([
+            'comments',
+            'emails',
+            'analistas',
+            'requirements',
+            'statuses',
+            'subactivities.analistas',
+            'subactivities.comments',
+            'subactivities.emails',
+            'subactivities.requirements',
+            'subactivities.statuses',
+            'subactivities.subactivities.analistas',
+            'subactivities.subactivities.comments',
+            'subactivities.subactivities.emails',
+            'subactivities.subactivities.requirements',
+            'subactivities.subactivities.statuses'
+        ]);
+
+        // Filtros de estado (array asociativo para la tabla)
+        $statusLabels = [
+            'no_iniciada' => 'No Iniciada',
+            'en_ejecucion' => 'En Ejecución',
+            'en_espera_de_insumos' => 'En Espera de Insumos',
+            'en_certificacion_por_cliente' => 'En Certificación',
+            'pases_enviados' => 'Pases Enviados',
+            'culminada' => 'Culminada',
+            'pausada' => 'Pausada'
+        ];
+
+        // Colores de estado para los filtros
+        $statusColors = [
+            'no_iniciada' => '#6c757d',
+            'en_ejecucion' => '#17a2b8',
+            'en_espera_de_insumos' => '#ffc107',
+            'en_certificacion_por_cliente' => '#fd7e14',
+            'pases_enviados' => '#20c997',
+            'culminada' => '#28a745',
+            'pausada' => '#343a40'
+        ];
+
         // Pasar las variables a la vista
-        return view('activities.edit', compact('activity', 'analistas', 'activities'));
+        return view('activities.edit', compact('activity', 'analistas', 'activities', 'statusLabels', 'statusColors'));
     }
+
     public function update(Request $request, Activity $activity)
     {
         $rules = [

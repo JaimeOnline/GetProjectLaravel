@@ -11,7 +11,7 @@
     --light-color: #f8f9fa;
     --dark-color: #343a40;
     --border-radius: 8px;
-    --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
 }
 
@@ -53,7 +53,7 @@
     margin: 0;
 }
 
-.breadcrumb-item + .breadcrumb-item::before {
+.breadcrumb-item+.breadcrumb-item::before {
     content: "›";
     color: var(--secondary-color);
     font-weight: bold;
@@ -102,7 +102,7 @@
 .analyst-card:hover {
     border-color: var(--primary-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .analyst-card.selected {
@@ -162,7 +162,7 @@
 
 .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary {
@@ -381,16 +381,16 @@ select.form-control option:hover {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 0.5rem;
     }
-    
+
     .action-bar {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .action-group {
         justify-content: center;
     }
-    
+
     .quick-nav {
         justify-content: center;
     }
@@ -398,8 +398,15 @@ select.form-control option:hover {
 
 /* ===== ANIMACIONES ===== */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .fade-in {
@@ -484,7 +491,9 @@ select.form-control option:hover {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ===== ORDENAMIENTO DE TABLAS ===== */
@@ -514,11 +523,13 @@ select.form-control option:hover {
 }
 
 .sortable.sort-asc .sort-icon:before {
-    content: "\f0de"; /* fa-sort-up */
+    content: "\f0de";
+    /* fa-sort-up */
 }
 
 .sortable.sort-desc .sort-icon:before {
-    content: "\f0dd"; /* fa-sort-down */
+    content: "\f0dd";
+    /* fa-sort-down */
 }
 
 /* ===== FILTROS DE COLUMNAS ===== */
@@ -535,13 +546,13 @@ select.form-control option:hover {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     min-width: 200px;
 }
 
 .dropdown-menu {
     border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border-radius: 8px;
 }
 
@@ -616,18 +627,19 @@ select.form-control option:hover {
         padding-left: 10px;
         padding-right: 10px;
     }
-    
+
     .card {
         margin-bottom: 1rem;
     }
-    
+
     .btn-group-vertical .btn {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
     }
-    
+
     .sort-icon {
-        display: none; /* Ocultar iconos de ordenamiento en móviles */
+        display: none;
+        /* Ocultar iconos de ordenamiento en móviles */
     }
 }
 
@@ -716,7 +728,7 @@ select.form-control option:hover {
     cursor: pointer;
 }
 
-.status-checkboxes .custom-control-input:checked ~ .custom-control-label {
+.status-checkboxes .custom-control-input:checked~.custom-control-label {
     background-color: rgba(0, 123, 255, 0.1);
     border-radius: 6px;
     padding: 0.5rem;
@@ -779,13 +791,13 @@ select.form-control option:hover {
     font-weight: 500;
     padding: 0.375rem 0.75rem;
     border-radius: 50px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     transition: all 0.2s ease;
 }
 
 .badge-pill:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Filtro múltiple de estados */
@@ -807,6 +819,7 @@ select.form-control option:hover {
         transform: translateX(100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -825,7 +838,9 @@ select.form-control option:hover {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Responsive para estados múltiples */
@@ -835,16 +850,17 @@ select.form-control option:hover {
         align-items: flex-start;
         gap: 0.25rem;
     }
-    
+
     .status-edit-btn {
-        opacity: 1; /* Siempre visible en móviles */
+        opacity: 1;
+        /* Siempre visible en móviles */
         align-self: flex-end;
     }
-    
+
     .status-display {
         width: 100%;
     }
-    
+
     .badge-pill {
         font-size: 0.7rem;
         padding: 0.25rem 0.5rem;
@@ -856,11 +872,11 @@ select.form-control option:hover {
         margin: 0.5rem;
         max-width: none;
     }
-    
+
     .status-checkboxes {
         max-height: 300px;
     }
-    
+
     .status-checkboxes .badge {
         font-size: 0.75rem;
         padding: 0.375rem 0.5rem;
@@ -962,11 +978,11 @@ select.form-control option:hover {
         min-height: 110px;
         padding: 1.25rem;
     }
-    
+
     .stats-icon {
         font-size: 2.2rem;
     }
-    
+
     .stats-content h3 {
         font-size: 1.8rem;
     }
@@ -977,15 +993,15 @@ select.form-control option:hover {
         min-height: 100px;
         padding: 1rem;
     }
-    
+
     .stats-icon {
         font-size: 2rem;
     }
-    
+
     .stats-content h3 {
         font-size: 1.6rem;
     }
-    
+
     .stats-content p {
         font-size: 0.85rem;
     }
@@ -996,16 +1012,16 @@ select.form-control option:hover {
         min-height: 90px;
         padding: 0.875rem;
     }
-    
+
     .stats-icon {
         font-size: 1.8rem;
         margin-bottom: 0.25rem;
     }
-    
+
     .stats-content h3 {
         font-size: 1.4rem;
     }
-    
+
     .stats-content p {
         font-size: 0.8rem;
     }
@@ -1016,15 +1032,15 @@ select.form-control option:hover {
         min-height: 80px;
         padding: 0.75rem;
     }
-    
+
     .stats-icon {
         font-size: 1.5rem;
     }
-    
+
     .stats-content h3 {
         font-size: 1.2rem;
     }
-    
+
     .stats-content p {
         font-size: 0.75rem;
     }
@@ -1044,9 +1060,11 @@ select.form-control option:hover {
     0% {
         box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
     }
+
     70% {
         box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
     }
+
     100% {
         box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
     }
@@ -1093,7 +1111,7 @@ select.form-control option:hover {
 .status-card:hover {
     border-color: var(--primary-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .status-card.selected {
@@ -1144,18 +1162,41 @@ select.form-control option:hover {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 0.5rem;
     }
-    
+
     .status-card {
         padding: 0.5rem;
     }
-    
+
     .status-icon {
         width: 32px;
         height: 32px;
         font-size: 1rem;
     }
-    
+
     .status-name {
         font-size: 0.75rem;
     }
+}
+
+#edit-activity-page .tab-content,
+#edit-activity-page .tab-pane {
+    min-height: 0 !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+#edit-activity-page .card-body:empty {
+    min-height: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+
+#edit-activity-page .card-body.p-0 {
+    padding-bottom: 0 !important;
+    padding-top: 0 !important;
+    min-height: 0 !important;
 }

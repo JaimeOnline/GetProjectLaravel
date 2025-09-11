@@ -19,8 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     // Variables globales
-    let currentSort = { column: null, direction: 'asc' };
-    let originalRows = null;
     let activeFilters = {
         status: [],
         analistas: [],
@@ -32,122 +30,126 @@ document.addEventListener('DOMContentLoaded', function () {
     formatStatusLabels();
 
     // Inicializar
-    setupSortHandlers();
+    setupSortHandlersForAllTables();
     setupColumnFilters();
 
-    // --- Expandir/Colapsar todas las subactividades ---
-    const toggleAllBtn = document.getElementById('toggleAllSubactivitiesBtn');
-    const toggleAllIcon = document.getElementById('toggleAllSubactivitiesIcon');
-    let allExpanded = false;
+    // Solo ejecutar la expansión/colapso de subactividades en el index, NO en el edit
+    const isEditPage = document.getElementById('edit-activity-page');
+    [
+        { btnId: 'toggleAllSubactivitiesBtn', iconId: 'toggleAllSubactivitiesIcon', tableSelector: '#tableContainer', onlyIndex: false },
+        { btnId: 'toggleAllSubactivitiesBtnEdit', iconId: 'toggleAllSubactivitiesIconEdit', tableSelector: '#subactivitiesTableContainer', onlyIndex: true }
+    ].forEach(cfg => {
+        // Si es el botón de edición y estamos en la página de edición, NO ejecutar aquí (lo hace el otro JS)
+        if (cfg.onlyIndex && isEditPage) return;
 
-    if (toggleAllBtn) {
-        toggleAllBtn.addEventListener('click', function () {
-            const tableBody = document.querySelector('#tableContainer tbody');
-            if (!tableBody) return;
+        const toggleAllBtn = document.getElementById(cfg.btnId);
+        const toggleAllIcon = document.getElementById(cfg.iconId);
+        let allExpanded = false;
 
-            // Todas las filas de subactividad
-            const subRows = tableBody.querySelectorAll('tr.subactivity-row');
-            // Todos los toggles de actividades padre
-            const toggles = tableBody.querySelectorAll('.toggle-subactivities');
+        if (toggleAllBtn) {
+            toggleAllBtn.addEventListener('click', function () {
+                const tableBody = document.querySelector(`${cfg.tableSelector} tbody`);
+                if (!tableBody) return;
 
-            if (!allExpanded) {
-                // Expandir todas
-                subRows.forEach(row => row.style.display = 'table-row');
-                toggles.forEach(toggle => {
-                    toggle.classList.add('expanded');
-                    const icon = toggle.querySelector('i');
+                // Todas las filas de subactividad
+                const subRows = tableBody.querySelectorAll('tr.subactivity-row');
+                // Todos los toggles de actividades padre
+                const toggles = tableBody.querySelectorAll('.toggle-subactivities');
+
+                if (!allExpanded) {
+                    // Expandir todas
+                    subRows.forEach(row => row.style.display = 'table-row');
+                    toggles.forEach(toggle => {
+                        toggle.classList.add('expanded');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-right');
+                            icon.classList.add('fa-chevron-down');
+                        }
+                    });
+                    if (toggleAllIcon) {
+                        toggleAllIcon.classList.remove('fa-chevron-down');
+                        toggleAllIcon.classList.add('fa-chevron-up');
+                    }
+                    allExpanded = true;
+                } else {
+                    // Colapsar todas
+                    subRows.forEach(row => row.style.display = 'none');
+                    toggles.forEach(toggle => {
+                        toggle.classList.remove('expanded');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-down');
+                            icon.classList.add('fa-chevron-right');
+                        }
+                    });
+                    if (toggleAllIcon) {
+                        toggleAllIcon.classList.remove('fa-chevron-up');
+                        toggleAllIcon.classList.add('fa-chevron-down');
+                    }
+                    allExpanded = false;
+                }
+            });
+        }
+
+        // Toggle subactividades usando event delegation sobre el tbody
+        const tableBody = document.querySelector(`${cfg.tableSelector} tbody`);
+        if (tableBody) {
+            tableBody.addEventListener('click', function (e) {
+                // Asegura que el click fue en el toggle o en su icono
+                let btn = e.target;
+                if (!btn.classList.contains('toggle-subactivities')) {
+                    btn = btn.closest('.toggle-subactivities');
+                }
+                if (!btn) return;
+
+                // El id de la actividad está en el data-activity-id del span
+                const parentId = btn.getAttribute('data-activity-id');
+                if (!parentId) {
+                    return;
+                }
+                const icon = btn.querySelector('i');
+                const subRows = tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`);
+
+                const isExpanded = btn.classList.contains('expanded');
+                if (!isExpanded) {
+                    btn.classList.add('expanded');
                     if (icon) {
                         icon.classList.remove('fa-chevron-right');
                         icon.classList.add('fa-chevron-down');
                     }
-                });
-                if (toggleAllIcon) {
-                    toggleAllIcon.classList.remove('fa-chevron-down');
-                    toggleAllIcon.classList.add('fa-chevron-up');
-                }
-                allExpanded = true;
-            } else {
-                // Colapsar todas
-                subRows.forEach(row => row.style.display = 'none');
-                toggles.forEach(toggle => {
-                    toggle.classList.remove('expanded');
-                    const icon = toggle.querySelector('i');
+                    // Mostrar subactividades directas
+                    subRows.forEach(row => {
+                        row.style.display = 'table-row';
+                    });
+                } else {
+                    btn.classList.remove('expanded');
                     if (icon) {
                         icon.classList.remove('fa-chevron-down');
                         icon.classList.add('fa-chevron-right');
                     }
-                });
-                if (toggleAllIcon) {
-                    toggleAllIcon.classList.remove('fa-chevron-up');
-                    toggleAllIcon.classList.add('fa-chevron-down');
-                }
-                allExpanded = false;
-            }
-        });
-    }
-
-
-    // Toggle subactividades usando event delegation sobre el tbody
-    const tableBody = document.querySelector('#tableContainer tbody');
-    if (tableBody) {
-        tableBody.addEventListener('click', function (e) {
-            // Asegura que el click fue en el toggle o en su icono
-            let btn = e.target;
-            if (!btn.classList.contains('toggle-subactivities')) {
-                btn = btn.closest('.toggle-subactivities');
-            }
-            if (!btn) return;
-
-            // DEPURACIÓN: Verifica si el evento se dispara y qué botón es
-            console.log('Toggle click:', btn);
-
-            // El id de la actividad está en el data-activity-id del span
-            const parentId = btn.getAttribute('data-activity-id');
-            if (!parentId) {
-                console.log('No data-activity-id en el toggle');
-                return;
-            }
-            const icon = btn.querySelector('i');
-            const subRows = tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`);
-
-            const isExpanded = btn.classList.contains('expanded');
-            if (!isExpanded) {
-                btn.classList.add('expanded');
-                if (icon) {
-                    icon.classList.remove('fa-chevron-right');
-                    icon.classList.add('fa-chevron-down');
-                }
-                // Mostrar subactividades directas
-                subRows.forEach(row => {
-                    row.style.display = 'table-row';
-                });
-            } else {
-                btn.classList.remove('expanded');
-                if (icon) {
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-right');
-                }
-                // Ocultar subactividades directas y sus descendientes recursivamente
-                function hideSubtree(parentId) {
-                    tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`).forEach(row => {
-                        row.style.display = 'none';
-                        // Si la subactividad tiene su propio toggle expandido, colapsar también
-                        const subBtn = row.querySelector('.toggle-subactivities.expanded');
-                        if (subBtn) {
-                            subBtn.classList.remove('expanded');
-                            const subIcon = subBtn.querySelector('i');
-                            if (subIcon) {
-                                subIcon.classList.remove('fa-chevron-down');
-                                subIcon.classList.add('fa-chevron-right');
+                    // Ocultar subactividades directas y sus descendientes recursivamente
+                    function hideSubtree(parentId) {
+                        tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`).forEach(row => {
+                            row.style.display = 'none';
+                            // Si la subactividad tiene su propio toggle expandido, colapsar también
+                            const subBtn = row.querySelector('.toggle-subactivities.expanded');
+                            if (subBtn) {
+                                subBtn.classList.remove('expanded');
+                                const subIcon = subBtn.querySelector('i');
+                                if (subIcon) {
+                                    subIcon.classList.remove('fa-chevron-down');
+                                    subIcon.classList.add('fa-chevron-right');
+                                }
                             }
-                        }
-                        hideSubtree(row.getAttribute('data-activity-id'));
-                    });
+                            hideSubtree(row.getAttribute('data-activity-id'));
+                        });
+                    }
+                    hideSubtree(parentId);
                 }
-                hideSubtree(parentId);
-            }
-        });
-    }
+            });
+        }
+    });
 
     /**
      * Formatear todas las etiquetas de estado para mostrar nombres legibles
@@ -157,143 +159,95 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Configurar manejadores de ordenamiento
-     */
-    function setupSortHandlers() {
-        const sortableHeaders = document.querySelectorAll('.sortable');
-        sortableHeaders.forEach(header => {
-            // Eliminar manejadores de eventos anteriores
-            header.removeEventListener('click', handleSortClick);
+    * Configurar manejadores de ordenamiento para ambas tablas
+    */
+    function setupSortHandlersForAllTables() {
+        [
+            { container: '#tableContainer', rowSelector: 'tr.parent-activity' },
+            { container: '#subactivitiesTableContainer', rowSelector: 'tr.subactivity-row' }
+        ].forEach(cfg => {
+            const container = document.querySelector(cfg.container);
+            if (!container) return;
+            const table = container.querySelector('table');
+            if (!table) return;
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
 
-            // Agregar nuevo event listener
-            header.addEventListener('click', handleSortClick);
-        });
-    }
+            let currentSort = { column: null, direction: 'asc' };
+            let originalRows = Array.from(tbody.querySelectorAll(cfg.rowSelector)).map(row => row.cloneNode(true));
 
-    /**
-     * Manejador de eventos para el clic en encabezados ordenables
-     */
-
-    function handleSortClick(event) {
-        const header = event.currentTarget;
-        const column = header.getAttribute('data-sort');
-
-        // Guardar las filas originales la primera vez
-        if (!originalRows) {
-            const table = document.querySelector('#tableContainer table');
-            originalRows = Array.from(table.tBodies[0].rows).map(row => row.cloneNode(true));
-        }
-
-        if (currentSort.column === column) {
-            if (currentSort.direction === 'asc') {
-                currentSort.direction = 'desc';
-            } else if (currentSort.direction === 'desc') {
-                // Tercer clic: volver a neutro
-                currentSort = { column: null, direction: null };
-                restoreOriginalOrder();
-                updateSortIcons(null, null);
-                return;
-            } else {
-                currentSort.direction = 'asc';
-            }
-        } else {
-            currentSort = { column: column, direction: 'asc' };
-        }
-
-        sortTable(column);
-        updateSortIcons(currentSort.column, currentSort.direction);
-    }
-
-    function restoreOriginalOrder() {
-        const table = document.querySelector('#tableContainer table');
-        const tbody = table.tBodies[0];
-        tbody.innerHTML = '';
-        originalRows.forEach(row => {
-            tbody.appendChild(row.cloneNode(true));
-        });
-    }
-
-    /**
-     * Ordenar tabla por columna
-     */
-    function sortTable(column) {
-        console.log('Ordenando por columna:', column);
-
-        // Obtener filas de la tabla
-        const tableBody = document.querySelector('#tableContainer tbody');
-        if (!tableBody) {
-            console.error('No se encontró el cuerpo de la tabla');
-            return;
-        }
-
-        const rows = Array.from(tableBody.querySelectorAll('tr.parent-activity'));
-
-        // Ordenar filas
-        rows.sort((a, b) => {
-            let aValue = getSortValue(a, column);
-            let bValue = getSortValue(b, column);
-
-            // Ordenar por fecha
-            if (column === 'fecha_recepcion') {
-                // Si alguna fecha está vacía, ponla al final
-                if (!aValue && !bValue) return 0;
-                if (!aValue) return 1;
-                if (!bValue) return -1;
-
-                // Convertir formato DD/MM/YYYY a objeto Date
-                const aParts = aValue.split('/');
-                const bParts = bValue.split('/');
-                const aDate = aParts.length === 3 ? new Date(aParts[2], aParts[1] - 1, aParts[0]) : null;
-                const bDate = bParts.length === 3 ? new Date(bParts[2], bParts[1] - 1, bParts[0]) : null;
-
-                if (!aDate || isNaN(aDate)) return 1;
-                if (!bDate || isNaN(bDate)) return -1;
-
-                if (aDate < bDate) return currentSort.direction === 'asc' ? -1 : 1;
-                if (aDate > bDate) return currentSort.direction === 'asc' ? 1 : -1;
-                return 0;
-            }
-
-            // Ordenar por número si ambos son numéricos
-            const aNum = parseFloat(aValue);
-            const bNum = parseFloat(bValue);
-            if (!isNaN(aNum) && !isNaN(bNum)) {
-                if (aNum < bNum) return currentSort.direction === 'asc' ? -1 : 1;
-                if (aNum > bNum) return currentSort.direction === 'asc' ? 1 : -1;
-                return 0;
-            }
-
-            // Ordenar por texto
-            if (aValue < bValue) return currentSort.direction === 'asc' ? -1 : 1;
-            if (aValue > bValue) return currentSort.direction === 'asc' ? 1 : -1;
-            return 0;
-        });
-
-        // Reordenar filas en el DOM
-        rows.forEach(row => {
-            tableBody.appendChild(row);
-            // También mover las subactividades si existen
-            const activityId = row.getAttribute('data-activity-id');
-            const subRows = tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`);
-            subRows.forEach(subRow => {
-                tableBody.appendChild(subRow);
+            table.querySelectorAll('.sortable').forEach(header => {
+                header.addEventListener('click', function () {
+                    const column = header.getAttribute('data-sort');
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort = { column: column, direction: 'asc' };
+                    }
+                    sortTable(tbody, column, currentSort.direction, cfg.rowSelector);
+                    updateSortIcons(table, column, currentSort.direction);
+                });
             });
-        });
-    }
 
-    /**
-     * Actualizar iconos de ordenamiento
-     */
-    function updateSortIcons(activeColumn, direction) {
-        document.querySelectorAll('.sortable').forEach(header => {
-            const column = header.getAttribute('data-sort');
-            const icon = header.querySelector('.sort-icon');
-            if (!icon) return;
+            function sortTable(tbody, column, direction, rowSelector) {
+                const rows = Array.from(tbody.querySelectorAll(rowSelector));
+                rows.sort((a, b) => {
+                    let aValue = getSortValue(a, column);
+                    let bValue = getSortValue(b, column);
 
-            if (column === activeColumn) {
-                icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} text-primary ml-1`;
-            } else {
-                icon.className = 'fas fa-sort text-muted ml-1';
+                    // Ordenar por fecha
+                    if (column === 'fecha_recepcion') {
+                        if (!aValue && !bValue) return 0;
+                        if (!aValue) return 1;
+                        if (!bValue) return -1;
+                        const aParts = aValue.split('/');
+                        const bParts = bValue.split('/');
+                        const aDate = aParts.length === 3 ? new Date(aParts[2], aParts[1] - 1, aParts[0]) : null;
+                        const bDate = bParts.length === 3 ? new Date(bParts[2], bParts[1] - 1, bParts[0]) : null;
+                        if (!aDate || isNaN(aDate)) return 1;
+                        if (!bDate || isNaN(bDate)) return -1;
+                        if (aDate < bDate) return direction === 'asc' ? -1 : 1;
+                        if (aDate > bDate) return direction === 'asc' ? 1 : -1;
+                        return 0;
+                    }
+
+                    // Ordenar por número si ambos son numéricos
+                    const aNum = parseFloat(aValue);
+                    const bNum = parseFloat(bValue);
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        if (aNum < bNum) return direction === 'asc' ? -1 : 1;
+                        if (aNum > bNum) return direction === 'asc' ? 1 : -1;
+                        return 0;
+                    }
+
+                    // Ordenar por texto
+                    if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                rows.forEach(row => {
+                    tbody.appendChild(row);
+                    // También mover las subactividades si existen
+                    const activityId = row.getAttribute('data-activity-id');
+                    const subRows = tbody.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`);
+                    subRows.forEach(subRow => {
+                        tbody.appendChild(subRow);
+                    });
+                });
+            }
+
+            function updateSortIcons(table, activeColumn, direction) {
+                table.querySelectorAll('.sortable').forEach(header => {
+                    const column = header.getAttribute('data-sort');
+                    const icon = header.querySelector('.sort-icon');
+                    if (!icon) return;
+                    if (column === activeColumn) {
+                        icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} text-primary ml-1`;
+                    } else {
+                        icon.className = 'fas fa-sort text-muted ml-1';
+                    }
+                });
             }
         });
     }
@@ -654,116 +608,108 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Aplicar todos los filtros activos
-     */
+         * Aplicar todos los filtros activos en ambas tablas
+         */
     function applyFilters() {
-        const rows = document.querySelectorAll('#tableContainer tbody tr');
-        let visibleCount = 0;
+        [
+            { container: '#tableContainer', rowSelector: 'tr.activity-row', count: true },
+            { container: '#subactivitiesTableContainer', rowSelector: 'tr.activity-row', count: false }
+        ].forEach(cfg => {
+            const tableBody = document.querySelector(`${cfg.container} tbody`);
+            if (!tableBody) return;
+            const rows = tableBody.querySelectorAll(cfg.rowSelector);
+            let visibleCount = 0;
 
-        // Asegurar que el contenedor de la tabla mantenga su altura mínima
-        const tableContainer = document.querySelector('#tableContainer');
-        if (tableContainer) {
-            // Guardar la altura actual si es la primera vez
-            if (!tableContainer.getAttribute('data-original-height') && tableContainer.offsetHeight > 300) {
-                tableContainer.setAttribute('data-original-height', tableContainer.offsetHeight + 'px');
-                tableContainer.style.minHeight = tableContainer.offsetHeight + 'px';
-            }
-        }
+            rows.forEach(row => {
+                let shouldShow = true;
+                const cells = row.querySelectorAll('td');
 
-        rows.forEach(row => {
-            // Ignorar filas que no son actividades ni subactividades
-            if (!row.classList.contains('activity-row')) return;
+                // Filtro por estado
+                if (activeFilters.status.length > 0 && cells[3]) {
+                    const statusText = cells[3].textContent.trim().toLowerCase();
+                    const statusMatch = activeFilters.status.some(status => {
+                        switch (status) {
+                            case 'no_iniciada':
+                                return statusText.includes('no iniciada');
+                            case 'en_ejecucion':
+                                return statusText.includes('en ejecución') || statusText.includes('ejecutando');
+                            case 'en_espera_de_insumos':
+                                return statusText.includes('en espera') || statusText.includes('insumos');
+                            case 'en_certificacion_por_cliente':
+                                return statusText.includes('certificación') || statusText.includes('certificando');
+                            case 'pases_enviados':
+                                return statusText.includes('pases enviados');
+                            case 'culminada':
+                                return statusText.includes('culminada') || statusText.includes('completada');
+                            case 'pausada':
+                                return statusText.includes('pausada');
+                            default:
+                                return statusText.includes(status.replace(/_/g, ' ').toLowerCase());
+                        }
+                    });
 
-            let shouldShow = true;
-            const cells = row.querySelectorAll('td');
-
-            // Filtro por estado
-            if (activeFilters.status.length > 0 && cells[3]) {
-                const statusText = cells[3].textContent.trim().toLowerCase();
-                const statusMatch = activeFilters.status.some(status => {
-                    // Mapeo de códigos internos a textos legibles
-                    switch (status) {
-                        case 'no_iniciada':
-                            return statusText.includes('no iniciada');
-                        case 'en_ejecucion':
-                            return statusText.includes('en ejecución') || statusText.includes('ejecutando');
-                        case 'en_espera_de_insumos':
-                            return statusText.includes('en espera') || statusText.includes('insumos');
-                        case 'en_certificacion_por_cliente':
-                            return statusText.includes('certificación') || statusText.includes('certificando');
-                        case 'pases_enviados':
-                            return statusText.includes('pases enviados');
-                        case 'culminada':
-                            return statusText.includes('culminada') || statusText.includes('completada');
-                        case 'pausada':
-                            return statusText.includes('pausada');
-                        default:
-                            return statusText.includes(status.replace(/_/g, ' ').toLowerCase());
-                    }
-                });
-
-                if (!statusMatch) shouldShow = false;
-            }
-
-            // Filtro por analista
-            if (shouldShow && activeFilters.analistas.length > 0 && cells[4]) {
-                const analistaText = cells[4].textContent.trim().toLowerCase();
-                const analistaMatch = activeFilters.analistas.some(analistaId => {
-                    // Busca el nombre del analista por su ID
-                    const analistaLabel = document.querySelector(`.analista-filter[value="${analistaId}"] + label`);
-                    if (!analistaLabel) return false;
-                    const nombre = analistaLabel.textContent.trim().toLowerCase();
-                    return analistaText.includes(nombre);
-                });
-                if (!analistaMatch) shouldShow = false;
-            }
-
-            // Filtro por fecha
-            if (shouldShow && (activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[7]) {
-                const fechaText = cells[6].textContent.trim(); // Columna 7: Fecha de Recepción, 
-                const fechaMatch = fechaText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-
-                if (fechaMatch) {
-                    // Convertir a formato YYYY-MM-DD para comparación
-                    const day = fechaMatch[1];
-                    const month = fechaMatch[2];
-                    const year = fechaMatch[3];
-                    const fechaActividad = new Date(`${year}-${month}-${day}`);
-
-                    if (activeFilters.fechaDesde) {
-                        const fechaDesde = new Date(activeFilters.fechaDesde);
-                        if (fechaActividad < fechaDesde) shouldShow = false;
-                    }
-
-                    if (shouldShow && activeFilters.fechaHasta) {
-                        const fechaHasta = new Date(activeFilters.fechaHasta);
-                        if (fechaActividad > fechaHasta) shouldShow = false;
-                    }
-                } else if (activeFilters.fechaDesde || activeFilters.fechaHasta) {
-                    // Si no se puede extraer la fecha pero hay filtro de fecha, ocultar
-                    shouldShow = false;
+                    if (!statusMatch) shouldShow = false;
                 }
-            }
 
-            // Aplicar visibilidad
-            if (shouldShow) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
+                // Filtro por analista
+                if (shouldShow && activeFilters.analistas.length > 0 && cells[4]) {
+                    const analistaText = cells[4].textContent.trim().toLowerCase();
+                    const analistaMatch = activeFilters.analistas.some(analistaId => {
+                        const analistaLabel = document.querySelector(`.analista-filter[value="${analistaId}"] + label`);
+                        if (!analistaLabel) return false;
+                        const nombre = analistaLabel.textContent.trim().toLowerCase();
+                        return analistaText.includes(nombre);
+                    });
+                    if (!analistaMatch) shouldShow = false;
+                }
 
-            // Si es una actividad padre y está oculta, ocultar también sus subactividades
-            if (row.classList.contains('parent-activity') && !shouldShow) {
-                const activityId = row.getAttribute('data-activity-id');
-                document.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`).forEach(subRow => {
-                    subRow.style.display = 'none';
-                });
+                // Filtro por fecha
+                if (shouldShow && (activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[6]) {
+                    const fechaText = cells[6].textContent.trim();
+                    const fechaMatch = fechaText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+
+                    if (fechaMatch) {
+                        const day = fechaMatch[1];
+                        const month = fechaMatch[2];
+                        const year = fechaMatch[3];
+                        const fechaActividad = new Date(`${year}-${month}-${day}`);
+
+                        if (activeFilters.fechaDesde) {
+                            const fechaDesde = new Date(activeFilters.fechaDesde);
+                            if (fechaActividad < fechaDesde) shouldShow = false;
+                        }
+
+                        if (shouldShow && activeFilters.fechaHasta) {
+                            const fechaHasta = new Date(activeFilters.fechaHasta);
+                            if (fechaActividad > fechaHasta) shouldShow = false;
+                        }
+                    } else if (activeFilters.fechaDesde || activeFilters.fechaHasta) {
+                        shouldShow = false;
+                    }
+                }
+
+                // Aplicar visibilidad
+                if (shouldShow) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+
+                // Si es una actividad padre y está oculta, ocultar también sus subactividades
+                if (row.classList.contains('parent-activity') && !shouldShow) {
+                    const activityId = row.getAttribute('data-activity-id');
+                    tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`).forEach(subRow => {
+                        subRow.style.display = 'none';
+                    });
+                }
+            });
+
+            // Solo actualizar el contador en la tabla principal
+            if (cfg.count) {
+                updateResultsCount(visibleCount);
             }
         });
-
-        // Actualizar contador de resultados
-        updateResultsCount(visibleCount);
     }
 
     /**
