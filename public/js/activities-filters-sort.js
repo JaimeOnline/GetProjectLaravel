@@ -1086,9 +1086,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- INICIO: Actualización de indicadores al usar filtros avanzados ---
-    const estadoSelect = document.getElementById('filterEstado');
+    const estadoSelect = document.getElementById('filterStatus');
     const analistaSelect = document.getElementById('filterAnalista');
-    const fechaInput = document.getElementById('filterFecha');
+    const fechaDesdeInput = document.getElementById('filterFechaDesde');
+    const fechaHastaInput = document.getElementById('filterFechaHasta');
 
     function filtrarAvanzado() {
         // Estado
@@ -1103,21 +1104,18 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             activeFilters.analistas = [];
         }
-        // Fecha
-        if (fechaInput && fechaInput.value) {
-            activeFilters.fechaDesde = fechaInput.value;
-            activeFilters.fechaHasta = fechaInput.value;
-        } else {
-            activeFilters.fechaDesde = null;
-            activeFilters.fechaHasta = null;
-        }
+        // Fechas
+        activeFilters.fechaDesde = (fechaDesdeInput && fechaDesdeInput.value) ? fechaDesdeInput.value : null;
+        activeFilters.fechaHasta = (fechaHastaInput && fechaHastaInput.value) ? fechaHastaInput.value : null;
+
         applyFilters();
         updateFilterIndicators();
     }
 
     if (estadoSelect) estadoSelect.addEventListener('change', filtrarAvanzado);
     if (analistaSelect) analistaSelect.addEventListener('change', filtrarAvanzado);
-    if (fechaInput) fechaInput.addEventListener('change', filtrarAvanzado);
+    if (fechaDesdeInput) fechaDesdeInput.addEventListener('change', filtrarAvanzado);
+    if (fechaHastaInput) fechaHastaInput.addEventListener('change', filtrarAvanzado);
     // --- FIN: Actualización de indicadores al usar filtros avanzados ---
 
     // --- BÚSQUEDA Y FILTRO AJAX (como en la versión anterior) ---
@@ -1215,19 +1213,62 @@ document.addEventListener('DOMContentLoaded', function () {
             tableTitle.textContent = 'Sin resultados';
         }
 
-        // Renderizar resultados en la tabla
+        // Renderizar resultados en la tabla (estructura igual al index)
         let html = `
             <table class="table table-hover mb-0 modern-table">
                 <thead class="thead-light">
                     <tr>
-                        <th class="border-0"><i class="fas fa-hashtag text-primary"></i> Caso</th>
-                        <th class="border-0"><i class="fas fa-file-alt text-primary"></i> Nombre</th>
-                        <th class="border-0"><i class="fas fa-align-left text-primary"></i> Descripción</th>
-                        <th class="border-0"><i class="fas fa-flag text-primary"></i> Estado</th>
-                        <th class="border-0"><i class="fas fa-users text-primary"></i> Analistas</th>
-                        <th class="border-0"><i class="fas fa-clipboard-list text-primary"></i> Requerimientos</th>
-                        <th class="border-0"><i class="fas fa-calendar text-primary"></i> Fecha</th>
-                        <th class="border-0 text-center"><i class="fas fa-cogs text-primary"></i> Acciones</th>
+                        <th class="border-0" style="position: relative;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="sortable" data-sort="caso" style="cursor: pointer;">
+                                    <i class="fas fa-hashtag text-primary"></i> Caso
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="border-0" style="position: relative;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-alt text-primary"></i> Nombre
+                            </div>
+                        </th>
+                        <th class="border-0 sortable" data-sort="prioridad" style="cursor: pointer;">
+                            <i class="fas fa-arrow-up text-primary"></i> Prioridad
+                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                        </th>
+                        <th class="border-0 sortable" data-sort="orden_analista" style="cursor: pointer;">
+                            <i class="fas fa-sort-numeric-up text-primary"></i> Orden
+                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                        </th>
+                        <th class="border-0">
+                            <i class="fas fa-align-left text-primary"></i> Descripción
+                        </th>
+                        <th class="border-0" style="position: relative;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="sortable" data-sort="status" style="cursor: pointer;">
+                                    <i class="fas fa-flag text-primary"></i> Estado
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="border-0" style="position: relative;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="sortable" data-sort="analistas" style="cursor: pointer;">
+                                    <i class="fas fa-users text-primary"></i> Analistas
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="border-0">
+                            <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
+                        </th>
+                        <th class="border-0" style="position: relative;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
+                                    <i class="fas fa-calendar text-primary"></i> Fecha
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                </div>
+                            </div>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1253,7 +1294,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('tableContainer').innerHTML = html;
     }
 
-    // Renderiza una fila de actividad (puedes mejorar el HTML según tu diseño)
+    // Renderiza una fila de actividad (estructura igual al index)
     function renderActivityRow(activity, isSub = false) {
         // Estado
         let statusHtml = '';
@@ -1295,31 +1336,21 @@ document.addEventListener('DOMContentLoaded', function () {
             fechaHtml = '<span class="text-muted"><i class="fas fa-calendar-times"></i> No asignada</span>';
         }
 
-        // Acciones
-        let actionsHtml = `
-        <div class="action-buttons" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
-            <div class="btn-group btn-group-sm" role="group">
-                <a href="/activities/${activity.id}/edit" class="btn btn-warning btn-sm action-btn" title="Ver/Editar">
-                    <i class="fas fa-edit"></i>
-                </a>
-                <a href="/activities/create?parentId=${activity.id}" class="btn btn-secondary btn-sm action-btn" title="Crear Subactividad">
-                    <i class="fas fa-plus"></i>
-                </a>
-                <form action="/activities/${activity.id}" method="POST" style="display:inline;">
-                    <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
-                    <input type="hidden" name="_method" value="DELETE">
-                    <button type="submit" class="btn btn-danger btn-sm action-btn" title="Eliminar"
-                        onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-    `;
+        // Prioridad y Orden
+        let prioridad = activity.prioridad !== undefined && activity.prioridad !== null
+            ? `<span class="badge badge-outline-info editable-value">${activity.prioridad}</span>`
+            : '-';
+        let orden = activity.orden_analista !== undefined && activity.orden_analista !== null
+            ? `<span class="badge badge-outline-secondary editable-value">${activity.orden_analista}</span>`
+            : '-';
 
         return `
         <tr class="${isSub ? 'subactivity-row' : 'parent-activity activity-row'}">
-            <td class="align-middle">${activity.caso || ''}</td>
+            <td class="align-middle">
+                <span class="badge badge-outline-primary font-weight-bold">
+                    ${activity.caso || ''}
+                </span>
+            </td>
             <td class="align-middle position-relative" style="position: relative;">
                 <div class="d-flex align-items-center">
                     ${activity.subactivities && activity.subactivities.length > 0
@@ -1328,26 +1359,67 @@ document.addEventListener('DOMContentLoaded', function () {
                             </span>`
                 : ''
             }
-                    <a href="/activities/${activity.id}/edit" class="font-weight-bold text-dark small" title="Ver/Editar subactividad">
-                        ${activity.name ? activity.name.substring(0, 40) : ''}
-                    </a>
-                    ${activity.name && activity.name.length > 40
+                    <div>
+                        <div class="font-weight-bold text-dark small">
+                            ${activity.name ? activity.name.substring(0, 40) : ''}
+                            ${activity.name && activity.name.length > 40
                 ? `<span class="text-primary" style="cursor: pointer;" title="${activity.name}" data-toggle="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                    </span>`
+                : ''
+            }
+                        </div>
+                        ${activity.subactivities && activity.subactivities.length > 0
+                ? `<small class="text-muted">
+                                    <i class="fas fa-sitemap"></i>
+                                    ${activity.subactivities.length} subactividad(es)
+                                </small>`
+                : ''
+            }
+                    </div>
+                </div>
+                <div class="action-buttons"
+                    style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="/activities/${activity.id}/edit"
+                            class="btn btn-warning btn-sm action-btn"
+                            data-tooltip="Ver/Editar" title="Ver/Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="/activities/create?parentId=${activity.id}"
+                            class="btn btn-secondary btn-sm action-btn"
+                            data-tooltip="Crear Subactividad" title="Crear Subactividad">
+                            <i class="fas fa-plus"></i>
+                        </a>
+                        <form action="/activities/${activity.id}" method="POST" style="display:inline;">
+                            <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-danger btn-sm action-btn"
+                                data-tooltip="Eliminar" title="Eliminar"
+                                onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </td>
+            <td class="align-middle editable-cell" data-activity-id="${activity.id}" data-field="prioridad" data-sort-value="${activity.prioridad ?? 0}">
+                ${prioridad}
+            </td>
+            <td class="align-middle editable-cell" data-activity-id="${activity.id}" data-field="orden_analista" data-sort-value="${activity.orden_analista ?? 0}">
+                ${orden}
+            </td>
+            <td class="align-middle">
+                <div class="description-cell">
+                    ${activity.description ? activity.description.substring(0, 30) : ''}
+                    ${activity.description && activity.description.length > 30
+                ? `<span class="text-primary" style="cursor: pointer;" title="${activity.description}" data-toggle="tooltip">
                                 <i class="fas fa-info-circle"></i>
                             </span>`
                 : ''
             }
-                    ${activity.subactivities && activity.subactivities.length > 0
-                ? `<small class="text-muted ml-2">
-                                <i class="fas fa-sitemap"></i>
-                                ${activity.subactivities.length} subactividad(es)
-                            </small>`
-                : ''
-            }
                 </div>
-                ${actionsHtml}
             </td>
-            <td class="align-middle">${activity.description ? activity.description.substring(0, 30) : ''}</td>
             <td class="align-middle">${statusHtml}</td>
             <td class="align-middle">${analistasHtml}</td>
             <td class="align-middle">${reqHtml}</td>
@@ -1355,6 +1427,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </tr>
     `;
     }
+
 
 
     function clearSearch() {

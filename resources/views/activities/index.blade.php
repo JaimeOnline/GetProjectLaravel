@@ -43,7 +43,7 @@
                     <h5 class="mb-0">
                         <i class="fas fa-search text-primary"></i> Búsqueda y Filtros
                     </h5>
-                    <button class="btn btn-outline-secondary btn-sm" id="toggleFilters">
+                    <button class="btn btn-primary btn-sm" id="toggleFilters">
                         <i class="fas fa-filter"></i> <span id="filterToggleText">Mostrar Filtros</span>
                     </button>
                 </div>
