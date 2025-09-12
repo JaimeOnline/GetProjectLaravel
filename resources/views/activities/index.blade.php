@@ -18,7 +18,7 @@
                         Administra todas las actividades del sistema y sus subactividades
                     </p>
                 </div>
-                <div class="action-buttons">
+                <div class="header-action-buttons">
                     <a href="{{ route('activities.create') }}" class="btn btn-success btn-lg shadow-sm">
                         <i class="fas fa-plus"></i> Nueva Actividad
                     </a>
@@ -288,6 +288,70 @@
             });
         </script>
 
+        {{-- Script para editar Prioridad y Orden en tabla --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Al hacer click en el valor, mostrar input
+                document.querySelectorAll('.editable-cell .editable-value').forEach(function(span) {
+                    span.addEventListener('click', function() {
+                        const cell = span.closest('.editable-cell');
+                        const input = cell.querySelector('.editable-input');
+                        span.style.display = 'none';
+                        input.style.display = 'inline-block';
+                        input.focus();
+                        input.select();
+                    });
+                });
+
+                // Al perder foco o presionar Enter, enviar AJAX
+                document.querySelectorAll('.editable-cell .editable-input').forEach(function(input) {
+                    input.addEventListener('blur', saveInlineEdit);
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            saveInlineEdit.call(input, e);
+                        }
+                    });
+                });
+
+                function saveInlineEdit(e) {
+                    const input = this;
+                    const cell = input.closest('.editable-cell');
+                    const span = cell.querySelector('.editable-value');
+                    const activityId = cell.getAttribute('data-activity-id');
+                    const field = cell.getAttribute('data-field');
+                    const value = input.value;
+
+                    fetch(`/activities/${activityId}/inline-update`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content')
+                            },
+                            body: JSON.stringify({
+                                field,
+                                value
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                span.textContent = value;
+                            } else {
+                                alert('Error al actualizar');
+                            }
+                            input.style.display = 'none';
+                            span.style.display = 'inline-block';
+                        })
+                        .catch(() => {
+                            alert('Error al actualizar');
+                            input.style.display = 'none';
+                            span.style.display = 'inline-block';
+                        });
+                }
+            });
+        </script>
+
         <!-- Search Results Alert -->
         <div class="alert alert-info" id="searchResultsAlert" style="display: none;">
             <div class="d-flex align-items-center">
@@ -346,6 +410,70 @@
                                                 style="margin-left: 8px; padding: 2px 8px;">
                                                 <i class="fas fa-chevron-down" id="toggleAllSubactivitiesIcon"></i>
                                             </button>
+                                        </div>
+                                    </th>
+                                    <th class="border-0 sortable" data-sort="prioridad" style="cursor: pointer;">
+                                        <i class="fas fa-arrow-up text-primary"></i> Prioridad
+                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                        <div class="custom-dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
+                                                data-filter="prioridad" style="padding: 2px 6px;">
+                                                <i class="fas fa-filter"></i>
+                                            </button>
+                                            <div class="custom-dropdown-menu" id="prioridad-filter-menu"
+                                                style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 150px;">
+                                                <h6 class="dropdown-header"
+                                                    style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                    Filtrar por Prioridad</h6>
+                                                <div class="px-3 py-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input prioridad-filter" type="checkbox"
+                                                            value="" id="prioridad-all" checked>
+                                                        <label class="form-check-label" for="prioridad-all">Todas</label>
+                                                    </div>
+                                                    @for ($i = 1; $i <= 10; $i++)
+                                                        <div class="form-check">
+                                                            <input class="form-check-input prioridad-filter"
+                                                                type="checkbox" value="{{ $i }}"
+                                                                id="prioridad-{{ $i }}">
+                                                            <label class="form-check-label"
+                                                                for="prioridad-{{ $i }}">{{ $i }}</label>
+                                                        </div>
+                                                    @endfor
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th class="border-0 sortable" data-sort="orden_analista" style="cursor: pointer;">
+                                        <i class="fas fa-sort-numeric-up text-primary"></i> Orden
+                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                        <div class="custom-dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
+                                                data-filter="orden_analista" style="padding: 2px 6px;">
+                                                <i class="fas fa-filter"></i>
+                                            </button>
+                                            <div class="custom-dropdown-menu" id="orden_analista-filter-menu"
+                                                style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 120px;">
+                                                <h6 class="dropdown-header"
+                                                    style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                    Filtrar por Orden</h6>
+                                                <div class="px-3 py-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input orden-filter" type="checkbox"
+                                                            value="" id="orden-all" checked>
+                                                        <label class="form-check-label" for="orden-all">Todos</label>
+                                                    </div>
+                                                    @for ($i = 1; $i <= 10; $i++)
+                                                        <div class="form-check">
+                                                            <input class="form-check-input orden-filter" type="checkbox"
+                                                                value="{{ $i }}"
+                                                                id="orden-{{ $i }}">
+                                                            <label class="form-check-label"
+                                                                for="orden-{{ $i }}">{{ $i }}</label>
+                                                        </div>
+                                                    @endfor
+                                                </div>
+                                            </div>
                                         </div>
                                     </th>
                                     <th class="border-0">
@@ -540,6 +668,23 @@
                                                     </form>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
+                                            data-field="prioridad" data-sort-value="{{ $activity->prioridad ?? 0 }}">
+                                            <span
+                                                class="badge badge-outline-info editable-value">{{ $activity->prioridad ?? '-' }}</span>
+                                            <input type="number" class="form-control form-control-sm editable-input"
+                                                value="{{ $activity->prioridad ?? 1 }}"
+                                                style="display:none; width: 70px;" min="1">
+                                        </td>
+                                        <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
+                                            data-field="orden_analista"
+                                            data-sort-value="{{ $activity->orden_analista ?? 0 }}">
+                                            <span
+                                                class="badge badge-outline-secondary editable-value">{{ $activity->orden_analista ?? '-' }}</span>
+                                            <input type="number" class="form-control form-control-sm editable-input"
+                                                value="{{ $activity->orden_analista ?? 1 }}"
+                                                style="display:none; width: 70px;" min="1">
                                         </td>
                                         <td class="align-middle">
                                             <div class="description-cell">
@@ -982,9 +1127,9 @@
     }
 
     /* Oculta los botones de acción por defecto */
-    .action-buttons {
+    /* .action-buttons {
         display: none;
-    }
+    } */
 
     /* Muestra los botones de acción al hacer hover sobre la fila */
     .activity-row:hover .action-buttons,

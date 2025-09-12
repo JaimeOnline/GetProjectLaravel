@@ -173,25 +173,77 @@ document.addEventListener('DOMContentLoaded', function () {
             const tbody = table.querySelector('tbody');
             if (!tbody) return;
 
-            let currentSort = { column: null, direction: 'asc' };
-            let originalRows = Array.from(tbody.querySelectorAll(cfg.rowSelector)).map(row => row.cloneNode(true));
+            let currentSort = { column: null, direction: null };
+            // Guardar el orden original de las filas raíz y sus subárboles
+            let originalOrder = [];
+            (function saveOriginalOrder() {
+                // Solo filas raíz
+                const rootRows = Array.from(tbody.querySelectorAll('tr.activity-row:not(.subactivity-row), tr.subactivity-row[level="0"], tr.subactivity-row:not([data-parent-id])'));
+                // Para cada raíz, guarda la rama completa (raíz + subárbol)
+                rootRows.forEach(row => {
+                    const branch = [row];
+                    function collectSubtree(parentId) {
+                        const children = Array.from(tbody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`));
+                        children.forEach(child => {
+                            branch.push(child);
+                            collectSubtree(child.getAttribute('data-activity-id'));
+                        });
+                    }
+                    collectSubtree(row.getAttribute('data-activity-id'));
+                    originalOrder.push(branch);
+                });
+            })();
 
             table.querySelectorAll('.sortable').forEach(header => {
+                let clickCount = 0;
                 header.addEventListener('click', function () {
                     const column = header.getAttribute('data-sort');
                     if (currentSort.column === column) {
-                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                        if (currentSort.direction === 'asc') {
+                            currentSort.direction = 'desc';
+                        } else if (currentSort.direction === 'desc') {
+                            currentSort.direction = null; // Tercer click: restaurar original
+                        } else {
+                            currentSort.direction = 'asc';
+                        }
                     } else {
                         currentSort = { column: column, direction: 'asc' };
                     }
-                    sortTable(tbody, column, currentSort.direction, cfg.rowSelector);
-                    updateSortIcons(table, column, currentSort.direction);
+
+                    if (currentSort.direction === null) {
+                        // Restaurar orden original
+                        restoreOriginalOrder(tbody, originalOrder);
+                        updateSortIcons(table, null, null);
+                        window.lastSortConfig = null;
+                    } else {
+                        sortTable(tbody, column, currentSort.direction, cfg.rowSelector);
+                        updateSortIcons(table, column, currentSort.direction);
+                    }
                 });
             });
 
+            function restoreOriginalOrder(tbody, originalOrder) {
+                // Limpia el tbody y re-inserta las ramas en el orden original
+                originalOrder.forEach(branch => {
+                    branch.forEach(row => {
+                        tbody.appendChild(row);
+                    });
+                });
+            }
+
             function sortTable(tbody, column, direction, rowSelector) {
-                const rows = Array.from(tbody.querySelectorAll(rowSelector));
-                rows.sort((a, b) => {
+                // Guardar el último sort globalmente
+                window.lastSortConfig = {
+                    table: tbody.closest('table'),
+                    column,
+                    direction,
+                    rowSelector
+                };
+
+                // Solo ordenar las filas de nivel raíz (sin data-parent-id o parent-id vacío)
+                const rootRows = Array.from(tbody.querySelectorAll('tr.activity-row:not(.subactivity-row), tr.subactivity-row[level="0"], tr.subactivity-row:not([data-parent-id])'));
+
+                rootRows.sort((a, b) => {
                     let aValue = getSortValue(a, column);
                     let bValue = getSortValue(b, column);
 
@@ -226,16 +278,26 @@ document.addEventListener('DOMContentLoaded', function () {
                     return 0;
                 });
 
-                rows.forEach(row => {
-                    tbody.appendChild(row);
-                    // También mover las subactividades si existen
-                    const activityId = row.getAttribute('data-activity-id');
-                    const subRows = tbody.querySelectorAll(`tr.subactivity-row[data-parent-id="${activityId}"]`);
-                    subRows.forEach(subRow => {
-                        tbody.appendChild(subRow);
+                // Función recursiva para agregar una rama completa de subactividades
+                function appendSubtree(parentId) {
+                    const children = Array.from(tbody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`));
+                    children.forEach(child => {
+                        tbody.appendChild(child);
+                        appendSubtree(child.getAttribute('data-activity-id'));
                     });
+                }
+
+                // Limpiar el tbody y reinsertar en orden correcto
+                rootRows.forEach(row => {
+                    tbody.appendChild(row);
+                    const activityId = row.getAttribute('data-activity-id');
+                    appendSubtree(activityId);
                 });
             }
+
+            // Exponer la función globalmente para applyFilters
+            window.globalSortTable = sortTable;
+
 
             function updateSortIcons(table, activeColumn, direction) {
                 table.querySelectorAll('.sortable').forEach(header => {
@@ -252,41 +314,70 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+
     /**
      * Obtener valor para ordenamiento
      */
     function getSortValue(row, column) {
+        // Mapear el nombre de columna a índice fijo según tu tabla
+        // Orden real: caso(0), nombre(1), prioridad(2), orden(3), descripcion(4), status(5), analistas(6), requerimientos(7), fecha(8)
+        const COLUMN_INDEX = {
+            'caso': 0,
+            'nombre': 1,
+            'prioridad': 2,
+            'orden_analista': 3,
+            'descripcion': 4,
+            'status': 5,
+            'analistas': 6,
+            'requerimientos': 7,
+            'fecha_recepcion': 8
+        };
         const cells = row.querySelectorAll('td');
         let value = '';
 
+        if (column === 'prioridad') {
+            const cell = cells[COLUMN_INDEX['prioridad']];
+            return cell ? parseInt(cell.getAttribute('data-sort-value') || '0', 10) : 0;
+        }
+        if (column === 'orden_analista') {
+            const cell = cells[COLUMN_INDEX['orden_analista']];
+            return cell ? parseInt(cell.getAttribute('data-sort-value') || '0', 10) : 0;
+        }
+
         switch (column) {
             case 'caso':
-                value = cells[0]?.textContent?.trim() || '';
+                value = cells[COLUMN_INDEX['caso']]?.textContent?.trim() || '';
                 break;
             case 'nombre':
-                value = cells[1]?.textContent?.trim() || '';
+                value = cells[COLUMN_INDEX['nombre']]?.textContent?.trim() || '';
                 break;
             case 'descripcion':
-                value = cells[2]?.textContent?.trim() || '';
+                value = cells[COLUMN_INDEX['descripcion']]?.textContent?.trim() || '';
                 break;
             case 'status':
-                value = cells[3]?.textContent?.trim() || '';
+                value = cells[COLUMN_INDEX['status']]?.textContent?.trim() || '';
                 break;
             case 'analistas':
-                value = cells[4]?.textContent?.trim() || '';
+                value = cells[COLUMN_INDEX['analistas']]?.textContent?.trim() || '';
+                break;
+            case 'requerimientos':
+                value = cells[COLUMN_INDEX['requerimientos']]?.textContent?.trim() || '';
                 break;
             case 'fecha_recepcion':
                 // Extraer solo la fecha del formato "DD/MM/YYYY"
-                const dateText = cells[6]?.textContent?.trim() || '';
+                const dateText = cells[COLUMN_INDEX['fecha_recepcion']]?.textContent?.trim() || '';
                 const dateMatch = dateText.match(/\d{2}\/\d{2}\/\d{4}/);
                 value = dateMatch ? dateMatch[0] : '';
-                return value; // <-- DEVUELVE LA FECHA TAL CUAL
+                return value;
             default:
                 value = '';
         }
 
         return value.toLowerCase();
     }
+
+
+
 
     /**
      * Configurar filtros de columna
@@ -306,6 +397,85 @@ document.addEventListener('DOMContentLoaded', function () {
                 toggleFilterMenu(filterType);
             });
         });
+
+        // --- PRIORIDAD ---
+        document.querySelectorAll('.prioridad-filter').forEach(cb => {
+            cb.addEventListener('change', function () {
+                if (this.value === '') {
+                    // "Todas" seleccionada: deselecciona las demás
+                    if (this.checked) {
+                        document.querySelectorAll('.prioridad-filter').forEach(other => {
+                            if (other.value !== '') other.checked = false;
+                        });
+                    }
+                } else {
+                    // Si se selecciona una prioridad, deselecciona "Todas"
+                    document.querySelectorAll('.prioridad-filter[value=""]').forEach(allCb => {
+                        allCb.checked = false;
+                    });
+                }
+                // Si ninguna está seleccionada, selecciona "Todas"
+                const anyChecked = Array.from(document.querySelectorAll('.prioridad-filter')).some(cb => cb.checked && cb.value !== '');
+                if (!anyChecked) {
+                    document.querySelectorAll('.prioridad-filter[value=""]').forEach(allCb => {
+                        allCb.checked = true;
+                    });
+                }
+                applyFilters();
+                updateFilterIndicators();
+            });
+        });
+        // Al cargar, selecciona "Todas" si ninguna está seleccionada
+        const prioridadChecks = Array.from(document.querySelectorAll('.prioridad-filter'));
+        if (!prioridadChecks.some(cb => cb.checked)) {
+            document.querySelectorAll('.prioridad-filter[value=""]').forEach(allCb => {
+                allCb.checked = true;
+            });
+        }
+        // Forzar "Todos" en orden
+        const ordenChecks = Array.from(document.querySelectorAll('.orden-filter'));
+        if (!ordenChecks.some(cb => cb.checked)) {
+            document.querySelectorAll('.orden-filter[value=""]').forEach(allCb => {
+                allCb.checked = true;
+            });
+        }
+        // Mostrar/ocultar botón limpiar filtros al cargar
+        updateFilterIndicators();
+
+        // --- ORDEN ---
+        document.querySelectorAll('.orden-filter').forEach(cb => {
+            cb.addEventListener('change', function () {
+                if (this.value === '') {
+                    // "Todos" seleccionada: deselecciona las demás
+                    if (this.checked) {
+                        document.querySelectorAll('.orden-filter').forEach(other => {
+                            if (other.value !== '') other.checked = false;
+                        });
+                    }
+                } else {
+                    // Si se selecciona un orden, deselecciona "Todos"
+                    document.querySelectorAll('.orden-filter[value=""]').forEach(allCb => {
+                        allCb.checked = false;
+                    });
+                }
+                // Si ninguna está seleccionada, selecciona "Todos"
+                const anyChecked = Array.from(document.querySelectorAll('.orden-filter')).some(cb => cb.checked && cb.value !== '');
+                if (!anyChecked) {
+                    document.querySelectorAll('.orden-filter[value=""]').forEach(allCb => {
+                        allCb.checked = true;
+                    });
+                }
+                applyFilters();
+                updateFilterIndicators();
+            });
+        });
+
+        // Al cargar, selecciona "Todos" si ninguna está seleccionada
+        if (!Array.from(document.querySelectorAll('.orden-filter')).some(cb => cb.checked)) {
+            document.querySelectorAll('.orden-filter[value=""]').forEach(allCb => {
+                allCb.checked = true;
+            });
+        }
 
         // Configurar checkboxes de estado
         document.querySelectorAll('.status-filter').forEach(checkbox => {
@@ -340,10 +510,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+
     /**
      * Mostrar/ocultar menú de filtro
      */
     function toggleFilterMenu(filterType) {
+        // Soportar "orden_analista" como id
         const menu = document.getElementById(`${filterType}-filter-menu`);
 
         if (menu) {
@@ -624,10 +796,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 let shouldShow = true;
                 const cells = row.querySelectorAll('td');
 
-                // Filtro por estado
-                if (activeFilters.status.length > 0 && cells[3]) {
+                // Filtro por estado (columna 5)
+                if (activeFilters.status.length > 0 && cells[5]) {
                     // Extraer todos los textos de los badges dentro de la celda de estado
-                    const badgeTexts = Array.from(cells[3].querySelectorAll('.badge'))
+                    const badgeTexts = Array.from(cells[5].querySelectorAll('.badge'))
                         .map(badge => badge.textContent.trim().toLowerCase());
 
                     const statusMatch = activeFilters.status.some(status => {
@@ -654,9 +826,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!statusMatch) shouldShow = false;
                 }
 
-                // Filtro por analista
-                if (shouldShow && activeFilters.analistas.length > 0 && cells[4]) {
-                    const analistaText = cells[4].textContent.trim().toLowerCase();
+                // Filtro por analista (columna 6)
+                if (shouldShow && activeFilters.analistas.length > 0 && cells[6]) {
+                    const analistaText = cells[6].textContent.trim().toLowerCase();
                     const analistaMatch = activeFilters.analistas.some(analistaId => {
                         const analistaLabel = document.querySelector(`.analista-filter[value="${analistaId}"] + label`);
                         if (!analistaLabel) return false;
@@ -666,9 +838,37 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!analistaMatch) shouldShow = false;
                 }
 
-                // Filtro por fecha
-                if (shouldShow && (activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[6]) {
-                    const fechaText = cells[6].textContent.trim();
+                // Filtro por prioridad
+                const prioridadFilterCheckboxes = document.querySelectorAll('.prioridad-filter:checked');
+                const prioridadValues = Array.from(prioridadFilterCheckboxes)
+                    .map(cb => cb.value)
+                    .filter(val => val !== '');
+                if (shouldShow && prioridadValues.length > 0) {
+                    // Si "Todas" está seleccionada, no filtrar
+                    if (!prioridadFilterCheckboxes[0] || prioridadFilterCheckboxes[0].value !== '') {
+                        const prioridadCell = cells[2]; // Prioridad es la columna 2
+                        const prioridadValue = prioridadCell ? prioridadCell.getAttribute('data-sort-value') : null;
+                        if (!prioridadValues.includes(prioridadValue)) shouldShow = false;
+                    }
+                }
+
+                // Filtro por orden
+                const ordenFilterCheckboxes = document.querySelectorAll('.orden-filter:checked');
+                const ordenValues = Array.from(ordenFilterCheckboxes)
+                    .map(cb => cb.value)
+                    .filter(val => val !== '');
+                if (shouldShow && ordenValues.length > 0) {
+                    // Si "Todos" está seleccionada, no filtrar
+                    if (!ordenFilterCheckboxes[0] || ordenFilterCheckboxes[0].value !== '') {
+                        const ordenCell = cells[3]; // Orden es la columna 3
+                        const ordenValue = ordenCell ? ordenCell.getAttribute('data-sort-value') : null;
+                        if (!ordenValues.includes(ordenValue)) shouldShow = false;
+                    }
+                }
+
+                // Filtro por fecha (columna 8)
+                if (shouldShow && (activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[8]) {
+                    const fechaText = cells[8].textContent.trim();
                     const fechaMatch = fechaText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
 
                     if (fechaMatch) {
@@ -709,6 +909,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateResultsCount(visibleCount);
             }
         });
+
+        // Reaplicar el último sort si existe
+        if (window.lastSortConfig) {
+            const { table, column, direction, rowSelector } = window.lastSortConfig;
+            const tbody = table.querySelector('tbody');
+            if (tbody) {
+                // Llama a la función sortTable definida en setupSortHandlersForAllTables
+                // Debes exponerla en window para poder llamarla aquí
+                if (typeof window.globalSortTable === 'function') {
+                    window.globalSortTable(tbody, column, direction, rowSelector);
+                }
+            }
+        }
     }
 
     /**
@@ -778,6 +991,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 activeFilters.fechaDesde ||
                 activeFilters.fechaHasta;
 
+            // Filtros de prioridad y orden
+            const prioridadChecked = Array.from(document.querySelectorAll('.prioridad-filter')).some(cb => cb.checked && cb.value !== '');
+            const ordenChecked = Array.from(document.querySelectorAll('.orden-filter')).some(cb => cb.checked && cb.value !== '');
+            if (prioridadChecked || ordenChecked) {
+                hasActiveFilters = true;
+            }
+
             // Filtros avanzados
             const estadoSelect = document.getElementById('filterEstado');
             const analistaSelect = document.getElementById('filterAnalista');
@@ -801,20 +1021,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function clearAllFilters() {
         // Limpiar filtros de estado
         document.querySelectorAll('.status-filter').forEach(cb => {
-            if (cb.value === '') {
-                cb.checked = true;
-            } else {
-                cb.checked = false;
-            }
+            cb.checked = cb.value === '';
         });
 
         // Limpiar filtros de analistas
         document.querySelectorAll('.analista-filter').forEach(cb => {
-            if (cb.value === '') {
-                cb.checked = true;
-            } else {
-                cb.checked = false;
-            }
+            cb.checked = cb.value === '';
+        });
+
+        // Limpiar filtros de prioridad
+        document.querySelectorAll('.prioridad-filter').forEach(cb => {
+            cb.checked = cb.value === '';
+        });
+
+        // Limpiar filtros de orden
+        document.querySelectorAll('.orden-filter').forEach(cb => {
+            cb.checked = cb.value === '';
         });
 
         // Limpiar filtros de fecha

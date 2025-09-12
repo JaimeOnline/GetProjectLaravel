@@ -237,6 +237,8 @@ class ActivityController extends Controller
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
             'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
             'estatus_operacional' => 'nullable|string|max:1000', // Validar el nuevo campo estatus_operacional
+            'prioridad' => 'required|integer|min:1',
+            'orden_analista' => 'required|integer|min:1',
         ];
 
         // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
@@ -249,7 +251,7 @@ class ActivityController extends Controller
         $request->validate($rules);
 
         // Crear la actividad (sin el campo status ya que ahora usamos la tabla pivot)
-        $activity = Activity::create($request->only(['caso', 'name', 'description', 'estatus_operacional', 'fecha_recepcion', 'parent_id']));
+        $activity = Activity::create($request->only(['caso', 'name', 'description', 'estatus_operacional', 'fecha_recepcion', 'parent_id', 'prioridad', 'orden_analista']));
 
         // Asignar analistas a la actividad
         $activity->analistas()->attach($request->analista_id);
@@ -348,6 +350,8 @@ class ActivityController extends Controller
             'parent_id' => 'nullable|exists:activities,id',
             'description' => 'nullable|string|max:1000',
             'estatus_operacional' => 'nullable|string|max:1000',
+            'prioridad' => 'required|integer|min:1',
+            'orden_analista' => 'required|integer|min:1',
         ];
 
         // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
@@ -368,7 +372,7 @@ class ActivityController extends Controller
 
         try {
             // Actualizar la actividad
-            $activity->update($request->only(['caso', 'name', 'description', 'estatus_operacional', 'status', 'fecha_recepcion', 'parent_id']));
+            $activity->update($request->only(['caso', 'name', 'description', 'estatus_operacional', 'status', 'fecha_recepcion', 'parent_id', 'prioridad', 'orden_analista']));
 
             // Asignar analistas a la actividad
             $activity->analistas()->sync($request->analista_id);
@@ -710,5 +714,21 @@ class ActivityController extends Controller
             'statuses' => $activity->statuses,
             'status_badges' => $activity->status_badges
         ]);
+    }
+
+    /**
+     * Editar prioridad y orden en la tabla
+     */
+    public function inlineUpdate(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'field' => 'required|in:prioridad,orden_analista',
+            'value' => 'required|integer|min:1'
+        ]);
+
+        $activity->{$request->field} = $request->value;
+        $activity->save();
+
+        return response()->json(['success' => true, 'value' => $activity->{$request->field}]);
     }
 }

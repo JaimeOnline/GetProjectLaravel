@@ -141,6 +141,22 @@
                             </div>
 
                             <div class="form-group">
+                                <label class="form-label" for="prioridad">
+                                    <i class="fas fa-arrow-up text-primary"></i> Prioridad (número)
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="prioridad" name="prioridad"
+                                    value="{{ $activity->prioridad ?? 1 }}" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="orden_analista">
+                                    <i class="fas fa-sort-numeric-up text-primary"></i> Orden Analista (número)
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="orden_analista" name="orden_analista"
+                                    value="{{ $activity->orden_analista ?? 1 }}" min="1" required>
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label" for="name">
                                     <i class="fas fa-tag text-primary"></i> Nombre de la Actividad
                                     <span class="text-danger">*</span>
@@ -278,162 +294,142 @@
                             <div class="table-responsive" id="subactivitiesTableContainer">
                                 <table class="table table-hover mb-0 modern-table">
                                     <thead class="thead-light">
-                                        <tr>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div class="sortable" data-sort="caso" style="cursor: pointer;">
-                                                        <i class="fas fa-hashtag text-primary"></i> Caso
-                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    </div>
-                                                </div>
-                                            </th>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-file-alt text-primary"></i> Nombre
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary ml-2"
-                                                        id="toggleAllSubactivitiesBtnEdit"
-                                                        title="Expandir/Colapsar todas las subactividades"
-                                                        style="margin-left: 8px; padding: 2px 8px;">
-                                                        <i class="fas fa-chevron-down"
-                                                            id="toggleAllSubactivitiesIconEdit"></i>
-                                                    </button>
-                                                </div>
-                                            </th>
-                                            <th class="border-0">
-                                                <i class="fas fa-align-left text-primary"></i> Descripción
-                                            </th>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div class="sortable" data-sort="status" style="cursor: pointer;">
-                                                        <i class="fas fa-flag text-primary"></i> Estado
-                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    </div>
-                                                    <!-- Filtro de Estado -->
-                                                    <div class="custom-dropdown ml-2">
-                                                        <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                            type="button" data-filter="status"
-                                                            style="padding: 2px 6px;">
-                                                            <i class="fas fa-filter"></i>
-                                                        </button>
-                                                        <div class="custom-dropdown-menu" id="status-filter-menu"
-                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
-                                                            <h6 class="dropdown-header"
-                                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                                Filtrar por Estado</h6>
-                                                            <div class="px-3 py-2">
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input status-filter"
-                                                                        type="checkbox" value="" id="status-all"
-                                                                        checked>
-                                                                    <label class="form-check-label"
-                                                                        for="status-all">Todos</label>
-                                                                </div>
-                                                                @foreach ($statusLabels as $key => $label)
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input status-filter"
-                                                                            type="checkbox" value="{{ $key }}"
-                                                                            id="status-{{ $key }}">
-                                                                        <label
-                                                                            class="form-check-label d-flex align-items-center"
-                                                                            for="status-{{ $key }}">
-                                                                            <span class="badge badge-pill mr-2"
-                                                                                style="background-color: {{ $statusColors[$key] ?? '#6c757d' }}; color: white; width: 18px; height: 18px; display: inline-block; text-align: center; line-height: 18px; font-size: 0.8em; border-radius: 50%;">
-                                                                                &nbsp;
-                                                                            </span>
-                                                                            {{ $label }}
-                                                                        </label>
-                                                                    </div>
-                                                                @endforeach
-                                                            </div>
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th class="border-0" style="position: relative;">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div class="sortable" data-sort="caso" style="cursor: pointer;">
+                                                            <i class="fas fa-hashtag text-primary"></i> Caso
+                                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </th>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div class="sortable" data-sort="analistas" style="cursor: pointer;">
-                                                        <i class="fas fa-users text-primary"></i> Analistas
-                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                </th>
+                                                <th class="border-0" style="position: relative;">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-file-alt text-primary"></i> Nombre
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-secondary ml-2"
+                                                            id="toggleAllSubactivitiesBtnEdit"
+                                                            title="Expandir/Colapsar todas las subactividades"
+                                                            style="margin-left: 8px; padding: 2px 8px;">
+                                                            <i class="fas fa-chevron-down"
+                                                                id="toggleAllSubactivitiesIconEdit"></i>
+                                                        </button>
                                                     </div>
-                                                    <!-- Filtro de Analistas -->
-                                                    <div class="custom-dropdown ml-2">
+                                                </th>
+                                                <th class="border-0 sortable" data-sort="prioridad"
+                                                    style="cursor: pointer;">
+                                                    <i class="fas fa-arrow-up text-primary"></i> Prioridad
+                                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                    <div class="custom-dropdown">
                                                         <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                            type="button" data-filter="analistas"
+                                                            type="button" data-filter="prioridad"
                                                             style="padding: 2px 6px;">
                                                             <i class="fas fa-filter"></i>
                                                         </button>
-                                                        <div class="custom-dropdown-menu" id="analistas-filter-menu"
-                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                                                        <div class="custom-dropdown-menu" id="prioridad-filter-menu"
+                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 150px;">
                                                             <h6 class="dropdown-header"
                                                                 style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                                Filtrar por Analista</h6>
+                                                                Filtrar por Prioridad</h6>
                                                             <div class="px-3 py-2">
                                                                 <div class="form-check">
-                                                                    <input class="form-check-input analista-filter"
-                                                                        type="checkbox" value="" id="analista-all"
+                                                                    <input class="form-check-input prioridad-filter"
+                                                                        type="checkbox" value="" id="prioridad-all"
                                                                         checked>
                                                                     <label class="form-check-label"
-                                                                        for="analista-all">Todos</label>
+                                                                        for="prioridad-all">Todas</label>
                                                                 </div>
-                                                                @foreach ($analistas as $analista)
+                                                                @for ($i = 1; $i <= 10; $i++)
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input analista-filter"
-                                                                            type="checkbox" value="{{ $analista->id }}"
-                                                                            id="analista-{{ $analista->id }}">
+                                                                        <input class="form-check-input prioridad-filter"
+                                                                            type="checkbox" value="{{ $i }}"
+                                                                            id="prioridad-{{ $i }}">
                                                                         <label class="form-check-label"
-                                                                            for="analista-{{ $analista->id }}">{{ $analista->name }}</label>
+                                                                            for="prioridad-{{ $i }}">{{ $i }}</label>
                                                                     </div>
-                                                                @endforeach
+                                                                @endfor
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </th>
-                                            <th class="border-0">
-                                                <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
-                                            </th>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div class="sortable" data-sort="fecha_recepcion"
-                                                        style="cursor: pointer;">
-                                                        <i class="fas fa-calendar text-primary"></i> Fecha
-                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    </div>
-                                                    <!-- Filtro de Fecha -->
-                                                    <div class="custom-dropdown ml-2">
+                                                </th>
+                                                <th class="border-0 sortable" data-sort="orden_analista"
+                                                    style="cursor: pointer;">
+                                                    <i class="fas fa-sort-numeric-up text-primary"></i> Orden
+                                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                    <div class="custom-dropdown">
                                                         <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                            type="button" data-filter="fecha" style="padding: 2px 6px;">
+                                                            type="button" data-filter="orden_analista"
+                                                            style="padding: 2px 6px;">
                                                             <i class="fas fa-filter"></i>
                                                         </button>
-                                                        <div class="custom-dropdown-menu" id="fecha-filter-menu"
-                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 250px;">
+                                                        <div class="custom-dropdown-menu" id="orden-filter-menu"
+                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 120px;">
                                                             <h6 class="dropdown-header"
                                                                 style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                                Filtrar por Fecha</h6>
+                                                                Filtrar por Orden</h6>
                                                             <div class="px-3 py-2">
-                                                                <div class="form-group mb-2">
-                                                                    <label class="small">Desde:</label>
-                                                                    <input type="date"
-                                                                        class="form-control form-control-sm"
-                                                                        id="fecha-desde-filter">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input orden-filter"
+                                                                        type="checkbox" value="" id="orden-all"
+                                                                        checked>
+                                                                    <label class="form-check-label"
+                                                                        for="orden-all">Todos</label>
                                                                 </div>
-                                                                <div class="form-group mb-2">
-                                                                    <label class="small">Hasta:</label>
-                                                                    <input type="date"
-                                                                        class="form-control form-control-sm"
-                                                                        id="fecha-hasta-filter">
-                                                                </div>
-                                                                <button class="btn btn-sm btn-primary btn-block"
-                                                                    id="apply-date-filter">Aplicar</button>
-                                                                <button class="btn btn-sm btn-outline-secondary btn-block"
-                                                                    id="clear-date-filter">Limpiar</button>
+                                                                @for ($i = 1; $i <= 10; $i++)
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input orden-filter"
+                                                                            type="checkbox" value="{{ $i }}"
+                                                                            id="orden-{{ $i }}">
+                                                                        <label class="form-check-label"
+                                                                            for="orden-{{ $i }}">{{ $i }}</label>
+                                                                    </div>
+                                                                @endfor
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </th>
-                                        </tr>
-                                    </thead>
+                                                </th>
+                                                <th class="border-0">
+                                                    <i class="fas fa-align-left text-primary"></i> Descripción
+                                                </th>
+                                                <th class="border-0" style="position: relative;">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div class="sortable" data-sort="status"
+                                                            style="cursor: pointer;">
+                                                            <i class="fas fa-flag text-primary"></i> Estado
+                                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                        </div>
+                                                        <!-- Filtro de Estado -->
+                                                        ...
+                                                    </div>
+                                                </th>
+                                                <th class="border-0" style="position: relative;">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div class="sortable" data-sort="analistas"
+                                                            style="cursor: pointer;">
+                                                            <i class="fas fa-users text-primary"></i> Analistas
+                                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                        </div>
+                                                        <!-- Filtro de Analistas -->
+                                                        ...
+                                                    </div>
+                                                </th>
+                                                <th class="border-0">
+                                                    <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
+                                                </th>
+                                                <th class="border-0" style="position: relative;">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div class="sortable" data-sort="fecha_recepcion"
+                                                            style="cursor: pointer;">
+                                                            <i class="fas fa-calendar text-primary"></i> Fecha
+                                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                        </div>
+                                                        <!-- Filtro de Fecha -->
+                                                        ...
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                        </thead>
                                     <tbody>
                                         @include('activities.partials.subactivities', [
                                             'subactivities' => $activity->subactivities,
@@ -1306,6 +1302,70 @@
                 } else {
                     // Si no existe la función original, crear una nueva
                     window.updateStatusDisplay = updateEditStatusDisplay;
+                }
+            });
+        </script>
+
+        {{-- Script para editar Prioridad y orden en tabla --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Al hacer click en el valor, mostrar input
+                document.querySelectorAll('.editable-cell .editable-value').forEach(function(span) {
+                    span.addEventListener('click', function() {
+                        const cell = span.closest('.editable-cell');
+                        const input = cell.querySelector('.editable-input');
+                        span.style.display = 'none';
+                        input.style.display = 'inline-block';
+                        input.focus();
+                        input.select();
+                    });
+                });
+
+                // Al perder foco o presionar Enter, enviar AJAX
+                document.querySelectorAll('.editable-cell .editable-input').forEach(function(input) {
+                    input.addEventListener('blur', saveInlineEdit);
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            saveInlineEdit.call(input, e);
+                        }
+                    });
+                });
+
+                function saveInlineEdit(e) {
+                    const input = this;
+                    const cell = input.closest('.editable-cell');
+                    const span = cell.querySelector('.editable-value');
+                    const activityId = cell.getAttribute('data-activity-id');
+                    const field = cell.getAttribute('data-field');
+                    const value = input.value;
+
+                    fetch(`/activities/${activityId}/inline-update`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content')
+                            },
+                            body: JSON.stringify({
+                                field,
+                                value
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                span.textContent = value;
+                            } else {
+                                alert('Error al actualizar');
+                            }
+                            input.style.display = 'none';
+                            span.style.display = 'inline-block';
+                        })
+                        .catch(() => {
+                            alert('Error al actualizar');
+                            input.style.display = 'none';
+                            span.style.display = 'inline-block';
+                        });
                 }
             });
         </script>

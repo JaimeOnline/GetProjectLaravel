@@ -98,6 +98,22 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label" for="prioridad">
+                            <i class="fas fa-arrow-up text-primary"></i> Prioridad (número)
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" id="prioridad" name="prioridad" value="1"
+                            min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="orden_analista">
+                            <i class="fas fa-sort-numeric-up text-primary"></i> Orden Analista (número)
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" id="orden_analista" name="orden_analista" value="1"
+                            min="1" required>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label" for="name">
                             <i class="fas fa-tag text-primary"></i> Nombre de la Actividad
                             <span class="text-danger">*</span>

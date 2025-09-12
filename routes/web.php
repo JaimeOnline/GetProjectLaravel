@@ -39,3 +39,6 @@ Route::resource('requirements', RequirementController::class);
 Route::patch('requirements/{requirement}/mark-received', [RequirementController::class, 'markAsReceived'])->name('requirements.mark-received');
 Route::patch('requirements/{requirement}/mark-pending', [RequirementController::class, 'markAsPending'])->name('requirements.mark-pending');
 
+// Rutas para actualización en linea de Orden y Prioridad
+Route::patch('/activities/{activity}/inline-update', [App\Http\Controllers\ActivityController::class, 'inlineUpdate'])
+    ->name('activities.inline-update');

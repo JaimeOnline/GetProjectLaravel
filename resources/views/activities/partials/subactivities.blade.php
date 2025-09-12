@@ -62,6 +62,22 @@
                 </div>
             </div>
         </td>
+        <td class="align-middle editable-cell" data-activity-id="{{ $subactivity->id }}" data-field="prioridad"
+            data-sort-value="{{ $subactivity->prioridad ?? 0 }}">
+            <span class="badge badge-outline-info editable-value">
+                {{ $subactivity->prioridad ?? '-' }}
+            </span>
+            <input type="number" class="form-control form-control-sm editable-input"
+                value="{{ $subactivity->prioridad ?? 1 }}" style="display:none; width: 70px;" min="1">
+        </td>
+        <td class="align-middle editable-cell" data-activity-id="{{ $subactivity->id }}" data-field="orden_analista"
+            data-sort-value="{{ $subactivity->orden_analista ?? 0 }}">
+            <span class="badge badge-outline-secondary editable-value">
+                {{ $subactivity->orden_analista ?? '-' }}
+            </span>
+            <input type="number" class="form-control form-control-sm editable-input"
+                value="{{ $subactivity->orden_analista ?? 1 }}" style="display:none; width: 70px;" min="1">
+        </td>
         <td class="align-middle">
             <div class="description-cell">
                 {{ Str::limit($subactivity->description, 30) }}
