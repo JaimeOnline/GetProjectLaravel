@@ -15,7 +15,7 @@ return new class extends Migration
              $table->id();
         $table->string('name');
         $table->text('description')->nullable();
-        $table->enum('status', ['en_ejecucion', 'culminada', 'en_espera_de_insumos'])->default('en_ejecucion');
+        $table->enum('status', ['no_iniciada', 'en_ejecucion', 'culminada', 'en_espera_de_insumos', 'en_certificacion_por_cliente', 'pases_enviados', 'pausada', 'cancelada'])->default('en_ejecucion');
         $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
         $table->foreignId('parent_id')->nullable()->constrained('activities')->nullOnDelete();
         $table->timestamps();

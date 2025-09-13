@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 class AddParentIdToActivitiesTable extends Migration
 {
-    public function up()
+    /* public function up()
     {
         Schema::table('activities', function (Blueprint $table) {
             $table->foreignId('parent_id')->nullable()->constrained('activities')->onDelete('cascade');
@@ -17,5 +17,5 @@ class AddParentIdToActivitiesTable extends Migration
             $table->dropForeign(['parent_id']);
             $table->dropColumn('parent_id');
         });
-    }
+    } */
 }
