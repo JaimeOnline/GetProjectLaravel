@@ -600,7 +600,9 @@ document.addEventListener('DOMContentLoaded', function () {
             'en_certificacion_por_cliente': 'En Certificación',
             'pases_enviados': 'Pases Enviados',
             'culminada': 'Culminada',
-            'pausada': 'Pausada'
+            'pausada': 'Pausada',
+            'reiterar': 'Reiterar',
+            'atendiendo_hoy': 'Atendiendo hoy'
         };
 
         // Actualizar texto de la etiqueta si existe en el mapeo

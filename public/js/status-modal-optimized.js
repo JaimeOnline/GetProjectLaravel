@@ -217,8 +217,8 @@ function updateActivityRowInTable(activityId, newStatuses) {
 
 // Función para actualizar la celda de estados
 function updateStatusCell(row, newStatuses) {
-    // Buscar la celda de estados (generalmente la 4ta columna)
-    const statusCell = row.querySelector('td:nth-child(4)');
+    // Buscar la celda de estados (generalmente la 6ta columna)
+    const statusCell = row.querySelector('td:nth-child(6)');
     if (!statusCell) {
         console.log('Celda de estados no encontrada');
         return;

@@ -50,7 +50,9 @@ class ActivityController extends Controller
             'en_certificacion_por_cliente' => 'En Certificación',
             'pases_enviados' => 'Pases Enviados',
             'culminada' => 'Culminada',
-            'pausada' => 'Pausada'
+            'pausada' => 'Pausada',
+            'reiterar' => 'Reiterar',
+            'atendiendo_hoy' => 'Atendiendo hoy'
         ];
 
         // Colores de estado para los filtros
@@ -61,7 +63,9 @@ class ActivityController extends Controller
             'en_certificacion_por_cliente' => '#fd7e14',
             'pases_enviados' => '#20c997',
             'culminada' => '#28a745',
-            'pausada' => '#343a40'
+            'pausada' => '#343a40',
+            'reiterar' => '#ff5722',
+            'atendiendo_hoy' => '#007bff'
         ];
 
         // Estados para el modal (colección de objetos)
@@ -317,7 +321,9 @@ class ActivityController extends Controller
             'en_certificacion_por_cliente' => 'En Certificación',
             'pases_enviados' => 'Pases Enviados',
             'culminada' => 'Culminada',
-            'pausada' => 'Pausada'
+            'pausada' => 'Pausada',
+            'reiterar' => 'Reiterar',
+            'atendiendo_hoy' => 'Atendiendo hoy'
         ];
 
         // Colores de estado para los filtros
@@ -328,7 +334,9 @@ class ActivityController extends Controller
             'en_certificacion_por_cliente' => '#fd7e14',
             'pases_enviados' => '#20c997',
             'culminada' => '#28a745',
-            'pausada' => '#343a40'
+            'pausada' => '#343a40',
+            'reiterar' => '#ff5722',
+            'atendiendo_hoy' => '#007bff'
         ];
 
         // Pasar las variables a la vista
@@ -339,7 +347,7 @@ class ActivityController extends Controller
     {
         $rules = [
             'name' => 'required|string|max:255',
-            'status' => 'nullable|in:no_iniciada,en_ejecucion,en_espera_de_insumos,pausada,en_certificacion_por_cliente,pases_enviados,culminada,cancelada,en_revision',
+            'status' => 'nullable|in:no_iniciada,en_ejecucion,en_espera_de_insumos,pausada,en_certificacion_por_cliente,pases_enviados,culminada,cancelada,en_revision,reiterar,atendiendo_hoy',
             'analista_id' => 'required|array|min:1',
             'analista_id.*' => 'exists:analistas,id',
             'requirements' => 'nullable|array',
