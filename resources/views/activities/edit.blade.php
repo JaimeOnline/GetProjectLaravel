@@ -282,6 +282,7 @@
                 </form>
 
                 @if ($activity->subactivities->count() > 0)
+                    <a id="subactivities-table"></a>
                     <div class="card mt-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <span>
@@ -1406,7 +1407,80 @@
         </div>
     </div>
 
+    <!-- Modal para Editar Analistas -->
+    <div class="modal fade" id="analystsEditModal" tabindex="-1" role="dialog"
+        aria-labelledby="analystsEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="analystsEditForm" method="POST">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="redirect_to_edit" value="1">
+                <input type="hidden" name="parent_activity_id" id="parentActivityId" value="{{ $activity->id }}">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="analystsEditModalLabel">
+                            <i class="fas fa-users"></i> Editar Analistas de Actividad
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="modalAnalystsSelect">Selecciona analistas:</label>
+                            <select name="analista_id[]" id="modalAnalystsSelect" class="form-control" multiple>
+                                @foreach ($analistas as $analista)
+                                    <option value="{{ $analista->id }}">{{ $analista->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
 @endsection
 
 <script src="{{ asset('js/activities-edit-subactivities.js') }}"></script>
 <script src="{{ asset('js/activities-filters-sort.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Botón para abrir el modal de analistas (funciona para actividades y subactividades)
+        document.querySelectorAll('.edit-analysts-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var activityId = btn.getAttribute('data-activity-id');
+                var analysts = [];
+                // Busca los badges de analistas en la misma celda
+                btn.closest('td').querySelectorAll('.badge').forEach(function(badge) {
+                    analysts.push(badge.textContent.trim());
+                });
+
+                // Selecciona la opción correspondiente en el select del modal
+                var select = document.getElementById('modalAnalystsSelect');
+                for (var i = 0; i < select.options.length; i++) {
+                    select.options[i].selected = false;
+                    if (analysts.includes(select.options[i].text.trim())) {
+                        select.options[i].selected = true;
+                    }
+                }
+
+                // Cambia la acción del formulario
+                var form = document.getElementById('analystsEditForm');
+                form.action = '/activities/' + activityId;
+
+                // Muestra el modal
+                $('#analystsEditModal').modal('show');
+            });
+        });
+    });
+</script>

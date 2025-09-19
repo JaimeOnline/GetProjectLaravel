@@ -136,12 +136,18 @@
                     <i class="fas fa-user-slash"></i> Sin asignar
                 </span>
             @else
-                <div class="analysts-list">
+                <div class="analysts-list d-inline">
                     @foreach ($subactivity->analistas as $analista)
                         <span class="badge badge-light mr-1 mb-1">
                             <i class="fas fa-user"></i> {{ $analista->name }}
                         </span>
                     @endforeach
+                </div>
+                <div class="analysts-edit-btn-group" style="display: none;">
+                    <button class="btn btn-sm btn-outline-secondary edit-analysts-btn ml-2"
+                        data-activity-id="{{ $subactivity->id }}" title="Editar analistas">
+                        <i class="fas fa-edit"></i>
+                    </button>
                 </div>
             @endif
         </td>
@@ -225,5 +231,16 @@
     .activity-row:hover .action-buttons,
     .subactivity-row:hover .action-buttons {
         display: block !important;
+    }
+
+    /* Oculta el botón de editar analistas por defecto */
+    .analysts-edit-btn-group {
+        display: none;
+    }
+
+    /* Muestra el botón al hacer hover sobre la fila */
+    .activity-row:hover .analysts-edit-btn-group,
+    .subactivity-row:hover .analysts-edit-btn-group {
+        display: inline-block !important;
     }
 </style>

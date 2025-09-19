@@ -345,6 +345,35 @@ class ActivityController extends Controller
 
     public function update(Request $request, Activity $activity)
     {
+        // Si solo se está actualizando analistas desde el modal
+        if ($request->has('analista_id')) {
+            $request->validate([
+                'analista_id' => 'required|array|min:1',
+                'analista_id.*' => 'exists:analistas,id',
+            ]);
+            $activity->analistas()->sync($request->analista_id);
+
+            // Si el formulario pide volver a la edición, redirige ahí
+            if ($request->has('redirect_to_edit')) {
+                // Si viene el id de la actividad principal, redirige ahí
+                if ($request->has('parent_activity_id')) {
+                    $parentId = $request->input('parent_activity_id');
+                    return redirect()
+                        ->route('activities.edit', $parentId)
+                        ->withFragment('subactivities-table')
+                        ->with('success', 'Analistas actualizados correctamente.')
+                        ->with('active_tab', 'basic');
+                }
+                // Si no, redirige a la actividad editada
+                return redirect()->route('activities.edit', $activity)
+                    ->with('success', 'Analistas actualizados correctamente.')
+                    ->with('active_tab', 'basic');
+            }
+
+            // Por defecto, redirigir al index
+            return redirect()->route('activities.index')->with('success', 'Analistas actualizados correctamente.');
+        }
+
         $rules = [
             'name' => 'required|string|max:255',
             'status' => 'nullable|in:no_iniciada,en_ejecucion,en_espera_de_insumos,pausada,en_certificacion_por_cliente,pases_enviados,culminada,cancelada,en_revision,reiterar,atendiendo_hoy',
@@ -376,7 +405,6 @@ class ActivityController extends Controller
             $rules['caso'] = 'required|string|max:255';
         }
         $request->validate($rules);
-
 
         try {
             // Actualizar la actividad
