@@ -292,145 +292,145 @@
 
                         </div>
                         <div class="card-body p-0">
-                            <div class="table-responsive" id="subactivitiesTableContainer">
+                            <!-- Scroll horizontal superior opcional -->
+                            <div id="top-scroll" style="overflow-x: auto; width: 100%;">
+                                <div style="width: 1800px; height: 1px;"></div>
+                            </div>
+                            <!-- Contenedor con scroll horizontal siempre visible -->
+                            <div style="overflow-x: auto; max-width: 100vw; border-bottom: 1px solid #ccc;"
+                                id="subactivitiesTableContainer">
                                 <table class="table table-hover mb-0 modern-table">
                                     <thead class="thead-light">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th class="border-0" style="position: relative;">
-                                                    <div class="d-flex align-items-center justify-content-between">
-                                                        <div class="sortable" data-sort="caso" style="cursor: pointer;">
-                                                            <i class="fas fa-hashtag text-primary"></i> Caso
-                                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                        </div>
+                                        <tr>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="sortable" data-sort="caso" style="cursor: pointer;">
+                                                        <i class="fas fa-hashtag text-primary"></i> Caso
+                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                                                     </div>
-                                                </th>
-                                                <th class="border-0" style="position: relative;">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="fas fa-file-alt text-primary"></i> Nombre
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary ml-2"
-                                                            id="toggleAllSubactivitiesBtnEdit"
-                                                            title="Expandir/Colapsar todas las subactividades"
-                                                            style="margin-left: 8px; padding: 2px 8px;">
-                                                            <i class="fas fa-chevron-down"
-                                                                id="toggleAllSubactivitiesIconEdit"></i>
-                                                        </button>
-                                                    </div>
-                                                </th>
-                                                <th class="border-0 sortable" data-sort="prioridad"
-                                                    style="cursor: pointer;">
-                                                    <i class="fas fa-arrow-up text-primary"></i> Prioridad
-                                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    <div class="custom-dropdown">
-                                                        <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                            type="button" data-filter="prioridad"
-                                                            style="padding: 2px 6px;">
-                                                            <i class="fas fa-filter"></i>
-                                                        </button>
-                                                        <div class="custom-dropdown-menu" id="prioridad-filter-menu"
-                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 150px;">
-                                                            <h6 class="dropdown-header"
-                                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                                Filtrar por Prioridad</h6>
-                                                            <div class="px-3 py-2">
+                                                </div>
+                                            </th>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-file-alt text-primary"></i> Nombre
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary ml-2"
+                                                        id="toggleAllSubactivitiesBtnEdit"
+                                                        title="Expandir/Colapsar todas las subactividades"
+                                                        style="margin-left: 8px; padding: 2px 8px;">
+                                                        <i class="fas fa-chevron-down"
+                                                            id="toggleAllSubactivitiesIconEdit"></i>
+                                                    </button>
+                                                </div>
+                                            </th>
+                                            <th class="border-0 sortable" data-sort="prioridad" style="cursor: pointer;">
+                                                <i class="fas fa-arrow-up text-primary"></i> Prioridad
+                                                <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                <div class="custom-dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary filter-toggle"
+                                                        type="button" data-filter="prioridad" style="padding: 2px 6px;">
+                                                        <i class="fas fa-filter"></i>
+                                                    </button>
+                                                    <div class="custom-dropdown-menu" id="prioridad-filter-menu"
+                                                        style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 150px;">
+                                                        <h6 class="dropdown-header"
+                                                            style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                            Filtrar por Prioridad</h6>
+                                                        <div class="px-3 py-2">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input prioridad-filter"
+                                                                    type="checkbox" value="" id="prioridad-all"
+                                                                    checked>
+                                                                <label class="form-check-label"
+                                                                    for="prioridad-all">Todas</label>
+                                                            </div>
+                                                            @for ($i = 1; $i <= 10; $i++)
                                                                 <div class="form-check">
                                                                     <input class="form-check-input prioridad-filter"
-                                                                        type="checkbox" value="" id="prioridad-all"
-                                                                        checked>
+                                                                        type="checkbox" value="{{ $i }}"
+                                                                        id="prioridad-{{ $i }}">
                                                                     <label class="form-check-label"
-                                                                        for="prioridad-all">Todas</label>
+                                                                        for="prioridad-{{ $i }}">{{ $i }}</label>
                                                                 </div>
-                                                                @for ($i = 1; $i <= 10; $i++)
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input prioridad-filter"
-                                                                            type="checkbox" value="{{ $i }}"
-                                                                            id="prioridad-{{ $i }}">
-                                                                        <label class="form-check-label"
-                                                                            for="prioridad-{{ $i }}">{{ $i }}</label>
-                                                                    </div>
-                                                                @endfor
-                                                            </div>
+                                                            @endfor
                                                         </div>
                                                     </div>
-                                                </th>
-                                                <th class="border-0 sortable" data-sort="orden_analista"
-                                                    style="cursor: pointer;">
-                                                    <i class="fas fa-sort-numeric-up text-primary"></i> Orden
-                                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    <div class="custom-dropdown">
-                                                        <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                            type="button" data-filter="orden_analista"
-                                                            style="padding: 2px 6px;">
-                                                            <i class="fas fa-filter"></i>
-                                                        </button>
-                                                        <div class="custom-dropdown-menu" id="orden-filter-menu"
-                                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 120px;">
-                                                            <h6 class="dropdown-header"
-                                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                                Filtrar por Orden</h6>
-                                                            <div class="px-3 py-2">
+                                                </div>
+                                            </th>
+                                            <th class="border-0 sortable" data-sort="orden_analista"
+                                                style="cursor: pointer;">
+                                                <i class="fas fa-sort-numeric-up text-primary"></i> Orden
+                                                <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                                <div class="custom-dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary filter-toggle"
+                                                        type="button" data-filter="orden_analista"
+                                                        style="padding: 2px 6px;">
+                                                        <i class="fas fa-filter"></i>
+                                                    </button>
+                                                    <div class="custom-dropdown-menu" id="orden-filter-menu"
+                                                        style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 120px;">
+                                                        <h6 class="dropdown-header"
+                                                            style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                            Filtrar por Orden</h6>
+                                                        <div class="px-3 py-2">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input orden-filter"
+                                                                    type="checkbox" value="" id="orden-all"
+                                                                    checked>
+                                                                <label class="form-check-label"
+                                                                    for="orden-all">Todos</label>
+                                                            </div>
+                                                            @for ($i = 1; $i <= 10; $i++)
                                                                 <div class="form-check">
                                                                     <input class="form-check-input orden-filter"
-                                                                        type="checkbox" value="" id="orden-all"
-                                                                        checked>
+                                                                        type="checkbox" value="{{ $i }}"
+                                                                        id="orden-{{ $i }}">
                                                                     <label class="form-check-label"
-                                                                        for="orden-all">Todos</label>
+                                                                        for="orden-{{ $i }}">{{ $i }}</label>
                                                                 </div>
-                                                                @for ($i = 1; $i <= 10; $i++)
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input orden-filter"
-                                                                            type="checkbox" value="{{ $i }}"
-                                                                            id="orden-{{ $i }}">
-                                                                        <label class="form-check-label"
-                                                                            for="orden-{{ $i }}">{{ $i }}</label>
-                                                                    </div>
-                                                                @endfor
-                                                            </div>
+                                                            @endfor
                                                         </div>
                                                     </div>
-                                                </th>
-                                                <th class="border-0">
-                                                    <i class="fas fa-align-left text-primary"></i> Descripción
-                                                </th>
-                                                <th class="border-0" style="position: relative;">
-                                                    <div class="d-flex align-items-center justify-content-between">
-                                                        <div class="sortable" data-sort="status"
-                                                            style="cursor: pointer;">
-                                                            <i class="fas fa-flag text-primary"></i> Estado
-                                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                        </div>
-                                                        <!-- Filtro de Estado -->
-                                                        ...
+                                                </div>
+                                            </th>
+                                            <th class="border-0">
+                                                <i class="fas fa-align-left text-primary"></i> Descripción
+                                            </th>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="sortable" data-sort="status" style="cursor: pointer;">
+                                                        <i class="fas fa-flag text-primary"></i> Estado
+                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                                                     </div>
-                                                </th>
-                                                <th class="border-0" style="position: relative;">
-                                                    <div class="d-flex align-items-center justify-content-between">
-                                                        <div class="sortable" data-sort="analistas"
-                                                            style="cursor: pointer;">
-                                                            <i class="fas fa-users text-primary"></i> Analistas
-                                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                        </div>
-                                                        <!-- Filtro de Analistas -->
-                                                        ...
+                                                    <!-- Filtro de Estado -->
+                                                    ...
+                                                </div>
+                                            </th>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="sortable" data-sort="analistas" style="cursor: pointer;">
+                                                        <i class="fas fa-users text-primary"></i> Analistas
+                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                                                     </div>
-                                                </th>
-                                                <th class="border-0">
-                                                    <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
-                                                </th>
-                                                <th class="border-0" style="position: relative;">
-                                                    <div class="d-flex align-items-center justify-content-between">
-                                                        <div class="sortable" data-sort="fecha_recepcion"
-                                                            style="cursor: pointer;">
-                                                            <i class="fas fa-calendar text-primary"></i> Fecha
-                                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                        </div>
-                                                        <!-- Filtro de Fecha -->
-                                                        ...
+                                                    <!-- Filtro de Analistas -->
+                                                    ...
+                                                </div>
+                                            </th>
+                                            <th class="border-0">
+                                                <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
+                                            </th>
+                                            <th class="border-0" style="position: relative;">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <div class="sortable" data-sort="fecha_recepcion"
+                                                        style="cursor: pointer;">
+                                                        <i class="fas fa-calendar text-primary"></i> Fecha
+                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                                                     </div>
-                                                </th>
-                                            </tr>
-                                        </thead>
+                                                    <!-- Filtro de Fecha -->
+                                                    ...
+                                                </div>
+                                            </th>
+                                        </tr>
+                                    </thead>
                                     <tbody>
                                         @include('activities.partials.subactivities', [
                                             'subactivities' => $activity->subactivities,
@@ -441,6 +441,21 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <!-- Sincroniza el scroll superior e inferior -->
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const topScroll = document.getElementById('top-scroll');
+                                    const tableScroll = document.getElementById('subactivitiesTableContainer');
+                                    if (topScroll && tableScroll) {
+                                        topScroll.addEventListener('scroll', function() {
+                                            tableScroll.scrollLeft = topScroll.scrollLeft;
+                                        });
+                                        tableScroll.addEventListener('scroll', function() {
+                                            topScroll.scrollLeft = tableScroll.scrollLeft;
+                                        });
+                                    }
+                                });
+                            </script>
                         </div>
                     </div>
                 @endif

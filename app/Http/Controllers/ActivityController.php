@@ -345,33 +345,67 @@ class ActivityController extends Controller
 
     public function update(Request $request, Activity $activity)
     {
+        Log::info('UPDATE AJAX', [
+            'is_ajax' => $request->ajax(),
+            'method' => $request->method(),
+            'analista_id' => $request->input('analista_id'),
+            'all' => $request->all()
+        ]);
         // Si solo se está actualizando analistas desde el modal
         if ($request->has('analista_id')) {
-            $request->validate([
-                'analista_id' => 'required|array|min:1',
-                'analista_id.*' => 'exists:analistas,id',
-            ]);
-            $activity->analistas()->sync($request->analista_id);
+            try {
+                $request->validate([
+                    'analista_id' => 'required|array|min:1',
+                    'analista_id.*' => 'exists:analistas,id',
+                ]);
+                $activity->analistas()->sync($request->analista_id);
 
-            // Si el formulario pide volver a la edición, redirige ahí
-            if ($request->has('redirect_to_edit')) {
-                // Si viene el id de la actividad principal, redirige ahí
-                if ($request->has('parent_activity_id')) {
-                    $parentId = $request->input('parent_activity_id');
-                    return redirect()
-                        ->route('activities.edit', $parentId)
-                        ->withFragment('subactivities-table')
+                // Si es AJAX o el cliente espera JSON, devolver JSON con los analistas actualizados
+                if ($request->ajax() || $request->wantsJson()) {
+                    $analistas = $activity->analistas()->get(['analistas.id', 'analistas.name']);
+                    return response()->json([
+                        'success' => true,
+                        'analistas' => $analistas
+                    ]);
+                }
+
+                // Si el formulario pide volver a la edición, redirige ahí
+                if ($request->has('redirect_to_edit')) {
+                    // Si viene el id de la actividad principal, redirige ahí
+                    if ($request->has('parent_activity_id')) {
+                        $parentId = $request->input('parent_activity_id');
+                        return redirect()
+                            ->route('activities.edit', $parentId)
+                            ->withFragment('subactivities-table')
+                            ->with('success', 'Analistas actualizados correctamente.')
+                            ->with('active_tab', 'basic');
+                    }
+                    // Si no, redirige a la actividad editada
+                    return redirect()->route('activities.edit', $activity)
                         ->with('success', 'Analistas actualizados correctamente.')
                         ->with('active_tab', 'basic');
                 }
-                // Si no, redirige a la actividad editada
-                return redirect()->route('activities.edit', $activity)
-                    ->with('success', 'Analistas actualizados correctamente.')
-                    ->with('active_tab', 'basic');
-            }
 
-            // Por defecto, redirigir al index
-            return redirect()->route('activities.index')->with('success', 'Analistas actualizados correctamente.');
+                // Por defecto, redirigir al index
+                return redirect()->route('activities.index')->with('success', 'Analistas actualizados correctamente.');
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'errors' => $e->errors(),
+                        'message' => 'Error de validación'
+                    ], 422);
+                }
+                throw $e;
+            } catch (\Exception $e) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Error inesperado: ' . $e->getMessage()
+                    ], 500);
+                }
+                throw $e;
+            }
         }
 
         $rules = [

@@ -388,12 +388,18 @@
                 </div>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
+                <!-- Scroll horizontal superior opcional -->
+                <div id="top-scroll" style="overflow-x: auto; width: 100%; height: 20px; background: #f8f9fa;">
+                    <div id="top-scroll-inner" style="height: 1px; width: 2000px;"></div>
+                </div>
+                <div id="main-table-scroll"
+                    style="overflow-x: auto; overflow-y: auto; max-height: 60vh; width: 100%; border-bottom: 1px solid #ccc;">
                     <div id="tableContainer">
-                        <table class="table table-hover mb-0 modern-table">
-                            <thead class="thead-light">
+                        <table id="main-activities-table" class="table table-hover mb-0 modern-table"
+                            style="min-width: 1100px;">
+                            <thead class="thead-light sticky-thead">
                                 <tr>
-                                    <th class="border-0" style="position: relative;">
+                                    <th class="border-0"> <!-- Caso -->
                                         <div class="d-flex align-items-center justify-content-between">
                                             <div class="sortable" data-sort="caso" style="cursor: pointer;">
                                                 <i class="fas fa-hashtag text-primary"></i> Caso
@@ -401,7 +407,7 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th class="border-0" style="position: relative;">
+                                    <th class="border-0"> <!-- Nombre -->
                                         <div class="d-flex align-items-center">
                                             <i class="fas fa-file-alt text-primary"></i> Nombre
                                             <button type="button" class="btn btn-sm btn-outline-secondary ml-2"
@@ -413,6 +419,7 @@
                                         </div>
                                     </th>
                                     <th class="border-0 sortable" data-sort="prioridad" style="cursor: pointer;">
+                                        <!-- Prioridad -->
                                         <i class="fas fa-arrow-up text-primary"></i> Prioridad
                                         <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                                         <div class="custom-dropdown">
@@ -445,6 +452,7 @@
                                         </div>
                                     </th>
                                     <th class="border-0 sortable" data-sort="orden_analista" style="cursor: pointer;">
+                                        <!-- Orden -->
                                         <i class="fas fa-sort-numeric-up text-primary"></i> Orden
                                         <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                                         <div class="custom-dropdown">
@@ -476,10 +484,10 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th class="border-0">
+                                    <th class="border-0"> <!-- Descripción -->
                                         <i class="fas fa-align-left text-primary"></i> Descripción
                                     </th>
-                                    <th class="border-0" style="position: relative;">
+                                    <th class="border-0"> <!-- Estado -->
                                         <div class="d-flex align-items-center justify-content-between">
                                             <div class="sortable" data-sort="status" style="cursor: pointer;">
                                                 <i class="fas fa-flag text-primary"></i> Estado
@@ -521,7 +529,7 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th class="border-0" style="position: relative;">
+                                    <th class="border-0"> <!-- Analistas -->
                                         <div class="d-flex align-items-center justify-content-between">
                                             <div class="sortable" data-sort="analistas" style="cursor: pointer;">
                                                 <i class="fas fa-users text-primary"></i> Analistas
@@ -558,16 +566,10 @@
                                             </div>
                                         </div>
                                     </th>
-                                    {{-- <th class="border-0">
-    <i class="fas fa-comments text-primary"></i> Comentarios
-</th> --}}
-                                    <th class="border-0">
+                                    <th class="border-0"> <!-- Requerimientos -->
                                         <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
                                     </th>
-                                    {{-- <th class="border-0">
-    <i class="fas fa-envelope text-primary"></i> Correos
-</th> --}}
-                                    <th class="border-0" style="position: relative;">
+                                    <th class="border-0"> <!-- Fecha -->
                                         <div class="d-flex align-items-center justify-content-between">
                                             <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
                                                 <i class="fas fa-calendar text-primary"></i> Fecha
@@ -605,7 +607,7 @@
                                     </th>
                                     {{-- <th class="border-0 text-center">
             <i class="fas fa-cogs text-primary"></i> Acciones
-        </th> --}}
+            </th> --}}
                                 </tr>
                             </thead>
                             <tbody>
@@ -754,26 +756,26 @@
                                             </div>
                                         </td>
                                         {{-- <td class="align-middle">
-                                    @if ($activity->comments->count() > 0)
-                                        <div class="comments-info">
-                                            <a href="{{ route('activities.comments', $activity) }}" class="text-decoration-none">
-                                                <span class="badge badge-info badge-pill">
-                                                    <i class="fas fa-comments"></i> {{ $activity->comments->count() }}
-                                                </span>
-                                            </a>
-                                            <div class="mt-1">
-                                                <small class="text-muted">
-                                                    <i class="fas fa-clock"></i> 
-                                                    {{ $activity->comments->last()->created_at->format('d/m/Y H:i') }}
-                                                </small>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <span class="text-muted">
-                                            <i class="fas fa-comment-slash"></i> Sin comentarios
-                                        </span>
-                                    @endif
-                                </td> --}}
+                                                    @if ($activity->comments->count() > 0)
+                                                    <div class="comments-info">
+                                                        <a href="{{ route('activities.comments', $activity) }}" class="text-decoration-none">
+                                                            <span class="badge badge-info badge-pill">
+                                                                <i class="fas fa-comments"></i> {{ $activity->comments->count() }}
+                                                            </span>
+                                                        </a>
+                                                        <div class="mt-1">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-clock"></i> 
+                                                                {{ $activity->comments->last()->created_at->format('d/m/Y H:i') }}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-comment-slash"></i> Sin comentarios
+                                                    </span>
+                                                @endif
+                                            </td> --}}
                                         <td class="align-middle">
                                             @if ($activity->requirements->count() > 0)
                                                 <div class="requirements-info">
@@ -814,41 +816,41 @@
                                             @endif
                                         </td>
                                         {{-- <td class="align-middle">
-                                    @if ($activity->emails->count() > 0)
-                                        <div class="emails-info">
-                                            <a href="{{ route('activities.emails', $activity) }}" class="text-decoration-none">
-                                                <span class="badge badge-success badge-pill">
-                                                    <i class="fas fa-envelope"></i> {{ $activity->emails->count() }}
-                                                </span>
-                                            </a>
-                                            <div class="mt-1">
-                                                @php
-                                                    $lastEmail = $activity->emails->sortByDesc('created_at')->first();
-                                                    $sentCount = $activity->emails->where('type', 'sent')->count();
-                                                    $receivedCount = $activity->emails->where('type', 'received')->count();
-                                                @endphp
-                                                <div class="d-flex justify-content-start align-items-center">
-                                                    <span class="badge badge-outline-primary badge-sm mr-1">
-                                                        <i class="fas fa-paper-plane"></i> {{ $sentCount }}
-                                                    </span>
-                                                    <span class="badge badge-outline-success badge-sm">
-                                                        <i class="fas fa-inbox"></i> {{ $receivedCount }}
-                                                    </span>
-                                                </div>
-                                                @if ($lastEmail)
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-clock"></i> 
-                                                        {{ $lastEmail->created_at->format('d/m/Y H:i') }}
-                                                    </small>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @else
-                                        <span class="text-muted">
-                                            <i class="fas fa-envelope-open"></i> Sin correos
-                                        </span>
-                                    @endif
-                                </td> --}}
+                                                        @if ($activity->emails->count() > 0)
+                                                            <div class="emails-info">
+                                                                <a href="{{ route('activities.emails', $activity) }}" class="text-decoration-none">
+                                                                    <span class="badge badge-success badge-pill">
+                                                                        <i class="fas fa-envelope"></i> {{ $activity->emails->count() }}
+                                                                    </span>
+                                                                </a>
+                                                                <div class="mt-1">
+                                                                    @php
+                                                                        $lastEmail = $activity->emails->sortByDesc('created_at')->first();
+                                                                        $sentCount = $activity->emails->where('type', 'sent')->count();
+                                                                        $receivedCount = $activity->emails->where('type', 'received')->count();
+                                                                    @endphp
+                                                                    <div class="d-flex justify-content-start align-items-center">
+                                                                        <span class="badge badge-outline-primary badge-sm mr-1">
+                                                                            <i class="fas fa-paper-plane"></i> {{ $sentCount }}
+                                                                        </span>
+                                                                        <span class="badge badge-outline-success badge-sm">
+                                                                            <i class="fas fa-inbox"></i> {{ $receivedCount }}
+                                                                        </span>
+                                                                    </div>
+                                                                    @if ($lastEmail)
+                                                                        <small class="text-muted">
+                                                                            <i class="fas fa-clock"></i> 
+                                                                            {{ $lastEmail->created_at->format('d/m/Y H:i') }}
+                                                                        </small>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        @else
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-envelope-open"></i> Sin correos
+                                                            </span>
+                                                        @endif
+                                                    </td> --}}
                                         <td class="align-middle">
                                             @if ($activity->fecha_recepcion)
                                                 <div class="date-info">
@@ -896,6 +898,22 @@
                         </table>
                     </div>
                 </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const topScroll = document.getElementById('top-scroll');
+                        const tableScroll = document.getElementById('main-table-scroll');
+
+                        // Sincroniza scroll horizontal SIEMPRE
+                        if (topScroll && tableScroll) {
+                            topScroll.addEventListener('scroll', function() {
+                                tableScroll.scrollLeft = topScroll.scrollLeft;
+                            });
+                            tableScroll.addEventListener('scroll', function() {
+                                topScroll.scrollLeft = tableScroll.scrollLeft;
+                            });
+                        }
+                    });
+                </script>
             </div>
         </div>
 
@@ -992,7 +1010,7 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="saveAnalystsAjaxBtn">
                             <i class="fas fa-save"></i> Guardar Cambios
                         </button>
                     </div>
@@ -1186,6 +1204,22 @@
     .activity-row:hover .analysts-edit-btn-group,
     .subactivity-row:hover .analysts-edit-btn-group {
         display: inline-block !important;
+    }
+
+    /* Sticky header para la tabla de actividades */
+    .sticky-thead th {
+        position: sticky;
+        top: 0;
+        z-index: 102;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+
+    #main-table-scroll {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 60vh;
+        width: 100%;
+        border-bottom: 1px solid #ccc;
     }
 
     /* Subactividades */
@@ -1611,6 +1645,61 @@
                 // Muestra el modal
                 $('#analystsEditModal').modal('show');
             });
+        });
+
+        // AJAX para guardar analistas sin refrescar la página
+        document.getElementById('analystsEditForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var form = this;
+            var activityId = document.getElementById('modalAnalystsActivityId').value;
+            var select = document.getElementById('modalAnalystsSelect');
+            var selected = Array.from(select.selectedOptions).map(opt => opt.value);
+
+            fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value,
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        _method: 'PUT',
+                        analista_id: selected
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualiza la celda de analistas en la tabla
+                        var row = document.querySelector('tr[data-activity-id="' + activityId +
+                            '"]');
+                        if (row) {
+                            var cell = row.querySelector('td .analysts-list');
+                            if (cell) {
+                                // Renderiza los nuevos analistas
+                                cell.innerHTML = '';
+                                data.analistas.forEach(function(analista) {
+                                    var span = document.createElement('span');
+                                    span.className = 'badge badge-light mr-1 mb-1';
+                                    span.innerHTML = '<i class="fas fa-user"></i> ' +
+                                        analista.name;
+                                    cell.appendChild(span);
+                                });
+                            }
+                            // Resalta la fila editada
+                            row.classList.add('table-success');
+                            setTimeout(function() {
+                                row.classList.remove('table-success');
+                            }, 2000);
+                        }
+                        $('#analystsEditModal').modal('hide');
+                    } else {
+                        alert('Error al actualizar analistas');
+                    }
+                })
+                .catch(() => {
+                    alert('Error al actualizar analistas');
+                });
         });
     });
 </script>
