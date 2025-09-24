@@ -56,7 +56,12 @@
                         <input type="hidden" name="analista_id" id="exportAnalista">
                         <input type="hidden" name="fecha_desde" id="exportFechaDesde">
                         <input type="hidden" name="fecha_hasta" id="exportFechaHasta">
-                        <input type="hidden" name="query" id="exportQuery"><!-- <-- AGREGA ESTA LÍNEA -->
+                        <input type="hidden" name="query" id="exportQuery">
+                        <!-- INPUTS PARA FILTROS DE COLUMNA -->
+                        <input type="hidden" name="status_column" id="exportStatusColumn">
+                        <input type="hidden" name="analista_column" id="exportAnalistaColumn">
+                        <input type="hidden" name="fecha_desde_column" id="exportFechaDesdeColumn">
+                        <input type="hidden" name="fecha_hasta_column" id="exportFechaHastaColumn">
                         <button type="submit" class="btn btn-outline-success">
                             <i class="fas fa-file-excel"></i> Exportar
                         </button>
@@ -65,20 +70,35 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             const exportForm = document.getElementById('exportForm');
                             exportForm.addEventListener('submit', function(e) {
-                                // Estado
+                                // Filtros avanzados
                                 document.getElementById('exportStatus').value = document.getElementById('filterStatus')
                                     .value;
-                                // Analista
                                 document.getElementById('exportAnalista').value = document.getElementById('filterAnalista')
                                     .value;
-                                // Fechas
                                 document.getElementById('exportFechaDesde').value = document.getElementById(
                                     'filterFechaDesde').value;
                                 document.getElementById('exportFechaHasta').value = document.getElementById(
                                     'filterFechaHasta').value;
-                                // Búsqueda por texto
-                                document.getElementById('exportQuery').value = document.getElementById('searchInput')
-                                .value;
+                                document.getElementById('exportQuery').value = document.getElementById('searchInput').value;
+
+                                // Filtros de columna (checkboxes)
+                                // Estado columna
+                                let statusChecked = Array.from(document.querySelectorAll('.status-filter:checked'))
+                                    .filter(el => el.value !== "")
+                                    .map(el => el.value);
+                                document.getElementById('exportStatusColumn').value = statusChecked.join(',');
+
+                                // Analista columna
+                                let analistaChecked = Array.from(document.querySelectorAll('.analista-filter:checked'))
+                                    .filter(el => el.value !== "")
+                                    .map(el => el.value);
+                                document.getElementById('exportAnalistaColumn').value = analistaChecked.join(',');
+
+                                // Fechas columna
+                                document.getElementById('exportFechaDesdeColumn').value = document.getElementById(
+                                    'fecha-desde-filter').value;
+                                document.getElementById('exportFechaHastaColumn').value = document.getElementById(
+                                    'fecha-hasta-filter').value;
                             });
                         });
                     </script>

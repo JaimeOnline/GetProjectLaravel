@@ -809,6 +809,18 @@ class ActivityController extends Controller
      */
     public function export(Request $request)
     {
+        // Prioriza los filtros de columna si existen
+        $statusFilter = $request->get('status_column') ?: $request->get('status');
+        if (is_string($statusFilter) && str_contains($statusFilter, ',')) {
+            $statusFilter = explode(',', $statusFilter);
+        }
+        $analistaFilter = $request->get('analista_column') ?: $request->get('analista_id');
+        if (is_string($analistaFilter) && str_contains($analistaFilter, ',')) {
+            $analistaFilter = explode(',', $analistaFilter);
+        }
+        $fechaDesde = $request->get('fecha_desde_column') ?: $request->get('fecha_desde');
+        $fechaHasta = $request->get('fecha_hasta_column') ?: $request->get('fecha_hasta');
+
         // Aplica los mismos filtros que en el método index o search
         // Filtros para actividades principales
         $mainQuery = Activity::with(['analistas', 'statuses'])
@@ -818,7 +830,6 @@ class ActivityController extends Controller
             ->whereNotNull('parent_id');
 
         // Filtro por estado
-        $statusFilter = $request->get('status');
         if (!is_null($statusFilter) && $statusFilter !== '') {
             if (is_array($statusFilter)) {
                 $mainQuery->where(function ($q) use ($statusFilter) {
@@ -850,25 +861,22 @@ class ActivityController extends Controller
         }
 
         // Filtro por analista
-        $analistaFilter = $request->get('analista_id');
         if (!is_null($analistaFilter) && $analistaFilter !== '') {
             $mainQuery->whereHas('analistas', function ($q) use ($analistaFilter) {
-                $q->where('analistas.id', $analistaFilter);
+                $q->whereIn('analistas.id', (array)$analistaFilter);
             });
             $subQuery->whereHas('analistas', function ($q) use ($analistaFilter) {
-                $q->where('analistas.id', $analistaFilter);
+                $q->whereIn('analistas.id', (array)$analistaFilter);
             });
         }
 
         // Filtro por fecha desde
-        $fechaDesde = $request->get('fecha_desde');
         if (!is_null($fechaDesde) && $fechaDesde !== '') {
             $mainQuery->where('fecha_recepcion', '>=', $fechaDesde);
             $subQuery->where('fecha_recepcion', '>=', $fechaDesde);
         }
 
         // Filtro por fecha hasta
-        $fechaHasta = $request->get('fecha_hasta');
         if (!is_null($fechaHasta) && $fechaHasta !== '') {
             $mainQuery->where('fecha_recepcion', '<=', $fechaHasta);
             $subQuery->where('fecha_recepcion', '<=', $fechaHasta);
@@ -899,28 +907,43 @@ class ActivityController extends Controller
                         });
                 });
             })
-            ->when($request->get('status'), function ($query, $statusFilter) {
-                if (is_array($statusFilter)) {
-                    $query->whereHas('statuses', function ($subQ) use ($statusFilter) {
-                        $subQ->whereIn('name', $statusFilter);
-                    });
-                } else {
-                    $query->whereHas('statuses', function ($subQ) use ($statusFilter) {
-                        $subQ->where('name', $statusFilter);
-                    });
-                }
-            })
-            ->when($request->get('analista_id'), function ($query, $analistaFilter) {
-                $query->whereHas('analistas', function ($q) use ($analistaFilter) {
-                    $q->where('analistas.id', $analistaFilter);
+            // Filtro por estado: si tiene estados en la relación, filtra por la relación; si no, por el campo antiguo
+            ->when($statusFilter, function ($query) use ($statusFilter) {
+                $query->where(function ($q) use ($statusFilter) {
+                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                        if (is_array($statusFilter)) {
+                            $subQ->whereIn('name', $statusFilter);
+                        } else {
+                            $subQ->where('name', $statusFilter);
+                        }
+                    })
+                        ->orWhere(function ($subQ) use ($statusFilter) {
+                            $subQ->whereDoesntHave('statuses')
+                                ->where(function ($subQ2) use ($statusFilter) {
+                                    if (is_array($statusFilter)) {
+                                        $subQ2->whereIn('status', $statusFilter);
+                                    } else {
+                                        $subQ2->where('status', $statusFilter);
+                                    }
+                                });
+                        });
                 });
             })
-            ->when($request->get('fecha_desde'), function ($query, $fechaDesde) {
+            // Filtro por analista (usando $analistaFilter procesado)
+            ->when($analistaFilter, function ($query) use ($analistaFilter) {
+                $query->whereHas('analistas', function ($q) use ($analistaFilter) {
+                    $q->whereIn('analistas.id', (array)$analistaFilter);
+                });
+            })
+            // Filtro por fecha desde (usando $fechaDesde procesado)
+            ->when($fechaDesde, function ($query) use ($fechaDesde) {
                 $query->where('fecha_recepcion', '>=', $fechaDesde);
             })
-            ->when($request->get('fecha_hasta'), function ($query, $fechaHasta) {
+            // Filtro por fecha hasta (usando $fechaHasta procesado)
+            ->when($fechaHasta, function ($query) use ($fechaHasta) {
                 $query->where('fecha_recepcion', '<=', $fechaHasta);
             })
+            // Filtro por caso
             ->when($request->get('caso'), function ($query, $caso) {
                 $query->where('caso', 'LIKE', "%{$caso}%");
             })
