@@ -227,8 +227,19 @@ class ActivityController extends Controller
         // Si se pasa un parentId, lo usamos como padre predeterminado
         $parentActivity = $parentId ? Activity::findOrFail($parentId) : null;
 
+        // Si hay actividad padre, obtener caso y analistas para preseleccionar
+        $defaultCaso = $parentActivity ? $parentActivity->caso : null;
+        $defaultAnalistas = $parentActivity ? $parentActivity->analistas->pluck('id')->toArray() : [];
+
         // Pasar las variables a la vista
-        return view('activities.create', compact('analistas', 'activities', 'statuses', 'parentActivity'));
+        return view('activities.create', compact(
+            'analistas',
+            'activities',
+            'statuses',
+            'parentActivity',
+            'defaultCaso',
+            'defaultAnalistas'
+        ));
     }
     public function store(Request $request)
     {
@@ -288,7 +299,7 @@ class ActivityController extends Controller
             }
         }
 
-        return redirect()->route('activities.index')->with('success', 'Actividad creada con éxito.');
+        return redirect()->route('activities.edit', $activity->id)->with('success', 'Actividad creada con éxito.');
     }
     public function edit(Activity $activity)
     {

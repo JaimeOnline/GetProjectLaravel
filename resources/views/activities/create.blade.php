@@ -76,7 +76,8 @@
                                     <i class="fas fa-hashtag text-primary"></i> Caso
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control" id="caso" name="caso" required>
+                                <input type="text" class="form-control" id="caso" name="caso" required
+                                    value="{{ old('caso', $defaultCaso ?? '') }}">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -152,7 +153,11 @@
 
                             <div class="analysts-grid">
                                 @foreach ($analistas as $analista)
-                                    <div class="analyst-card{{ $analista->id == 7 ? ' selected' : '' }}"
+                                    <div class="analyst-card
+                                        @if (isset($defaultAnalistas) && in_array($analista->id, $defaultAnalistas)) selected
+                                        @elseif (!isset($defaultAnalistas) && $analista->id == 7)
+                                            selected @endif
+                                    "
                                         data-analyst-id="{{ $analista->id }}" data-analyst-name="{{ $analista->name }}">
                                         <div class="analyst-avatar">
                                             {{ strtoupper(substr($analista->name, 0, 2)) }}
@@ -234,7 +239,16 @@
             @endphp
             // ===== FUNCIONALIDAD DE SELECCIÓN DE ANALISTAS =====
             let selectedAnalysts = [];
-            @if ($defaultAnalyst)
+            @if (isset($defaultAnalistas) && count($defaultAnalistas) > 0)
+                @foreach ($analistas as $analista)
+                    @if (in_array($analista->id, $defaultAnalistas))
+                        selectedAnalysts.push({
+                            id: "{{ $analista->id }}",
+                            name: "{{ $analista->name }}"
+                        });
+                    @endif
+                @endforeach
+            @elseif ($defaultAnalyst)
                 selectedAnalysts.push({
                     id: "{{ $defaultAnalyst->id }}",
                     name: "{{ $defaultAnalyst->name }}"
