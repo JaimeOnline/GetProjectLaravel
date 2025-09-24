@@ -49,6 +49,40 @@
                 </div>
             </div>
             <div class="card-body">
+                <!-- Botón de exportar -->
+                <div class="mb-3 d-flex justify-content-end">
+                    <form id="exportForm" method="GET" action="{{ route('activities.export') }}" target="_blank">
+                        <input type="hidden" name="status" id="exportStatus">
+                        <input type="hidden" name="analista_id" id="exportAnalista">
+                        <input type="hidden" name="fecha_desde" id="exportFechaDesde">
+                        <input type="hidden" name="fecha_hasta" id="exportFechaHasta">
+                        <input type="hidden" name="query" id="exportQuery"><!-- <-- AGREGA ESTA LÍNEA -->
+                        <button type="submit" class="btn btn-outline-success">
+                            <i class="fas fa-file-excel"></i> Exportar
+                        </button>
+                    </form>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const exportForm = document.getElementById('exportForm');
+                            exportForm.addEventListener('submit', function(e) {
+                                // Estado
+                                document.getElementById('exportStatus').value = document.getElementById('filterStatus')
+                                    .value;
+                                // Analista
+                                document.getElementById('exportAnalista').value = document.getElementById('filterAnalista')
+                                    .value;
+                                // Fechas
+                                document.getElementById('exportFechaDesde').value = document.getElementById(
+                                    'filterFechaDesde').value;
+                                document.getElementById('exportFechaHasta').value = document.getElementById(
+                                    'filterFechaHasta').value;
+                                // Búsqueda por texto
+                                document.getElementById('exportQuery').value = document.getElementById('searchInput')
+                                .value;
+                            });
+                        });
+                    </script>
+                </div>
                 <!-- Search Bar -->
                 <div class="row mb-3">
                     <div class="col-md-8">

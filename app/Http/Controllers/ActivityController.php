@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Activity;
 use App\Models\User;
-use App\Models\Analista;
-use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
-use App\Models\Comment;
 use App\Models\Email;
 use App\Models\Status;
+use App\Models\Comment;
+use App\Models\Activity;
+use App\Models\Analista;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Exports\ActivitiesExport;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
 
 
 class ActivityController extends Controller
@@ -800,5 +802,140 @@ class ActivityController extends Controller
         $activity->save();
 
         return response()->json(['success' => true, 'value' => $activity->{$request->field}]);
+    }
+
+    /**
+     * Exportar actividades filtradas
+     */
+    public function export(Request $request)
+    {
+        // Aplica los mismos filtros que en el método index o search
+        // Filtros para actividades principales
+        $mainQuery = Activity::with(['analistas', 'statuses'])
+            ->whereNull('parent_id');
+        // Filtros para subactividades
+        $subQuery = Activity::with(['analistas', 'statuses'])
+            ->whereNotNull('parent_id');
+
+        // Filtro por estado
+        $statusFilter = $request->get('status');
+        if (!is_null($statusFilter) && $statusFilter !== '') {
+            if (is_array($statusFilter)) {
+                $mainQuery->where(function ($q) use ($statusFilter) {
+                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                        $subQ->whereIn('name', $statusFilter);
+                    })
+                        ->orWhereIn('status', $statusFilter);
+                });
+                $subQuery->where(function ($q) use ($statusFilter) {
+                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                        $subQ->whereIn('name', $statusFilter);
+                    })
+                        ->orWhereIn('status', $statusFilter);
+                });
+            } else {
+                $mainQuery->where(function ($q) use ($statusFilter) {
+                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                        $subQ->where('name', $statusFilter);
+                    })
+                        ->orWhere('status', $statusFilter);
+                });
+                $subQuery->where(function ($q) use ($statusFilter) {
+                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                        $subQ->where('name', $statusFilter);
+                    })
+                        ->orWhere('status', $statusFilter);
+                });
+            }
+        }
+
+        // Filtro por analista
+        $analistaFilter = $request->get('analista_id');
+        if (!is_null($analistaFilter) && $analistaFilter !== '') {
+            $mainQuery->whereHas('analistas', function ($q) use ($analistaFilter) {
+                $q->where('analistas.id', $analistaFilter);
+            });
+            $subQuery->whereHas('analistas', function ($q) use ($analistaFilter) {
+                $q->where('analistas.id', $analistaFilter);
+            });
+        }
+
+        // Filtro por fecha desde
+        $fechaDesde = $request->get('fecha_desde');
+        if (!is_null($fechaDesde) && $fechaDesde !== '') {
+            $mainQuery->where('fecha_recepcion', '>=', $fechaDesde);
+            $subQuery->where('fecha_recepcion', '>=', $fechaDesde);
+        }
+
+        // Filtro por fecha hasta
+        $fechaHasta = $request->get('fecha_hasta');
+        if (!is_null($fechaHasta) && $fechaHasta !== '') {
+            $mainQuery->where('fecha_recepcion', '<=', $fechaHasta);
+            $subQuery->where('fecha_recepcion', '<=', $fechaHasta);
+        }
+
+        // Filtro por caso
+        $caso = $request->get('caso');
+        if (!is_null($caso) && $caso !== '') {
+            $mainQuery->where('caso', 'LIKE', "%{$caso}%");
+            $subQuery->where('caso', 'LIKE', "%{$caso}%");
+        }
+
+        // Obtener todas las actividades (padres y subactividades) con filtros y relaciones
+        $filteredActivities = Activity::with(['statuses', 'analistas'])
+            ->when($request->get('query'), function ($queryBuilder, $query) {
+                $queryBuilder->where(function ($q) use ($query) {
+                    $q->where('name', 'LIKE', "%{$query}%")
+                        ->orWhere('description', 'LIKE', "%{$query}%")
+                        ->orWhere('caso', 'LIKE', "%{$query}%")
+                        ->orWhere('status', 'LIKE', "%{$query}%")
+                        ->orWhere('fecha_recepcion', 'LIKE', "%{$query}%")
+                        ->orWhereHas('analistas', function ($subQ) use ($query) {
+                            $subQ->where('name', 'LIKE', "%{$query}%");
+                        })
+                        ->orWhereHas('statuses', function ($subQ) use ($query) {
+                            $subQ->where('name', 'LIKE', "%{$query}%")
+                                ->orWhere('label', 'LIKE', "%{$query}%");
+                        });
+                });
+            })
+            ->when($request->get('status'), function ($query, $statusFilter) {
+                if (is_array($statusFilter)) {
+                    $query->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                        $subQ->whereIn('name', $statusFilter);
+                    });
+                } else {
+                    $query->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                        $subQ->where('name', $statusFilter);
+                    });
+                }
+            })
+            ->when($request->get('analista_id'), function ($query, $analistaFilter) {
+                $query->whereHas('analistas', function ($q) use ($analistaFilter) {
+                    $q->where('analistas.id', $analistaFilter);
+                });
+            })
+            ->when($request->get('fecha_desde'), function ($query, $fechaDesde) {
+                $query->where('fecha_recepcion', '>=', $fechaDesde);
+            })
+            ->when($request->get('fecha_hasta'), function ($query, $fechaHasta) {
+                $query->where('fecha_recepcion', '<=', $fechaHasta);
+            })
+            ->when($request->get('caso'), function ($query, $caso) {
+                $query->where('caso', 'LIKE', "%{$caso}%");
+            })
+            ->get();
+
+        // Ordena por parent_id y luego por id para mantener cierto orden jerárquico
+        $ordered = $filteredActivities->sortBy([
+            ['parent_id', 'asc'],
+            ['id', 'asc'],
+        ])->values();
+
+        // Exportar usando Laravel Excel
+        return Excel::download(
+            new ActivitiesExport($ordered, $request->get('status')),
+            'actividades.xlsx'
+        );
     }
 }
