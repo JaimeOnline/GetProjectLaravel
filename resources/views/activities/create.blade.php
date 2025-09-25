@@ -53,6 +53,32 @@
                 </ul>
             </div>
         @endif
+        <!-- Formulario para carga masiva desde Excel -->
+        <form action="{{ route('activities.importExcel') }}" method="POST" enctype="multipart/form-data" class="mb-4">
+            @csrf
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-file-upload"></i> Cargar Actividades desde Excel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="excel_file">Selecciona archivo Excel (.xlsx)</label>
+                        <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx"
+                            required>
+                        <small class="form-text text-muted">
+                            Estructura: caso, estados, prioridad, orden_analista, nombre_actividad, descripcion,
+                            estatus_operacional, analistas, actividad_padre, fecha_recepcion.<br>
+                            Ejemplo: estados="Pendiente,En Ejecución", analistas="Juan, Maria",
+                            actividad_padre="Actividad A, si no, déjalo vacío", fecha_recepcion= 2024-06-18
+                        </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Importar Excel
+                    </button>
+                </div>
+            </div>
+        </form>
+
         <form action="{{ route('activities.store') }}" method="POST">
             @csrf
 
@@ -111,8 +137,8 @@
                             <i class="fas fa-sort-numeric-up text-primary"></i> Orden Analista (número)
                             <span class="text-danger">*</span>
                         </label>
-                        <input type="number" class="form-control" id="orden_analista" name="orden_analista" value="1"
-                            min="1" required>
+                        <input type="number" class="form-control" id="orden_analista" name="orden_analista"
+                            value="1" min="1" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="name">

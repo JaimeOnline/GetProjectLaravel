@@ -11,6 +11,7 @@ Route::get('/', function () {
 Route::get('activities/search', [ActivityController::class, 'search'])->name('activities.search');
 Route::get('/activities/export', [ActivityController::class, 'export'])->name('activities.export');
 Route::resource('activities', ActivityController::class);
+Route::post('activities/import-excel', [ActivityController::class, 'importExcel'])->name('activities.importExcel');
 
 // Rutas para gestión de estados múltiples
 Route::put('activities/{activity}/statuses', [ActivityController::class, 'updateStatuses'])->name('activities.statuses.update');

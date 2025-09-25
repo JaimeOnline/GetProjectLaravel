@@ -18,6 +18,102 @@ use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
 
 class ActivityController extends Controller
 {
+    // ... métodos existentes ...
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx',
+        ]);
+
+        $file = $request->file('excel_file');
+        $rows = \Maatwebsite\Excel\Facades\Excel::toArray([], $file)[0];
+
+        // Encabezados esperados
+        $expectedHeaders = [
+            'caso',
+            'estados',
+            'prioridad',
+            'orden_analista',
+            'nombre_actividad',
+            'descripcion',
+            'estatus_operacional',
+            'analistas',
+            'actividad_padre',
+            'fecha_recepcion'
+        ];
+
+        $header = array_map('strtolower', array_map('trim', $rows[0]));
+        foreach ($expectedHeaders as $col) {
+            if (!in_array($col, $header)) {
+                return back()->withErrors(['excel_file' => "Falta la columna '$col' en el archivo Excel."]);
+            }
+        }
+
+        $rowCount = 0;
+        for ($i = 1; $i < count($rows); $i++) {
+            $row = array_combine($header, $rows[$i]);
+
+            // Buscar IDs por nombre
+            $statusIds = \App\Models\Status::whereIn('label', array_map('trim', explode(',', $row['estados'])))->pluck('id')->toArray();
+            $analistaIds = \App\Models\Analista::whereIn('name', array_map('trim', explode(',', $row['analistas'])))->pluck('id')->toArray();
+
+            $parentId = null;
+            if (!empty($row['actividad_padre'])) {
+                $parent = \App\Models\Activity::where('name', trim($row['actividad_padre']))->first();
+                if ($parent) {
+                    $parentId = $parent->id;
+                }
+            }
+
+            // Procesar la fecha correctamente
+            $fechaRecepcion = null;
+            if (!empty($row['fecha_recepcion'])) {
+                // Si es un número (Excel serial date)
+                if (is_numeric($row['fecha_recepcion'])) {
+                    $fechaRecepcion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['fecha_recepcion'])->format('Y-m-d');
+                } else {
+                    // Si es string, intentar convertirlo a Y-m-d
+                    $fecha = \DateTime::createFromFormat('Y-m-d', $row['fecha_recepcion']);
+                    if (!$fecha) {
+                        $fecha = \DateTime::createFromFormat('d/m/Y', $row['fecha_recepcion']);
+                    }
+                    if ($fecha) {
+                        $fechaRecepcion = $fecha->format('Y-m-d');
+                    } else {
+                        $fechaRecepcion = null;
+                    }
+                }
+            }
+
+            // Crear la actividad
+            $activity = \App\Models\Activity::create([
+                'caso' => $row['caso'],
+                'prioridad' => $row['prioridad'],
+                'orden_analista' => $row['orden_analista'],
+                'name' => $row['nombre_actividad'],
+                'description' => $row['descripcion'] ?? '',
+                'estatus_operacional' => $row['estatus_operacional'] ?? '',
+                'parent_id' => $parentId,
+                'fecha_recepcion' => $fechaRecepcion,
+            ]);
+
+            // Relacionar estados
+            if (!empty($statusIds)) {
+                $activity->statuses()->sync($statusIds);
+            }
+
+            // Relacionar analistas
+            if (!empty($analistaIds)) {
+                $activity->analistas()->sync($analistaIds);
+            }
+
+            $rowCount++;
+        }
+
+        return redirect()->route('activities.index')->with('success', "Se importaron $rowCount actividades correctamente.");
+    }
+
     public function index(Request $request)
     {
         // Obtener solo las actividades padre (sin parent_id) con sus relaciones
