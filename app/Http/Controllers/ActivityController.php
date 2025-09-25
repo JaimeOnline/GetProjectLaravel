@@ -18,7 +18,14 @@ use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
 
 class ActivityController extends Controller
 {
-    // ... métodos existentes ...
+    public function downloadExcelTemplate()
+    {
+        $file = public_path('modelo_actividades.xlsx');
+        if (!file_exists($file)) {
+            abort(404, 'El archivo modelo no está disponible. Contacta al administrador.');
+        }
+        return response()->download($file, 'modelo_actividades.xlsx');
+    }
 
     public function importExcel(Request $request)
     {
@@ -31,20 +38,28 @@ class ActivityController extends Controller
 
         // Encabezados esperados
         $expectedHeaders = [
-            'caso',
-            'estados',
-            'prioridad',
-            'orden_analista',
-            'nombre_actividad',
-            'descripcion',
-            'estatus_operacional',
-            'analistas',
-            'actividad_padre',
-            'fecha_recepcion'
+            'CASO',
+            'ESTADOS',
+            'PRIORIDAD',
+            'ORDEN ANALISTA',
+            'NOMBRE ACTIVIDAD',
+            'DESCRIPCION',
+            'ESTATUS OPERACIONAL',
+            'ANALISTAS',
+            'ACTIVIDAD PADRE',
+            'FECHA RECEPCION'
         ];
 
-        $header = array_map('strtolower', array_map('trim', $rows[0]));
-        foreach ($expectedHeaders as $col) {
+        // Normalizador: quita espacios, guiones, guiones bajos y pone mayúsculas
+        $normalize = function ($str) {
+            return strtoupper(str_replace([' ', '-', '_'], '', trim($str)));
+        };
+
+        $headerRaw = $rows[0];
+        $header = array_map($normalize, $headerRaw);
+        $expectedHeadersNorm = array_map($normalize, $expectedHeaders);
+
+        foreach ($expectedHeadersNorm as $col) {
             if (!in_array($col, $header)) {
                 return back()->withErrors(['excel_file' => "Falta la columna '$col' en el archivo Excel."]);
             }
@@ -52,15 +67,22 @@ class ActivityController extends Controller
 
         $rowCount = 0;
         for ($i = 1; $i < count($rows); $i++) {
-            $row = array_combine($header, $rows[$i]);
+            // Mapear los datos de la fila a los encabezados normalizados
+            $rowAssoc = [];
+            foreach ($header as $idx => $col) {
+                $rowAssoc[$col] = isset($rows[$i][$idx]) ? $rows[$i][$idx] : null;
+            }
+
+            // Ahora puedes acceder así:
+            // $rowAssoc['CASO'], $rowAssoc['ESTADOS'], etc. (ya normalizados)
 
             // Buscar IDs por nombre
-            $statusIds = \App\Models\Status::whereIn('label', array_map('trim', explode(',', $row['estados'])))->pluck('id')->toArray();
-            $analistaIds = \App\Models\Analista::whereIn('name', array_map('trim', explode(',', $row['analistas'])))->pluck('id')->toArray();
+            $statusIds = \App\Models\Status::whereIn('label', array_map('trim', explode(',', $rowAssoc['ESTADOS'])))->pluck('id')->toArray();
+            $analistaIds = \App\Models\Analista::whereIn('name', array_map('trim', explode(',', $rowAssoc['ANALISTAS'])))->pluck('id')->toArray();
 
             $parentId = null;
-            if (!empty($row['actividad_padre'])) {
-                $parent = \App\Models\Activity::where('name', trim($row['actividad_padre']))->first();
+            if (!empty($rowAssoc['ACTIVIDADPADRE'])) {
+                $parent = \App\Models\Activity::where('name', trim($rowAssoc['ACTIVIDADPADRE']))->first();
                 if ($parent) {
                     $parentId = $parent->id;
                 }
@@ -68,15 +90,13 @@ class ActivityController extends Controller
 
             // Procesar la fecha correctamente
             $fechaRecepcion = null;
-            if (!empty($row['fecha_recepcion'])) {
-                // Si es un número (Excel serial date)
-                if (is_numeric($row['fecha_recepcion'])) {
-                    $fechaRecepcion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['fecha_recepcion'])->format('Y-m-d');
+            if (!empty($rowAssoc['FECHARECEPCION'])) {
+                if (is_numeric($rowAssoc['FECHARECEPCION'])) {
+                    $fechaRecepcion = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($rowAssoc['FECHARECEPCION'])->format('Y-m-d');
                 } else {
-                    // Si es string, intentar convertirlo a Y-m-d
-                    $fecha = \DateTime::createFromFormat('Y-m-d', $row['fecha_recepcion']);
+                    $fecha = \DateTime::createFromFormat('Y-m-d', $rowAssoc['FECHARECEPCION']);
                     if (!$fecha) {
-                        $fecha = \DateTime::createFromFormat('d/m/Y', $row['fecha_recepcion']);
+                        $fecha = \DateTime::createFromFormat('d/m/Y', $rowAssoc['FECHARECEPCION']);
                     }
                     if ($fecha) {
                         $fechaRecepcion = $fecha->format('Y-m-d');
@@ -88,12 +108,12 @@ class ActivityController extends Controller
 
             // Crear la actividad
             $activity = \App\Models\Activity::create([
-                'caso' => $row['caso'],
-                'prioridad' => $row['prioridad'],
-                'orden_analista' => $row['orden_analista'],
-                'name' => $row['nombre_actividad'],
-                'description' => $row['descripcion'] ?? '',
-                'estatus_operacional' => $row['estatus_operacional'] ?? '',
+                'caso' => $rowAssoc['CASO'],
+                'prioridad' => $rowAssoc['PRIORIDAD'],
+                'orden_analista' => $rowAssoc['ORDENANALISTA'],
+                'name' => $rowAssoc['NOMBREACTIVIDAD'],
+                'description' => $rowAssoc['DESCRIPCION'] ?? '',
+                'estatus_operacional' => $rowAssoc['ESTATUSOPERACIONAL'] ?? '',
                 'parent_id' => $parentId,
                 'fecha_recepcion' => $fechaRecepcion,
             ]);

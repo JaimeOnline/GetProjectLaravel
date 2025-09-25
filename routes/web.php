@@ -10,8 +10,9 @@ Route::get('/', function () {
 
 Route::get('activities/search', [ActivityController::class, 'search'])->name('activities.search');
 Route::get('/activities/export', [ActivityController::class, 'export'])->name('activities.export');
-Route::resource('activities', ActivityController::class);
+Route::get('activities/excel-template', [ActivityController::class, 'downloadExcelTemplate'])->name('activities.excelTemplate');
 Route::post('activities/import-excel', [ActivityController::class, 'importExcel'])->name('activities.importExcel');
+Route::resource('activities', ActivityController::class);
 
 // Rutas para gestión de estados múltiples
 Route::put('activities/{activity}/statuses', [ActivityController::class, 'updateStatuses'])->name('activities.statuses.update');

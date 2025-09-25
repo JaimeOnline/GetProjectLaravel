@@ -53,31 +53,49 @@
                 </ul>
             </div>
         @endif
-        <!-- Formulario para carga masiva desde Excel -->
-        <form action="{{ route('activities.importExcel') }}" method="POST" enctype="multipart/form-data" class="mb-4">
-            @csrf
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-file-upload"></i> Cargar Actividades desde Excel</h5>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="excel_file">Selecciona archivo Excel (.xlsx)</label>
-                        <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx"
-                            required>
-                        <small class="form-text text-muted">
-                            Estructura: caso, estados, prioridad, orden_analista, nombre_actividad, descripcion,
-                            estatus_operacional, analistas, actividad_padre, fecha_recepcion.<br>
-                            Ejemplo: estados="Pendiente,En Ejecución", analistas="Juan, Maria",
-                            actividad_padre="Actividad A, si no, déjalo vacío", fecha_recepcion= 2024-06-18
-                        </small>
+        <!-- Botón para descargar el archivo modelo Excel -->
+        <div class="mb-3 d-flex align-items-center gap-2">
+            <a href="{{ route('activities.excelTemplate') }}" class="btn btn-outline-info">
+                <i class="fas fa-download"></i> Descargar archivo modelo Excel
+            </a>
+            <button type="button" class="btn btn-outline-primary ml-2" id="toggle-import-excel">
+                <i class="fas fa-file-upload"></i> Cargar actividades desde Excel
+            </button>
+        </div>
+        <!-- Formulario para carga masiva desde Excel (colapsable) -->
+        <div id="import-excel-section" style="display: none;">
+            <form action="{{ route('activities.importExcel') }}" method="POST" enctype="multipart/form-data"
+                class="mb-4">
+                @csrf
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-file-upload"></i> Cargar Actividades desde Excel</h5>
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-upload"></i> Importar Excel
-                    </button>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="excel_file">Selecciona archivo Excel (.xlsx)</label>
+                            <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx"
+                                required>
+                            <small class="form-text text-muted">
+                                Estructura: caso, estados, prioridad, orden_analista, nombre_actividad, descripcion,
+                                estatus_operacional, analistas, actividad_padre, fecha_recepcion.<br>
+                                Ejemplo: estados="Pendiente,En Ejecución", analistas="Juan, Maria",
+                                actividad_padre="Actividad A, si no, déjalo vacío", fecha_recepcion= 2024-06-18
+                            </small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Importar Excel
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
+        <script>
+            document.getElementById('toggle-import-excel').addEventListener('click', function() {
+                var section = document.getElementById('import-excel-section');
+                section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            });
+        </script>
 
         <form action="{{ route('activities.store') }}" method="POST">
             @csrf
