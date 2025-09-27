@@ -19,11 +19,41 @@ class Activity extends Model
         'parent_id',
         'prioridad',
         'orden_analista',
+        'cliente_id',
+        'tipo_producto_id',
+        'categoria',
     ];
     // Campos que deben ser tratados como fechas
     protected $casts = [
         'fecha_recepcion' => 'datetime',
     ];
+    /**
+     * Relación con Cliente
+     */
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class);
+    }
+
+    /**
+     * Relación con Tipo de Producto
+     */
+    public function tipoProducto()
+    {
+        return $this->belongsTo(TipoProducto::class, 'tipo_producto_id');
+    }
+
+    /**
+     * Categorías asociadas (relación muchos a muchos)
+     */
+    public function categorias()
+    {
+        // Relación manual usando query builder
+        return \DB::table('activity_categoria')
+            ->where('activity_id', $this->id)
+            ->pluck('categoria');
+    }
+
     /**
      * Usuarios asignados a la actividad (relación muchos a muchos)
      * DEPRECATED: Mantener para compatibilidad, usar analistas() en su lugar

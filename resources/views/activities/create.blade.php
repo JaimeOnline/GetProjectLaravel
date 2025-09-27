@@ -167,6 +167,63 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label" for="cliente_id">
+                            <i class="fas fa-user-tie text-primary"></i> Cliente
+                            <span class="text-danger">*</span>
+                        </label>
+                        @php
+                            $btClienteId = $clientes->firstWhere('nombre', 'BT Banco del Tesoro')->id ?? null;
+                            $selectedCliente = old('cliente_id');
+                            if ($selectedCliente === null || $selectedCliente === '') {
+                                $selectedCliente = $btClienteId;
+                            }
+                        @endphp
+                        <select class="form-control" id="cliente_id" name="cliente_id" required>
+                            <option value="" {{ $selectedCliente ? '' : 'selected' }}>-- Selecciona un cliente --
+                            </option>
+                            @foreach ($clientes as $cliente)
+                                <option value="{{ $cliente->id }}"
+                                    {{ (string) $selectedCliente === (string) $cliente->id ? 'selected' : '' }}>
+                                    {{ $cliente->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="tipo_producto_id">
+                            <i class="fas fa-box text-primary"></i> Tipo de Producto
+                        </label>
+                        <select class="form-control" id="tipo_producto_id" name="tipo_producto_id">
+                            <option value="">-- Selecciona un tipo de producto --</option>
+                            @foreach ($tipos_productos as $tipo)
+                                <option value="{{ $tipo->id }}"
+                                    {{ old('tipo_producto_id', $activity->tipo_producto_id ?? '') == $tipo->id ? 'selected' : '' }}>
+                                    {{ $tipo->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="categoria">
+                            <i class="fas fa-layer-group text-primary"></i> Categoría
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control" id="categoria" name="categoria[]" multiple required>
+                            <option value="proyecto"
+                                {{ collect(old('categoria', ['incidencia']))->contains('proyecto') ? 'selected' : '' }}>
+                                Proyecto</option>
+                            <option value="incidencia"
+                                {{ collect(old('categoria', ['incidencia']))->contains('incidencia') ? 'selected' : '' }}>
+                                Incidencia</option>
+                            <option value="mejora_continua"
+                                {{ collect(old('categoria', ['incidencia']))->contains('mejora_continua') ? 'selected' : '' }}>
+                                Mejora Continua</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label" for="description">
                             <i class="fas fa-align-left text-primary"></i> Descripción
                         </label>

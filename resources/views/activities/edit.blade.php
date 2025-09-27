@@ -161,8 +161,66 @@
                                     <i class="fas fa-tag text-primary"></i> Nombre de la Actividad
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control" id="name" name="name"
-                                    value="{{ $activity->name }}" required>
+                                <input type="text" class="form-control" id="name" name="name" required
+                                    value="{{ old('name', $activity->name) }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="cliente_id">
+                                    <i class="fas fa-user-tie text-primary"></i> Cliente
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control" id="cliente_id" name="cliente_id" required>
+                                    <option value="">-- Selecciona un cliente --</option>
+                                    @foreach ($clientes as $cliente)
+                                        <option value="{{ $cliente->id }}"
+                                            {{ old('cliente_id', $activity->cliente_id ?? '') == $cliente->id ? 'selected' : '' }}>
+                                            {{ $cliente->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="tipo_producto_id">
+                                    <i class="fas fa-box text-primary"></i> Tipo de Producto
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control" id="tipo_producto_id" name="tipo_producto_id">
+                                    <option value="">-- Selecciona un tipo de producto --</option>
+                                    @foreach ($tipos_productos as $tipo)
+                                        <option value="{{ $tipo->id }}"
+                                            {{ old('tipo_producto_id', $activity->tipo_producto_id ?? '') == $tipo->id ? 'selected' : '' }}>
+                                            {{ $tipo->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="categoria">
+                                    <i class="fas fa-layer-group text-primary"></i> Categoría
+                                    <span class="text-danger">*</span>
+                                </label>
+                                @php
+                                    $selectedCategorias = old(
+                                        'categoria',
+                                        \DB::table('activity_categoria')
+                                            ->where('activity_id', $activity->id)
+                                            ->pluck('categoria')
+                                            ->toArray(),
+                                    );
+                                @endphp
+                                <select class="form-control" id="categoria" name="categoria[]" multiple required>
+                                    <option value="proyecto"
+                                        {{ in_array('proyecto', $selectedCategorias) ? 'selected' : '' }}>Proyecto</option>
+                                    <option value="incidencia"
+                                        {{ in_array('incidencia', $selectedCategorias) ? 'selected' : '' }}>Incidencia
+                                    </option>
+                                    <option value="mejora_continua"
+                                        {{ in_array('mejora_continua', $selectedCategorias) ? 'selected' : '' }}>Mejora
+                                        Continua</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
@@ -170,7 +228,7 @@
                                     <i class="fas fa-align-left text-primary"></i> Descripción
                                 </label>
                                 <textarea class="form-control" id="description" name="description" rows="4"
-                                    placeholder="Describe los detalles de la actividad...">{{ $activity->description }}</textarea>
+                                    placeholder="Describe los detalles de la actividad...">{{ old('description', $activity->description) }}</textarea>
                             </div>
 
                             <div class="form-group">

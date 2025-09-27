@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Email;
 use App\Models\Status;
+use App\Models\Cliente;
 use App\Models\Comment;
 use App\Models\Activity;
 use App\Models\Analista;
+use App\Models\TipoProducto;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Exports\ActivitiesExport;
@@ -337,6 +339,10 @@ class ActivityController extends Controller
         // Obtener todos los estados
         $statuses = Status::active()->ordered()->get();
 
+        // Obtener todos los clientes y tipos de productos
+        $clientes = Cliente::all();
+        $tipos_productos = TipoProducto::all();
+
         // Obtener el parentId desde la query string
         $parentId = $request->query('parentId');
 
@@ -354,7 +360,9 @@ class ActivityController extends Controller
             'statuses',
             'parentActivity',
             'defaultCaso',
-            'defaultAnalistas'
+            'defaultAnalistas',
+            'clientes',
+            'tipos_productos'
         ));
     }
     public function store(Request $request)
@@ -372,6 +380,10 @@ class ActivityController extends Controller
             'estatus_operacional' => 'nullable|string|max:1000', // Validar el nuevo campo estatus_operacional
             'prioridad' => 'required|integer|min:1',
             'orden_analista' => 'required|integer|min:1',
+            'cliente_id' => 'required|exists:clientes,id',
+            'tipo_producto_id' => 'nullable|exists:tipos_productos,id',
+            'categoria' => 'required|array|min:1',
+            'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
         ];
 
         // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
@@ -384,7 +396,27 @@ class ActivityController extends Controller
         $request->validate($rules);
 
         // Crear la actividad (sin el campo status ya que ahora usamos la tabla pivot)
-        $activity = Activity::create($request->only(['caso', 'name', 'description', 'estatus_operacional', 'fecha_recepcion', 'parent_id', 'prioridad', 'orden_analista']));
+        $activity = Activity::create($request->only([
+            'caso',
+            'name',
+            'description',
+            'estatus_operacional',
+            'fecha_recepcion',
+            'parent_id',
+            'prioridad',
+            'orden_analista',
+            'cliente_id',
+            'tipo_producto_id',
+        ]));
+
+        // Guardar categorías seleccionadas (siempre, aunque el array esté vacío)
+        \DB::table('activity_categoria')->where('activity_id', $activity->id)->delete();
+        foreach ($request->input('categoria', []) as $cat) {
+            \DB::table('activity_categoria')->insert([
+                'activity_id' => $activity->id,
+                'categoria' => $cat,
+            ]);
+        }
 
         // Asignar analistas a la actividad
         $activity->analistas()->attach($request->analista_id);
@@ -423,6 +455,9 @@ class ActivityController extends Controller
         $analistas = Analista::all();
         // Obtener todas las actividades para el campo de actividad padre (excluyendo la actividad actual)
         $activities = Activity::where('id', '!=', $activity->id)->get();
+        // Obtener todos los clientes y tipos de productos
+        $clientes = Cliente::all();
+        $tipos_productos = TipoProducto::all();
         // Cargar la actividad con subactividades y todas sus relaciones recursivas
         $activity->load([
             'comments',
@@ -469,11 +504,21 @@ class ActivityController extends Controller
         ];
 
         // Pasar las variables a la vista
-        return view('activities.edit', compact('activity', 'analistas', 'activities', 'statusLabels', 'statusColors'));
+        return view('activities.edit', compact(
+            'activity',
+            'analistas',
+            'activities',
+            'statusLabels',
+            'statusColors',
+            'clientes',
+            'tipos_productos'
+        ));
     }
 
     public function update(Request $request, Activity $activity)
     {
+        /* dd($request->all()); */ /* esta linea es para ver que está enniando */
+
         Log::info('UPDATE AJAX', [
             'is_ajax' => $request->ajax(),
             'method' => $request->method(),
@@ -481,7 +526,7 @@ class ActivityController extends Controller
             'all' => $request->all()
         ]);
         // Si solo se está actualizando analistas desde el modal
-        if ($request->has('analista_id')) {
+        if ($request->has('analista_id') && !$request->has('categoria')) {
             try {
                 $request->validate([
                     'analista_id' => 'required|array|min:1',
@@ -552,6 +597,10 @@ class ActivityController extends Controller
             'estatus_operacional' => 'nullable|string|max:1000',
             'prioridad' => 'required|integer|min:1',
             'orden_analista' => 'required|integer|min:1',
+            'cliente_id' => 'required|exists:clientes,id',
+            'tipo_producto_id' => 'required|exists:tipos_productos,id',
+            'categoria' => 'required|array|min:1',
+            'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
         ];
 
         // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
@@ -570,8 +619,32 @@ class ActivityController extends Controller
         $request->validate($rules);
 
         try {
-            // Actualizar la actividad
-            $activity->update($request->only(['caso', 'name', 'description', 'estatus_operacional', 'status', 'fecha_recepcion', 'parent_id', 'prioridad', 'orden_analista']));
+            // Actualizar la actividad (sin el campo categoria)
+            $activity->update($request->only([
+                'caso',
+                'name',
+                'description',
+                'estatus_operacional',
+                'status',
+                'fecha_recepcion',
+                'parent_id',
+                'prioridad',
+                'orden_analista',
+                'cliente_id',
+                'tipo_producto_id',
+            ]));
+
+            // Sincronizar categorías seleccionadas
+            // Guardar categorías seleccionadas
+            Log::info('Antes de guardar categorías', ['data' => $request->input('categoria', [])]);
+            \DB::table('activity_categoria')->where('activity_id', $activity->id)->delete();
+            foreach ($request->input('categoria', []) as $cat) {
+                \DB::table('activity_categoria')->insert([
+                    'activity_id' => $activity->id,
+                    'categoria' => $cat,
+                ]);
+            }
+            Log::info('Después de guardar categorías');
 
             // Asignar analistas a la actividad
             $activity->analistas()->sync($request->analista_id);
