@@ -65,7 +65,10 @@ class ActivityController extends Controller
             'ANALISTAS',
             'ACTIVIDAD PADRE',
             'FECHA RECEPCION',
-            'PROYECTO'
+            'PROYECTO',
+            'CLIENTE',
+            'TIPO DE PRODUCTO',
+            'CATEGORIA',
         ];
 
         // Normalizador: quita espacios, guiones, guiones bajos y pone mayúsculas
@@ -89,6 +92,11 @@ class ActivityController extends Controller
             $rowAssoc = [];
             foreach ($header as $idx => $col) {
                 $rowAssoc[$col] = isset($rows[$i][$idx]) ? $rows[$i][$idx] : null;
+            }
+
+            // Saltar filas vacías (sin caso)
+            if (empty($rowAssoc['CASO']) || trim($rowAssoc['CASO']) === '') {
+                continue;
             }
 
             // Ahora puedes acceder así:
@@ -135,40 +143,77 @@ class ActivityController extends Controller
                 }
             }
 
+            // Buscar el ID del cliente por nombre
+            $clienteId = null;
+            if (!empty($rowAssoc['CLIENTE'])) {
+                $cliente = \App\Models\Cliente::where('nombre', trim($rowAssoc['CLIENTE']))->first();
+                if ($cliente) {
+                    $clienteId = $cliente->id;
+                } else {
+                    return back()->withErrors(['excel_file' => "El cliente '{$rowAssoc['CLIENTE']}' no existe en la base de datos."]);
+                }
+            }
+
+            // Buscar el ID del tipo de producto por nombre
+            $tipoProductoId = null;
+            if (!empty($rowAssoc['TIPODEPRODUCTO'])) {
+                $tipoProducto = \App\Models\TipoProducto::where('nombre', trim($rowAssoc['TIPODEPRODUCTO']))->first();
+                if ($tipoProducto) {
+                    $tipoProductoId = $tipoProducto->id;
+                } else {
+                    return back()->withErrors(['excel_file' => "El tipo de producto '{$rowAssoc['TIPODEPRODUCTO']}' no existe en la base de datos."]);
+                }
+            }
+
+            // Procesar la(s) categoría(s)
+            $categorias = [];
+            if (!empty($rowAssoc['CATEGORIA'])) {
+                $categorias = array_map('trim', explode(',', $rowAssoc['CATEGORIA']));
+            } else {
+                $categorias = $proyectoId ? ['proyecto'] : ['incidencia'];
+            }
+
+            // Validar y convertir prioridad y orden_analista a enteros, o asignar valor por defecto si están vacíos
+            $prioridad = isset($rowAssoc['PRIORIDAD']) && is_numeric($rowAssoc['PRIORIDAD']) ? (int)$rowAssoc['PRIORIDAD'] : 10;
+            $ordenAnalista = isset($rowAssoc['ORDENANALISTA']) && is_numeric($rowAssoc['ORDENANALISTA']) ? (int)$rowAssoc['ORDENANALISTA'] : 10;
+
             // Crear la actividad
             $activity = \App\Models\Activity::create([
-                'caso' => $rowAssoc['CASO'],
-                'prioridad' => $rowAssoc['PRIORIDAD'],
-                'orden_analista' => $rowAssoc['ORDENANALISTA'],
-                'name' => $rowAssoc['NOMBREACTIVIDAD'],
+                'caso' => $rowAssoc['CASO'] ?? '',
+                'prioridad' => $prioridad,
+                'orden_analista' => $ordenAnalista,
+                'name' => $rowAssoc['NOMBREACTIVIDAD'] ?? '',
                 'description' => $rowAssoc['DESCRIPCION'] ?? '',
                 'estatus_operacional' => $rowAssoc['ESTATUSOPERACIONAL'] ?? '',
                 'parent_id' => $parentId,
                 'fecha_recepcion' => $fechaRecepcion,
                 'proyecto_id' => $proyectoId,
+                'cliente_id' => $clienteId,
+                'tipo_producto_id' => $tipoProductoId,
             ]);
 
-            // Asignar categoría automáticamente
-            $categoria = $proyectoId ? ['proyecto'] : ['incidencia'];
-            \DB::table('activity_categoria')->where('activity_id', $activity->id)->delete();
-            foreach ($categoria as $cat) {
-                \DB::table('activity_categoria')->insert([
-                    'activity_id' => $activity->id,
-                    'categoria' => $cat,
-                ]);
-            }
+            // Asignar categoría desde el Excel o por defecto
+            if ($activity) {
+                \DB::table('activity_categoria')->where('activity_id', $activity->id)->delete();
+                foreach ($categorias as $cat) {
+                    \DB::table('activity_categoria')->insert([
+                        'activity_id' => $activity->id,
+                        'categoria' => $cat,
+                    ]);
+                }
 
-            // Relacionar estados
-            if (!empty($statusIds)) {
-                $activity->statuses()->sync($statusIds);
-            }
+                // Relacionar estados
+                if (!empty($statusIds)) {
+                    $activity->statuses()->sync($statusIds);
+                }
 
-            // Relacionar analistas
-            if (!empty($analistaIds)) {
-                $activity->analistas()->sync($analistaIds);
-            }
+                // Relacionar analistas
+                if (!empty($analistaIds)) {
+                    $activity->analistas()->sync($analistaIds);
+                }
 
-            $rowCount++;
+                $rowCount++;
+            }
         }
 
         return redirect()->route('activities.index')->with('success', "Se importaron $rowCount actividades correctamente.");
