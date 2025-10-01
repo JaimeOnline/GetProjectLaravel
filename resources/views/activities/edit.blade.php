@@ -159,10 +159,9 @@
                             <div class="form-group">
                                 <label class="form-label" for="proyecto_id">
                                     <i class="fas fa-project-diagram text-primary"></i> Proyecto
-                                    <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-control" id="proyecto_id" name="proyecto_id" required>
-                                    <option value="">-- Selecciona un proyecto --</option>
+                                <select class="form-control" id="proyecto_id" name="proyecto_id">
+                                    <option value="">-- Sin proyecto --</option>
                                     @foreach ($proyectos as $proyecto)
                                         <option value="{{ $proyecto->id }}"
                                             {{ old('proyecto_id', $activity->proyecto_id) == $proyecto->id ? 'selected' : '' }}>
@@ -215,7 +214,6 @@
                             <div class="form-group">
                                 <label class="form-label" for="categoria">
                                     <i class="fas fa-layer-group text-primary"></i> Categoría
-                                    <span class="text-danger">*</span>
                                 </label>
                                 @php
                                     $selectedCategorias = old(
@@ -226,7 +224,7 @@
                                             ->toArray(),
                                     );
                                 @endphp
-                                <select class="form-control" id="categoria" name="categoria[]" multiple required>
+                                <select class="form-control" id="categoria" name="categoria[]" multiple>
                                     <option value="proyecto"
                                         {{ in_array('proyecto', $selectedCategorias) ? 'selected' : '' }}>Proyecto</option>
                                     <option value="incidencia"

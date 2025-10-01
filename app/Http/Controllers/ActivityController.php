@@ -496,7 +496,7 @@ class ActivityController extends Controller
             'orden_analista' => 'required|integer|min:1',
             'cliente_id' => 'required|exists:clientes,id',
             'tipo_producto_id' => 'nullable|exists:tipos_productos,id',
-            'proyecto_id' => 'required|exists:proyectos,id',
+            'proyecto_id' => 'nullable|exists:proyectos,id',
             'categoria' => 'nullable|array',
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
         ];
@@ -726,6 +726,7 @@ class ActivityController extends Controller
             'orden_analista' => 'required|integer|min:1',
             'cliente_id' => 'required|exists:clientes,id',
             'tipo_producto_id' => 'required|exists:tipos_productos,id',
+            'proyecto_id' => 'nullable|exists:proyectos,id',
             'categoria' => 'required|array|min:1',
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
         ];
