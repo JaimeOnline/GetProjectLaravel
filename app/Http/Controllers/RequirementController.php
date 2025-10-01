@@ -67,7 +67,7 @@ class RequirementController extends Controller
     {
         $request->validate([
             'activity_id' => 'required|exists:activities,id',
-            'description' => 'required|string|max:1000',
+            'description' => 'required|string|max:65535',
             'status' => 'required|in:pendiente,recibido',
             'fecha_recepcion' => 'nullable|date',
             'notas' => 'nullable|string|max:2000',
@@ -111,7 +111,7 @@ class RequirementController extends Controller
     {
         $request->validate([
             'activity_id' => 'required|exists:activities,id',
-            'description' => 'required|string|max:1000',
+            'description' => 'required|string|max:65535',
             'status' => 'required|in:pendiente,recibido',
             'fecha_recepcion' => 'nullable|date',
             'notas' => 'nullable|string|max:2000',
