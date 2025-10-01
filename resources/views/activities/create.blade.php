@@ -108,10 +108,9 @@
                     <div class="form-group">
                         <label class="form-label" for="proyecto_id">
                             <i class="fas fa-project-diagram text-primary"></i> Proyecto
-                            <span class="text-danger">*</span>
                         </label>
-                        <select class="form-control" id="proyecto_id" name="proyecto_id" required>
-                            <option value="">-- Selecciona un proyecto --</option>
+                        <select class="form-control" id="proyecto_id" name="proyecto_id">
+                            <option value="">-- Sin proyecto --</option>
                             @foreach ($proyectos as $proyecto)
                                 <option value="{{ $proyecto->id }}"
                                     {{ (old('proyecto_id') !== null ? old('proyecto_id') : $proyectoId ?? '') == $proyecto->id ? 'selected' : '' }}>

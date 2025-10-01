@@ -198,10 +198,9 @@
                             <div class="form-group">
                                 <label class="form-label" for="tipo_producto_id">
                                     <i class="fas fa-box text-primary"></i> Tipo de Producto
-                                    <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-control" id="tipo_producto_id" name="tipo_producto_id">
-                                    <option value="">-- Selecciona un tipo de producto --</option>
+                                    <option value="">-- Sin tipo de producto --</option>
                                     @foreach ($tipos_productos as $tipo)
                                         <option value="{{ $tipo->id }}"
                                             {{ old('tipo_producto_id', $activity->tipo_producto_id ?? '') == $tipo->id ? 'selected' : '' }}>
