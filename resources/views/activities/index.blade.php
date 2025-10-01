@@ -105,7 +105,20 @@
                 </div>
                 <!-- Search Bar -->
                 <div class="row mb-3">
-                    <div class="col-md-8">
+                    <div class="col-md-3">
+                        <label for="filterProyecto">Proyecto:</label>
+                        <select class="form-control" id="filterProyecto" name="filterProyecto"
+                            onchange="window.location='?proyecto_id='+this.value">
+                            <option value="">Todos</option>
+                            @foreach ($proyectos as $proyecto)
+                                <option value="{{ $proyecto->id }}"
+                                    {{ request('proyecto_id') == $proyecto->id ? 'selected' : '' }}>
+                                    {{ $proyecto->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-5">
                         <div class="search-container">
                             <div class="input-group">
                                 <div class="input-group-prepend">

@@ -22,17 +22,32 @@ class ActivityController extends Controller
 {
     public function downloadExcelTemplate()
     {
-        $file = public_path('modelo_actividades.xlsx');
-        if (!file_exists($file)) {
+        // Busca primero .xlsm, luego .xlsx, luego sin extensión
+        $base = public_path('modelo_actividades');
+        $file = null;
+        $downloadName = null;
+
+        if (file_exists($base . '.xlsm')) {
+            $file = $base . '.xlsm';
+            $downloadName = 'modelo_actividades.xlsm';
+        } elseif (file_exists($base . '.xlsx')) {
+            $file = $base . '.xlsx';
+            $downloadName = 'modelo_actividades.xlsx';
+        } elseif (file_exists($base)) {
+            $file = $base;
+            $downloadName = 'modelo_actividades';
+        } else {
             abort(404, 'El archivo modelo no está disponible. Contacta al administrador.');
         }
-        return response()->download($file, 'modelo_actividades.xlsx');
+
+        return response()->download($file, $downloadName);
     }
+
 
     public function importExcel(Request $request)
     {
         $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx',
+            'excel_file' => 'required|file|mimes:xlsx,xlsm',
         ]);
 
         $file = $request->file('excel_file');
@@ -49,7 +64,8 @@ class ActivityController extends Controller
             'ESTATUS OPERACIONAL',
             'ANALISTAS',
             'ACTIVIDAD PADRE',
-            'FECHA RECEPCION'
+            'FECHA RECEPCION',
+            'PROYECTO'
         ];
 
         // Normalizador: quita espacios, guiones, guiones bajos y pone mayúsculas
@@ -108,6 +124,17 @@ class ActivityController extends Controller
                 }
             }
 
+            // Buscar el ID del proyecto por nombre
+            $proyectoId = null;
+            if (!empty($rowAssoc['PROYECTO'])) {
+                $proyecto = \App\Models\Proyecto::where('nombre', trim($rowAssoc['PROYECTO']))->first();
+                if ($proyecto) {
+                    $proyectoId = $proyecto->id;
+                } else {
+                    return back()->withErrors(['excel_file' => "El proyecto '{$rowAssoc['PROYECTO']}' no existe en la base de datos."]);
+                }
+            }
+
             // Crear la actividad
             $activity = \App\Models\Activity::create([
                 'caso' => $rowAssoc['CASO'],
@@ -118,7 +145,18 @@ class ActivityController extends Controller
                 'estatus_operacional' => $rowAssoc['ESTATUSOPERACIONAL'] ?? '',
                 'parent_id' => $parentId,
                 'fecha_recepcion' => $fechaRecepcion,
+                'proyecto_id' => $proyectoId,
             ]);
+
+            // Asignar categoría automáticamente
+            $categoria = $proyectoId ? ['proyecto'] : ['incidencia'];
+            \DB::table('activity_categoria')->where('activity_id', $activity->id)->delete();
+            foreach ($categoria as $cat) {
+                \DB::table('activity_categoria')->insert([
+                    'activity_id' => $activity->id,
+                    'categoria' => $cat,
+                ]);
+            }
 
             // Relacionar estados
             if (!empty($statusIds)) {
@@ -138,8 +176,8 @@ class ActivityController extends Controller
 
     public function index(Request $request)
     {
-        // Obtener solo las actividades padre (sin parent_id) con sus relaciones
-        $activities = Activity::whereNull('parent_id')
+        $proyectoId = $request->get('proyecto_id');
+        $query = Activity::whereNull('parent_id')
             ->with([
                 'analistas',
                 'comments',
@@ -156,11 +194,17 @@ class ActivityController extends Controller
                 'subactivities.subactivities.emails',
                 'subactivities.subactivities.requirements',
                 'subactivities.subactivities.statuses'
-            ])
-            ->get();
+            ]);
+        if ($proyectoId) {
+            $query->where('proyecto_id', $proyectoId);
+        }
+        $activities = $query->get();
 
         // Analistas para el filtro
         $analistas = Analista::all();
+
+        // Proyectos para el filtro
+        $proyectos = \App\Models\Proyecto::all();
 
         // Filtros de estado (array asociativo para la tabla)
         $statusLabels = [
@@ -194,11 +238,13 @@ class ActivityController extends Controller
         return view('activities.index', compact(
             'activities',
             'analistas',
+            'proyectos',
             'statusLabels',
             'statusColors',
             'statuses'
         ));
     }
+
 
     /**
      * Búsqueda AJAX en tiempo real
@@ -336,6 +382,9 @@ class ActivityController extends Controller
         // Obtener todas las actividades para el campo de actividad padre
         $activities = Activity::all();
 
+        // Obtener todos los proyectos
+        $proyectos = \App\Models\Proyecto::all();
+
         // Obtener todos los estados
         $statuses = Status::active()->ordered()->get();
 
@@ -353,17 +402,37 @@ class ActivityController extends Controller
         $defaultCaso = $parentActivity ? $parentActivity->caso : null;
         $defaultAnalistas = $parentActivity ? $parentActivity->analistas->pluck('id')->toArray() : [];
 
+        // Detectar si viene desde un proyecto
+        $proyectoId = $request->get('proyecto_id');
+        $defaultCategoria = $proyectoId ? ['proyecto'] : ['incidencia'];
+
+        // Si no viene en la query, intenta obtenerlo de la ruta anterior (referer)
+        if (!$proyectoId && $request->server('HTTP_REFERER')) {
+            $referer = $request->server('HTTP_REFERER');
+            $parsed = parse_url($referer);
+            if (isset($parsed['query'])) {
+                parse_str($parsed['query'], $queryParams);
+                if (isset($queryParams['proyecto_id'])) {
+                    $proyectoId = $queryParams['proyecto_id'];
+                    $defaultCategoria = ['proyecto'];
+                }
+            }
+        }
+
         // Pasar las variables a la vista
-        return view('activities.create', compact(
-            'analistas',
-            'activities',
-            'statuses',
-            'parentActivity',
-            'defaultCaso',
-            'defaultAnalistas',
-            'clientes',
-            'tipos_productos'
-        ));
+        return view('activities.create', [
+            'analistas' => $analistas,
+            'activities' => $activities,
+            'proyectos' => $proyectos,
+            'statuses' => $statuses,
+            'parentActivity' => $parentActivity,
+            'defaultCaso' => $defaultCaso,
+            'defaultAnalistas' => $defaultAnalistas,
+            'clientes' => $clientes,
+            'tipos_productos' => $tipos_productos,
+            'proyectoId' => $proyectoId,
+            'defaultCategoria' => $defaultCategoria,
+        ]);
     }
     public function store(Request $request)
     {
@@ -382,7 +451,8 @@ class ActivityController extends Controller
             'orden_analista' => 'required|integer|min:1',
             'cliente_id' => 'required|exists:clientes,id',
             'tipo_producto_id' => 'nullable|exists:tipos_productos,id',
-            'categoria' => 'required|array|min:1',
+            'proyecto_id' => 'required|exists:proyectos,id',
+            'categoria' => 'nullable|array',
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
         ];
 
@@ -395,28 +465,36 @@ class ActivityController extends Controller
 
         $request->validate($rules);
 
+        // Determinar la categoría por defecto si no viene del formulario
+        $categoria = $request->input('categoria');
+        if (!$categoria || count($categoria) === 0) {
+            $categoria = $request->has('proyecto_id') && $request->input('proyecto_id') ? ['proyecto'] : ['incidencia'];
+        }
+
         // Crear la actividad (sin el campo status ya que ahora usamos la tabla pivot)
-        $activity = Activity::create($request->only([
-            'caso',
-            'name',
-            'description',
-            'estatus_operacional',
-            'fecha_recepcion',
-            'parent_id',
-            'prioridad',
-            'orden_analista',
-            'cliente_id',
-            'tipo_producto_id',
-        ]));
+        $activity = new Activity();
+        $activity->caso = $request->input('caso');
+        $activity->name = $request->input('name');
+        $activity->description = $request->input('description');
+        $activity->estatus_operacional = $request->input('estatus_operacional');
+        $activity->fecha_recepcion = $request->input('fecha_recepcion');
+        $activity->parent_id = $request->input('parent_id');
+        $activity->prioridad = $request->input('prioridad');
+        $activity->orden_analista = $request->input('orden_analista');
+        $activity->cliente_id = $request->input('cliente_id');
+        $activity->tipo_producto_id = $request->input('tipo_producto_id');
+        $activity->proyecto_id = $request->input('proyecto_id');
+        $activity->save();
 
         // Guardar categorías seleccionadas (siempre, aunque el array esté vacío)
         \DB::table('activity_categoria')->where('activity_id', $activity->id)->delete();
-        foreach ($request->input('categoria', []) as $cat) {
+        foreach ($categoria as $cat) {
             \DB::table('activity_categoria')->insert([
                 'activity_id' => $activity->id,
                 'categoria' => $cat,
             ]);
         }
+
 
         // Asignar analistas a la actividad
         $activity->analistas()->attach($request->analista_id);
@@ -455,6 +533,8 @@ class ActivityController extends Controller
         $analistas = Analista::all();
         // Obtener todas las actividades para el campo de actividad padre (excluyendo la actividad actual)
         $activities = Activity::where('id', '!=', $activity->id)->get();
+        // Obtener todos los proyectos
+        $proyectos = \App\Models\Proyecto::all();
         // Obtener todos los clientes y tipos de productos
         $clientes = Cliente::all();
         $tipos_productos = TipoProducto::all();
@@ -508,12 +588,14 @@ class ActivityController extends Controller
             'activity',
             'analistas',
             'activities',
+            'proyectos',
             'statusLabels',
             'statusColors',
             'clientes',
             'tipos_productos'
         ));
     }
+
 
     public function update(Request $request, Activity $activity)
     {
@@ -620,19 +702,19 @@ class ActivityController extends Controller
 
         try {
             // Actualizar la actividad (sin el campo categoria)
-            $activity->update($request->only([
-                'caso',
-                'name',
-                'description',
-                'estatus_operacional',
-                'status',
-                'fecha_recepcion',
-                'parent_id',
-                'prioridad',
-                'orden_analista',
-                'cliente_id',
-                'tipo_producto_id',
-            ]));
+            $activity->caso = $request->input('caso');
+            $activity->name = $request->input('name');
+            $activity->description = $request->input('description');
+            $activity->estatus_operacional = $request->input('estatus_operacional');
+            $activity->status = $request->input('status');
+            $activity->fecha_recepcion = $request->input('fecha_recepcion');
+            $activity->parent_id = $request->input('parent_id');
+            $activity->prioridad = $request->input('prioridad');
+            $activity->orden_analista = $request->input('orden_analista');
+            $activity->cliente_id = $request->input('cliente_id');
+            $activity->tipo_producto_id = $request->input('tipo_producto_id');
+            $activity->proyecto_id = $request->input('proyecto_id');
+            $activity->save();
 
             // Sincronizar categorías seleccionadas
             // Guardar categorías seleccionadas

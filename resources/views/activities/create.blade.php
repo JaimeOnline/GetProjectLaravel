@@ -80,7 +80,7 @@
                                 Estructura: caso, estados, prioridad, orden_analista, nombre_actividad, descripcion,
                                 estatus_operacional, analistas, actividad_padre, fecha_recepcion.<br>
                                 Ejemplo: estados="Pendiente,En Ejecución", analistas="Juan, Maria",
-                                actividad_padre="Actividad A, si no, déjalo vacío", fecha_recepcion= 2024-06-18
+                                actividad_padre="Actividad A, si no, déjalo vacío", fecha_recepcion= 2024-06-18, Proyecto
                             </small>
                         </div>
                         <button type="submit" class="btn btn-primary">
@@ -105,6 +105,21 @@
                     <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Información de la Nueva Actividad</h5>
                 </div>
                 <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label" for="proyecto_id">
+                            <i class="fas fa-project-diagram text-primary"></i> Proyecto
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control" id="proyecto_id" name="proyecto_id" required>
+                            <option value="">-- Selecciona un proyecto --</option>
+                            @foreach ($proyectos as $proyecto)
+                                <option value="{{ $proyecto->id }}"
+                                    {{ (old('proyecto_id') !== null ? old('proyecto_id') : $proyectoId ?? '') == $proyecto->id ? 'selected' : '' }}>
+                                    {{ $proyecto->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                     @if (isset($parentActivity))
                         <input type="hidden" name="parent_id" value="{{ $parentActivity->id }}">
                         <div class="alert alert-info fade-in">
@@ -137,7 +152,8 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <small class="form-text text-muted">Selecciona al menos un estado para la actividad.</small>
+                                <small class="form-text text-muted">Selecciona al menos un estado para la
+                                    actividad.</small>
                             </div>
                         </div>
                     </div>
@@ -212,13 +228,13 @@
                         </label>
                         <select class="form-control" id="categoria" name="categoria[]" multiple required>
                             <option value="proyecto"
-                                {{ collect(old('categoria', ['incidencia']))->contains('proyecto') ? 'selected' : '' }}>
+                                {{ request()->get('proyecto_id') && !old('categoria') ? 'selected' : (collect(old('categoria', $defaultCategoria ?? ['incidencia']))->contains('proyecto') ? 'selected' : '') }}>
                                 Proyecto</option>
                             <option value="incidencia"
-                                {{ collect(old('categoria', ['incidencia']))->contains('incidencia') ? 'selected' : '' }}>
+                                {{ !request()->get('proyecto_id') && !old('categoria') ? 'selected' : (collect(old('categoria', $defaultCategoria ?? ['incidencia']))->contains('incidencia') ? 'selected' : '') }}>
                                 Incidencia</option>
                             <option value="mejora_continua"
-                                {{ collect(old('categoria', ['incidencia']))->contains('mejora_continua') ? 'selected' : '' }}>
+                                {{ collect(old('categoria', $defaultCategoria ?? ['incidencia']))->contains('mejora_continua') ? 'selected' : '' }}>
                                 Mejora Continua</option>
                         </select>
                     </div>

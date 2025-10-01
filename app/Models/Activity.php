@@ -22,7 +22,9 @@ class Activity extends Model
         'cliente_id',
         'tipo_producto_id',
         'categoria',
+        'proyecto_id',
     ];
+
     // Campos que deben ser tratados como fechas
     protected $casts = [
         'fecha_recepcion' => 'datetime',
@@ -162,5 +164,10 @@ class Activity extends Model
     public function getPrimaryStatusAttribute()
     {
         return $this->statuses->first();
+    }
+
+    public function proyecto()
+    {
+        return $this->belongsTo(\App\Models\Proyecto::class, 'proyecto_id');
     }
 }

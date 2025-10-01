@@ -1200,3 +1200,238 @@ select.form-control option:hover {
     padding-top: 0 !important;
     min-height: 0 !important;
 }
+
+/* Estilos para el sidebar */
+.sidebar {
+    width: 250px;
+    background: #2d3748;
+    color: #fff;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.contenedor-sidebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+}
+
+.sidebar h2 {
+    font-size: 2rem;
+    margin: 0;
+}
+
+.cerrar-menu img {
+    width: 24px;
+    cursor: pointer;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2rem;
+}
+
+.sidebar-nav a {
+    color: #fff;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    transition: background 0.2s;
+}
+
+.sidebar-nav a.activo,
+.sidebar-nav a:hover {
+    background: #4fd1c5;
+    color: #2d3748;
+    border-radius: 4px;
+}
+
+.cerrar-sesion-mobile {
+    margin-top: auto;
+    padding: 2rem;
+}
+
+.cerrar-sesion {
+    color: #fff;
+    text-decoration: none;
+    background: #e53e3e;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.cerrar-sesion:hover {
+    background: #c53030;
+}
+
+.contenido-principal {
+    margin-left: 250px;
+    padding: 2rem 0 2rem 0;
+}
+
+/* Estilos para el menú desplegable de requerimientos */
+#requirementsDropdown {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 5px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+#requirementsDropdown:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 5px !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+#requirementsDropdown:focus {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(135deg, #007bff, #0056b3) !important;
+    color: white !important;
+    transform: translateX(5px);
+}
+
+.dropdown-item:hover i {
+    color: white !important;
+}
+
+.navbar-nav .nav-item.dropdown.active>.nav-link {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Asegurar que el botón de actividades también se vea consistente */
+.navbar-nav .nav-item .nav-link {
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-item.active>.nav-link {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 5px;
+}
+
+
+
+/* ===== SIDEBAR DROPDOWN ===== */
+.sidebar-dropdown-menu {
+    display: none;
+    flex-direction: column;
+    background: #24304a;
+    border-radius: 0 0 4px 4px;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    min-width: 200px;
+    box-sizing: border-box;
+    position: static;
+    z-index: 1;
+}
+
+.sidebar-dropdown-menu a {
+    padding: 1rem 2rem 1rem 2.5rem;
+    font-size: 0.95em;
+    color: #fff;
+    white-space: normal;
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.sidebar-dropdown-menu a.activo,
+.sidebar-dropdown-menu a:hover {
+    background: #4fd1c5;
+    color: #2d3748;
+    border-radius: 4px;
+}
+
+.sidebar-dropdown-toggle {
+    cursor: pointer;
+    display: block;
+    padding: 1rem 2rem;
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sidebar-dropdown-toggle.activo,
+.sidebar-dropdown-toggle:hover {
+    background: #4fd1c5;
+    color: #2d3748;
+    border-radius: 4px;
+}
+
+/* Proyectos */
+
+.no-proyectos {
+    font-size: 1.1rem;
+    margin-top: 2rem;
+    color: #333;
+}
+
+.no-proyectos a {
+    color: #4fd1c5;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.listado-proyectos {
+    list-style: none;
+    padding: 0;
+    margin-top: 3rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .listado-proyectos {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (min-width: 1200px) {
+    .listado-proyectos {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+.proyecto {
+    background-color: #3c4e8f;
+    min-height: 12rem;
+    display: flex;
+    align-items: center;
+    padding: 2rem;
+    line-height: 2;
+    border-radius: .5rem;
+    transition: background 0.2s;
+}
+
+.proyecto:hover {
+    background-color: #2d3748;
+}
+
+.proyecto a {
+    color: #fff;
+    font-size: 1.2rem;
+    text-decoration: none;
+    font-weight: 500;
+}

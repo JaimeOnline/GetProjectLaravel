@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\ActivityController;
-use App\Http\Controllers\RequirementController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ProyectoController;
+use App\Http\Controllers\RequirementController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -45,3 +46,8 @@ Route::patch('requirements/{requirement}/mark-pending', [RequirementController::
 // Rutas para actualización en linea de Orden y Prioridad
 Route::patch('/activities/{activity}/inline-update', [App\Http\Controllers\ActivityController::class, 'inlineUpdate'])
     ->name('activities.inline-update');
+
+// Rutas Proyectos
+Route::get('/proyectos', [ProyectoController::class, 'index'])->name('projects.index');
+Route::get('/proyectos/crear', [ProyectoController::class, 'create'])->name('projects.create');
+Route::post('/proyectos', [ProyectoController::class, 'store'])->name('projects.store');

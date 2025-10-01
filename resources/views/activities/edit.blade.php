@@ -157,6 +157,21 @@
                                     value="{{ $activity->orden_analista ?? 1 }}" min="1" required>
                             </div>
                             <div class="form-group">
+                                <label class="form-label" for="proyecto_id">
+                                    <i class="fas fa-project-diagram text-primary"></i> Proyecto
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control" id="proyecto_id" name="proyecto_id" required>
+                                    <option value="">-- Selecciona un proyecto --</option>
+                                    @foreach ($proyectos as $proyecto)
+                                        <option value="{{ $proyecto->id }}"
+                                            {{ old('proyecto_id', $activity->proyecto_id) == $proyecto->id ? 'selected' : '' }}>
+                                            {{ $proyecto->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label" for="name">
                                     <i class="fas fa-tag text-primary"></i> Nombre de la Actividad
                                     <span class="text-danger">*</span>
