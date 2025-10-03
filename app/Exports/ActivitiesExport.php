@@ -58,6 +58,7 @@ class ActivitiesExport implements FromCollection, WithHeadings
                 'Caso' => $activity->caso,
                 'Nombre' => $activity->name,
                 'Descripción' => $activity->description,
+                'Estatus Operacional' => $activity->estatus_operacional, // <-- NUEVA COLUMNA
                 'Fecha Recepción' => $activity->fecha_recepcion,
                 'Prioridad' => $activity->prioridad,
                 'Orden Analista' => $activity->orden_analista,
@@ -77,6 +78,7 @@ class ActivitiesExport implements FromCollection, WithHeadings
             'Caso',
             'Nombre',
             'Descripción',
+            'Estatus Operacional', // <-- NUEVO ENCABEZADO
             'Fecha Recepción',
             'Prioridad',
             'Orden Analista',

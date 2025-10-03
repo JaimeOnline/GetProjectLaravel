@@ -65,6 +65,9 @@
                         <button type="submit" class="btn btn-outline-success">
                             <i class="fas fa-file-excel"></i> Exportar
                         </button>
+                        <button type="button" id="exportWordBtn" class="btn btn-outline-primary ml-2">
+                            <i class="fas fa-file-word"></i> Exportar Word
+                        </button>
                     </form>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
@@ -103,726 +106,754 @@
                         });
                     </script>
                 </div>
-                <!-- Search Bar -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label for="filterProyecto">Proyecto:</label>
-                        <select class="form-control" id="filterProyecto" name="filterProyecto"
-                            onchange="window.location='?proyecto_id='+this.value">
+                </script>
+                <script>
+                    document.getElementById('exportWordBtn').addEventListener('click', function() {
+                        // Toma los mismos valores que el submit de Excel
+                        const params = new URLSearchParams();
+                        params.set('status', document.getElementById('filterStatus').value);
+                        params.set('analista_id', document.getElementById('filterAnalista').value);
+                        params.set('fecha_desde', document.getElementById('filterFechaDesde').value);
+                        params.set('fecha_hasta', document.getElementById('filterFechaHasta').value);
+                        params.set('query', document.getElementById('searchInput').value);
+
+                        // Filtros de columna
+                        let statusChecked = Array.from(document.querySelectorAll('.status-filter:checked'))
+                            .filter(el => el.value !== "")
+                            .map(el => el.value);
+                        params.set('status_column', statusChecked.join(','));
+
+                        let analistaChecked = Array.from(document.querySelectorAll('.analista-filter:checked'))
+                            .filter(el => el.value !== "")
+                            .map(el => el.value);
+                        params.set('analista_column', analistaChecked.join(','));
+
+                        params.set('fecha_desde_column', document.getElementById('fecha-desde-filter').value);
+                        params.set('fecha_hasta_column', document.getElementById('fecha-hasta-filter').value);
+
+                        // Redirige a la ruta de exportación Word con los filtros
+                        window.open("{{ route('activities.exportWord') }}?" + params.toString(), "_blank");
+                    });
+                </script>
+            </div>
+            <!-- Search Bar -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="filterProyecto">Proyecto:</label>
+                    <select class="form-control" id="filterProyecto" name="filterProyecto"
+                        onchange="window.location='?proyecto_id='+this.value">
+                        <option value="">Todos</option>
+                        @foreach ($proyectos as $proyecto)
+                            <option value="{{ $proyecto->id }}"
+                                {{ request('proyecto_id') == $proyecto->id ? 'selected' : '' }}>
+                                {{ $proyecto->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <div class="search-container">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                            </div>
+                            <input type="text" class="form-control form-control-lg" id="searchInput"
+                                placeholder="Buscar en actividades, casos, analistas, comentarios, correos..."
+                                autocomplete="off">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
+                        <small class="text-muted mt-1 d-block">
+                            <i class="fas fa-keyboard"></i>
+                            Atajos: <kbd>Ctrl+K</kbd> o <kbd>Ctrl+F</kbd> para buscar, <kbd>Esc</kbd> para limpiar
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="search-stats">
+                        <div class="d-flex align-items-center justify-content-end">
+                            <span class="badge badge-info mr-2" id="searchResultsCount" style="display: none;">
+                                <i class="fas fa-list-ol"></i> <span id="resultsNumber">0</span> resultados
+                            </span>
+                            <div class="loading-spinner" id="searchSpinner" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Filtros avanzados (inicialmente ocultos) -->
+        <div id="filtersSection" style="display: none; margin-bottom: 1rem;">
+            <div class="card card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="filterStatus">Estado:</label>
+                        <select class="form-control" id="filterStatus">
                             <option value="">Todos</option>
-                            @foreach ($proyectos as $proyecto)
-                                <option value="{{ $proyecto->id }}"
-                                    {{ request('proyecto_id') == $proyecto->id ? 'selected' : '' }}>
-                                    {{ $proyecto->nombre }}
-                                </option>
+                            @foreach ($statusLabels as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-5">
-                        <div class="search-container">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-search text-muted"></i>
-                                    </span>
-                                </div>
-                                <input type="text" class="form-control form-control-lg" id="searchInput"
-                                    placeholder="Buscar en actividades, casos, analistas, comentarios, correos..."
-                                    autocomplete="off">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
-                            <small class="text-muted mt-1 d-block">
-                                <i class="fas fa-keyboard"></i>
-                                Atajos: <kbd>Ctrl+K</kbd> o <kbd>Ctrl+F</kbd> para buscar, <kbd>Esc</kbd> para limpiar
-                            </small>
-                        </div>
+                    <div class="col-md-4">
+                        <label for="filterAnalista">Analista:</label>
+                        <select class="form-control" id="filterAnalista">
+                            <option value="">Todos</option>
+                            @foreach ($analistas as $analista)
+                                <option value="{{ $analista->id }}">{{ $analista->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-md-4">
-                        <div class="search-stats">
-                            <div class="d-flex align-items-center justify-content-end">
-                                <span class="badge badge-info mr-2" id="searchResultsCount" style="display: none;">
-                                    <i class="fas fa-list-ol"></i> <span id="resultsNumber">0</span> resultados
-                                </span>
-                                <div class="loading-spinner" id="searchSpinner" style="display: none;"></div>
-                            </div>
-                        </div>
+                        <label for="filterFechaDesde">Fecha Desde:</label>
+                        <input type="date" class="form-control" id="filterFechaDesde">
+                        <label for="filterFechaHasta" class="mt-2">Fecha Hasta:</label>
+                        <input type="date" class="form-control" id="filterFechaHasta">
                     </div>
                 </div>
             </div>
-            <!-- Filtros avanzados (inicialmente ocultos) -->
-            <div id="filtersSection" style="display: none; margin-bottom: 1rem;">
-                <div class="card card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label for="filterStatus">Estado:</label>
-                            <select class="form-control" id="filterStatus">
-                                <option value="">Todos</option>
-                                @foreach ($statusLabels as $key => $label)
-                                    <option value="{{ $key }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="filterAnalista">Analista:</label>
-                            <select class="form-control" id="filterAnalista">
-                                <option value="">Todos</option>
-                                @foreach ($analistas as $analista)
-                                    <option value="{{ $analista->id }}">{{ $analista->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="filterFechaDesde">Fecha Desde:</label>
-                            <input type="date" class="form-control" id="filterFechaDesde">
-                            <label for="filterFechaHasta" class="mt-2">Fecha Hasta:</label>
-                            <input type="date" class="form-control" id="filterFechaHasta">
-                        </div>
+        </div>
+    </div>
+
+    <!-- Botón para mostrar/ocultar estadísticas -->
+    <button class="btn btn-outline-secondary btn-sm mb-3" id="toggleStatistics">
+        <i class="fas fa-chart-bar"></i> <span id="statisticsToggleText">Mostrar Estadísticas</span>
+    </button>
+    <!-- Statistics Cards -->
+    <div id="statisticsCards" class="row mb-4">
+        <!-- Primera fila: 4 columnas principales -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card bg-primary">
+                    <div class="stats-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->count() }}</h3>
+                        <p>Total Actividades</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card bg-secondary">
+                    <div class="stats-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('no_iniciada');})->count() }}
+                        </h3>
+                        <p>No Iniciadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card bg-info">
+                    <div class="stats-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('en_ejecucion');})->count() }}
+                        </h3>
+                        <p>En Ejecución</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card bg-success">
+                    <div class="stats-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('culminada');})->count() }}
+                        </h3>
+                        <p>Culminadas</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Botón para mostrar/ocultar estadísticas -->
-        <button class="btn btn-outline-secondary btn-sm mb-3" id="toggleStatistics">
-            <i class="fas fa-chart-bar"></i> <span id="statisticsToggleText">Mostrar Estadísticas</span>
-        </button>
-        <!-- Statistics Cards -->
-        <div id="statisticsCards" class="row mb-4">
-            <!-- Primera fila: 4 columnas principales -->
-            <div class="row mb-4">
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card bg-primary">
-                        <div class="stats-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->count() }}</h3>
-                            <p>Total Actividades</p>
-                        </div>
+        <!-- Segunda fila: Estados intermedios y especiales -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card bg-warning">
+                    <div class="stats-icon">
+                        <i class="fas fa-pause-circle"></i>
                     </div>
-                </div>
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card bg-secondary">
-                        <div class="stats-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('no_iniciada');})->count() }}
-                            </h3>
-                            <p>No Iniciadas</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card bg-info">
-                        <div class="stats-icon">
-                            <i class="fas fa-play-circle"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('en_ejecucion');})->count() }}
-                            </h3>
-                            <p>En Ejecución</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card bg-success">
-                        <div class="stats-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('culminada');})->count() }}
-                            </h3>
-                            <p>Culminadas</p>
-                        </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('en_espera_de_insumos');})->count() }}
+                        </h3>
+                        <p>En Espera</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Segunda fila: Estados intermedios y especiales -->
-            <div class="row mb-4">
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card bg-warning">
-                        <div class="stats-icon">
-                            <i class="fas fa-pause-circle"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('en_espera_de_insumos');})->count() }}
-                            </h3>
-                            <p>En Espera</p>
-                        </div>
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card" style="background-color: #fd7e14;">
+                    <div class="stats-icon">
+                        <i class="fas fa-certificate"></i>
                     </div>
-                </div>
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card" style="background-color: #fd7e14;">
-                        <div class="stats-icon">
-                            <i class="fas fa-certificate"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('en_certificacion_por_cliente');})->count() }}
-                            </h3>
-                            <p>En Certificación</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card" style="background-color: #20c997;">
-                        <div class="stats-icon">
-                            <i class="fas fa-paper-plane"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('pases_enviados');})->count() }}
-                            </h3>
-                            <p>Pases Enviados</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card bg-dark">
-                        <div class="stats-icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ number_format(($activities->filter(function ($activity) {return $activity->hasStatus('culminada');})->count() /max($activities->count(), 1)) *100,1) }}%
-                            </h3>
-                            <p>% Completado</p>
-                        </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('en_certificacion_por_cliente');})->count() }}
+                        </h3>
+                        <p>En Certificación</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Tercera fila: Estados finales -->
-            <div class="row mb-4">
-                <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card" style="background-color: #6c757d;">
-                        <div class="stats-icon">
-                            <i class="fas fa-pause"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('pausada');})->count() }}
-                            </h3>
-                            <p>Pausadas</p>
-                        </div>
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card" style="background-color: #20c997;">
+                    <div class="stats-icon">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('pases_enviados');})->count() }}
+                        </h3>
+                        <p>Pases Enviados</p>
                     </div>
                 </div>
-                <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
-                    <div class="stats-card bg-danger">
-                        <div class="stats-icon">
-                            <i class="fas fa-times-circle"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('cancelada');})->count() }}
-                            </h3>
-                            <p>Canceladas</p>
-                        </div>
+            </div>
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card bg-dark">
+                    <div class="stats-icon">
+                        <i class="fas fa-chart-pie"></i>
                     </div>
-                </div>
-                <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-3">
-                    <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <div class="stats-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="stats-content">
-                            <h3>{{ $activities->where('created_at', '>=', now()->startOfMonth())->count() }}</h3>
-                            <p>Este Mes</p>
-                        </div>
+                    <div class="stats-content">
+                        <h3>{{ number_format(($activities->filter(function ($activity) {return $activity->hasStatus('culminada');})->count() /max($activities->count(), 1)) *100,1) }}%
+                        </h3>
+                        <p>% Completado</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const toggleStatisticsBtn = document.getElementById('toggleStatistics');
-                const statisticsCards = document.getElementById('statisticsCards');
-                const statisticsToggleText = document.getElementById('statisticsToggleText');
-                // Inicialmente ocultar las estadísticas
-                statisticsCards.style.display = 'none';
-                toggleStatisticsBtn.addEventListener('click', function() {
-                    if (statisticsCards.style.display === 'none') {
-                        statisticsCards.style.display = 'block';
-                        statisticsToggleText.textContent = 'Ocultar Estadísticas';
-                    } else {
-                        statisticsCards.style.display = 'none';
-                        statisticsToggleText.textContent = 'Mostrar Estadísticas';
+        <!-- Tercera fila: Estados finales -->
+        <div class="row mb-4">
+            <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card" style="background-color: #6c757d;">
+                    <div class="stats-icon">
+                        <i class="fas fa-pause"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('pausada');})->count() }}
+                        </h3>
+                        <p>Pausadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
+                <div class="stats-card bg-danger">
+                    <div class="stats-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('cancelada');})->count() }}
+                        </h3>
+                        <p>Canceladas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12 mb-3">
+                <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="stats-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ $activities->where('created_at', '>=', now()->startOfMonth())->count() }}</h3>
+                        <p>Este Mes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleStatisticsBtn = document.getElementById('toggleStatistics');
+            const statisticsCards = document.getElementById('statisticsCards');
+            const statisticsToggleText = document.getElementById('statisticsToggleText');
+            // Inicialmente ocultar las estadísticas
+            statisticsCards.style.display = 'none';
+            toggleStatisticsBtn.addEventListener('click', function() {
+                if (statisticsCards.style.display === 'none') {
+                    statisticsCards.style.display = 'block';
+                    statisticsToggleText.textContent = 'Ocultar Estadísticas';
+                } else {
+                    statisticsCards.style.display = 'none';
+                    statisticsToggleText.textContent = 'Mostrar Estadísticas';
+                }
+            });
+        });
+    </script>
+
+    {{-- Script para editar Prioridad y Orden en tabla --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Al hacer click en el valor, mostrar input
+            document.querySelectorAll('.editable-cell .editable-value').forEach(function(span) {
+                span.addEventListener('click', function() {
+                    const cell = span.closest('.editable-cell');
+                    const input = cell.querySelector('.editable-input');
+                    span.style.display = 'none';
+                    input.style.display = 'inline-block';
+                    input.focus();
+                    input.select();
+                });
+            });
+
+            // Al perder foco o presionar Enter, enviar AJAX
+            document.querySelectorAll('.editable-cell .editable-input').forEach(function(input) {
+                input.addEventListener('blur', saveInlineEdit);
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        saveInlineEdit.call(input, e);
                     }
                 });
             });
-        </script>
 
-        {{-- Script para editar Prioridad y Orden en tabla --}}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Al hacer click en el valor, mostrar input
-                document.querySelectorAll('.editable-cell .editable-value').forEach(function(span) {
-                    span.addEventListener('click', function() {
-                        const cell = span.closest('.editable-cell');
-                        const input = cell.querySelector('.editable-input');
-                        span.style.display = 'none';
-                        input.style.display = 'inline-block';
-                        input.focus();
-                        input.select();
-                    });
-                });
+            function saveInlineEdit(e) {
+                const input = this;
+                const cell = input.closest('.editable-cell');
+                const span = cell.querySelector('.editable-value');
+                const activityId = cell.getAttribute('data-activity-id');
+                const field = cell.getAttribute('data-field');
+                const value = input.value;
 
-                // Al perder foco o presionar Enter, enviar AJAX
-                document.querySelectorAll('.editable-cell .editable-input').forEach(function(input) {
-                    input.addEventListener('blur', saveInlineEdit);
-                    input.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter') {
-                            saveInlineEdit.call(input, e);
-                        }
-                    });
-                });
-
-                function saveInlineEdit(e) {
-                    const input = this;
-                    const cell = input.closest('.editable-cell');
-                    const span = cell.querySelector('.editable-value');
-                    const activityId = cell.getAttribute('data-activity-id');
-                    const field = cell.getAttribute('data-field');
-                    const value = input.value;
-
-                    fetch(`/activities/${activityId}/inline-update`, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                    'content')
-                            },
-                            body: JSON.stringify({
-                                field,
-                                value
-                            })
+                fetch(`/activities/${activityId}/inline-update`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                'content')
+                        },
+                        body: JSON.stringify({
+                            field,
+                            value
                         })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                span.textContent = value;
-                            } else {
-                                alert('Error al actualizar');
-                            }
-                            input.style.display = 'none';
-                            span.style.display = 'inline-block';
-                        })
-                        .catch(() => {
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            span.textContent = value;
+                        } else {
                             alert('Error al actualizar');
-                            input.style.display = 'none';
-                            span.style.display = 'inline-block';
-                        });
-                }
-            });
-        </script>
+                        }
+                        input.style.display = 'none';
+                        span.style.display = 'inline-block';
+                    })
+                    .catch(() => {
+                        alert('Error al actualizar');
+                        input.style.display = 'none';
+                        span.style.display = 'inline-block';
+                    });
+            }
+        });
+    </script>
 
-        <!-- Search Results Alert -->
-        <div class="alert alert-info" id="searchResultsAlert" style="display: none;">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-search mr-2"></i>
-                <div>
-                    <strong>Resultados de búsqueda:</strong>
-                    <span id="searchResultsText"></span>
-                    {{-- <button class="btn btn-sm btn-outline-info ml-2" id="showAllResults">
+    <!-- Search Results Alert -->
+    <div class="alert alert-info" id="searchResultsAlert" style="display: none;">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-search mr-2"></i>
+            <div>
+                <strong>Resultados de búsqueda:</strong>
+                <span id="searchResultsText"></span>
+                {{-- <button class="btn btn-sm btn-outline-info ml-2" id="showAllResults">
                         <i class="fas fa-eye"></i> Ver todos los resultados
                     </button>
                     <button class="btn btn-sm btn-outline-secondary ml-1" id="clearSearchResults">
                         <i class="fas fa-times"></i> Limpiar búsqueda
                     </button> --}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Activities Table -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i> <span id="tableTitle">Lista de Actividades</span>
+                </h5>
+                <div class="header-actions">
+                    <button class="btn btn-sm btn-warning mr-2" id="clearAllColumnFilters" style="display: block;">
+                        <i class="fas fa-times-circle"></i> Limpiar Filtros
+                    </button>
+                    <small class="text-light">
+                        <i class="fas fa-info-circle"></i>
+                        Haz clic en <i class="fas fa-chevron-right"></i> para ver subactividades
+                    </small>
                 </div>
             </div>
         </div>
-
-        <!-- Activities Table -->
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list"></i> <span id="tableTitle">Lista de Actividades</span>
-                    </h5>
-                    <div class="header-actions">
-                        <button class="btn btn-sm btn-warning mr-2" id="clearAllColumnFilters" style="display: block;">
-                            <i class="fas fa-times-circle"></i> Limpiar Filtros
-                        </button>
-                        <small class="text-light">
-                            <i class="fas fa-info-circle"></i>
-                            Haz clic en <i class="fas fa-chevron-right"></i> para ver subactividades
-                        </small>
-                    </div>
-                </div>
+        <div class="card-body p-0">
+            <!-- Scroll horizontal superior opcional -->
+            <div id="top-scroll" style="overflow-x: auto; width: 100%; height: 20px; background: #f8f9fa;">
+                <div id="top-scroll-inner" style="height: 1px; width: 2000px;"></div>
             </div>
-            <div class="card-body p-0">
-                <!-- Scroll horizontal superior opcional -->
-                <div id="top-scroll" style="overflow-x: auto; width: 100%; height: 20px; background: #f8f9fa;">
-                    <div id="top-scroll-inner" style="height: 1px; width: 2000px;"></div>
-                </div>
-                <div id="main-table-scroll"
-                    style="overflow-x: auto; overflow-y: auto; max-height: 60vh; width: 100%; border-bottom: 1px solid #ccc;">
-                    <div id="tableContainer">
-                        <table id="main-activities-table" class="table table-hover mb-0 modern-table"
-                            style="min-width: 1100px;">
-                            <thead class="thead-light sticky-thead">
-                                <tr>
-                                    <th class="border-0"> <!-- Caso -->
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <div class="sortable" data-sort="caso" style="cursor: pointer;">
-                                                <i class="fas fa-hashtag text-primary"></i> Caso
-                                                <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                            </div>
+            <div id="main-table-scroll"
+                style="overflow-x: auto; overflow-y: auto; max-height: 60vh; width: 100%; border-bottom: 1px solid #ccc;">
+                <div id="tableContainer">
+                    <table id="main-activities-table" class="table table-hover mb-0 modern-table"
+                        style="min-width: 1100px;">
+                        <thead class="thead-light sticky-thead">
+                            <tr>
+                                <th class="border-0"> <!-- Caso -->
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="sortable" data-sort="caso" style="cursor: pointer;">
+                                            <i class="fas fa-hashtag text-primary"></i> Caso
+                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                                         </div>
-                                    </th>
-                                    <th class="border-0"> <!-- Nombre -->
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-file-alt text-primary"></i> Nombre
-                                            <button type="button" class="btn btn-sm btn-outline-secondary ml-2"
-                                                id="toggleAllSubactivitiesBtn"
-                                                title="Expandir/Colapsar todas las subactividades"
-                                                style="margin-left: 8px; padding: 2px 8px;">
-                                                <i class="fas fa-chevron-down" id="toggleAllSubactivitiesIcon"></i>
-                                            </button>
-                                        </div>
-                                    </th>
-                                    <th class="border-0 sortable" data-sort="prioridad" style="cursor: pointer;">
-                                        <!-- Prioridad -->
-                                        <i class="fas fa-arrow-up text-primary"></i> Prioridad
-                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                        <div class="custom-dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
-                                                data-filter="prioridad" style="padding: 2px 6px;">
-                                                <i class="fas fa-filter"></i>
-                                            </button>
-                                            <div class="custom-dropdown-menu" id="prioridad-filter-menu"
-                                                style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 150px;">
-                                                <h6 class="dropdown-header"
-                                                    style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                    Filtrar por Prioridad</h6>
-                                                <div class="px-3 py-2">
+                                    </div>
+                                </th>
+                                <th class="border-0"> <!-- Nombre -->
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-alt text-primary"></i> Nombre
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ml-2"
+                                            id="toggleAllSubactivitiesBtn"
+                                            title="Expandir/Colapsar todas las subactividades"
+                                            style="margin-left: 8px; padding: 2px 8px;">
+                                            <i class="fas fa-chevron-down" id="toggleAllSubactivitiesIcon"></i>
+                                        </button>
+                                    </div>
+                                </th>
+                                <th class="border-0 sortable" data-sort="prioridad" style="cursor: pointer;">
+                                    <!-- Prioridad -->
+                                    <i class="fas fa-arrow-up text-primary"></i> Prioridad
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                    <div class="custom-dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
+                                            data-filter="prioridad" style="padding: 2px 6px;">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <div class="custom-dropdown-menu" id="prioridad-filter-menu"
+                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 150px;">
+                                            <h6 class="dropdown-header"
+                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                Filtrar por Prioridad</h6>
+                                            <div class="px-3 py-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input prioridad-filter" type="checkbox"
+                                                        value="" id="prioridad-all" checked>
+                                                    <label class="form-check-label" for="prioridad-all">Todas</label>
+                                                </div>
+                                                @for ($i = 1; $i <= 10; $i++)
                                                     <div class="form-check">
                                                         <input class="form-check-input prioridad-filter" type="checkbox"
-                                                            value="" id="prioridad-all" checked>
-                                                        <label class="form-check-label" for="prioridad-all">Todas</label>
+                                                            value="{{ $i }}"
+                                                            id="prioridad-{{ $i }}">
+                                                        <label class="form-check-label"
+                                                            for="prioridad-{{ $i }}">{{ $i }}</label>
                                                     </div>
-                                                    @for ($i = 1; $i <= 10; $i++)
-                                                        <div class="form-check">
-                                                            <input class="form-check-input prioridad-filter"
-                                                                type="checkbox" value="{{ $i }}"
-                                                                id="prioridad-{{ $i }}">
-                                                            <label class="form-check-label"
-                                                                for="prioridad-{{ $i }}">{{ $i }}</label>
-                                                        </div>
-                                                    @endfor
-                                                </div>
+                                                @endfor
                                             </div>
                                         </div>
-                                    </th>
-                                    <th class="border-0 sortable" data-sort="orden_analista" style="cursor: pointer;">
-                                        <!-- Orden -->
-                                        <i class="fas fa-sort-numeric-up text-primary"></i> Orden
-                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                        <div class="custom-dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
-                                                data-filter="orden_analista" style="padding: 2px 6px;">
-                                                <i class="fas fa-filter"></i>
-                                            </button>
-                                            <div class="custom-dropdown-menu" id="orden_analista-filter-menu"
-                                                style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 120px;">
-                                                <h6 class="dropdown-header"
-                                                    style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                    Filtrar por Orden</h6>
-                                                <div class="px-3 py-2">
+                                    </div>
+                                </th>
+                                <th class="border-0 sortable" data-sort="orden_analista" style="cursor: pointer;">
+                                    <!-- Orden -->
+                                    <i class="fas fa-sort-numeric-up text-primary"></i> Orden
+                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                    <div class="custom-dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
+                                            data-filter="orden_analista" style="padding: 2px 6px;">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <div class="custom-dropdown-menu" id="orden_analista-filter-menu"
+                                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 120px;">
+                                            <h6 class="dropdown-header"
+                                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                Filtrar por Orden</h6>
+                                            <div class="px-3 py-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input orden-filter" type="checkbox"
+                                                        value="" id="orden-all" checked>
+                                                    <label class="form-check-label" for="orden-all">Todos</label>
+                                                </div>
+                                                @for ($i = 1; $i <= 10; $i++)
                                                     <div class="form-check">
                                                         <input class="form-check-input orden-filter" type="checkbox"
-                                                            value="" id="orden-all" checked>
-                                                        <label class="form-check-label" for="orden-all">Todos</label>
+                                                            value="{{ $i }}" id="orden-{{ $i }}">
+                                                        <label class="form-check-label"
+                                                            for="orden-{{ $i }}">{{ $i }}</label>
                                                     </div>
-                                                    @for ($i = 1; $i <= 10; $i++)
-                                                        <div class="form-check">
-                                                            <input class="form-check-input orden-filter" type="checkbox"
-                                                                value="{{ $i }}"
-                                                                id="orden-{{ $i }}">
-                                                            <label class="form-check-label"
-                                                                for="orden-{{ $i }}">{{ $i }}</label>
-                                                        </div>
-                                                    @endfor
-                                                </div>
+                                                @endfor
                                             </div>
                                         </div>
-                                    </th>
-                                    <th class="border-0"> <!-- Descripción -->
-                                        <i class="fas fa-align-left text-primary"></i> Descripción
-                                    </th>
-                                    <th class="border-0"> <!-- Estado -->
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <div class="sortable" data-sort="status" style="cursor: pointer;">
-                                                <i class="fas fa-flag text-primary"></i> Estado
-                                                <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                            </div>
-                                            <div class="custom-dropdown">
-                                                <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                    type="button" data-filter="status" style="padding: 2px 6px;">
-                                                    <i class="fas fa-filter"></i>
-                                                </button>
-                                                <div class="custom-dropdown-menu" id="status-filter-menu"
-                                                    style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
-                                                    <h6 class="dropdown-header"
-                                                        style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                        Filtrar por Estado</h6>
-                                                    <div class="px-3 py-2">
+                                    </div>
+                                </th>
+                                <th class="border-0"> <!-- Descripción -->
+                                    <i class="fas fa-align-left text-primary"></i> Descripción
+                                </th>
+                                <th class="border-0"> <!-- Estado -->
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="sortable" data-sort="status" style="cursor: pointer;">
+                                            <i class="fas fa-flag text-primary"></i> Estado
+                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                        </div>
+                                        <div class="custom-dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
+                                                data-filter="status" style="padding: 2px 6px;">
+                                                <i class="fas fa-filter"></i>
+                                            </button>
+                                            <div class="custom-dropdown-menu" id="status-filter-menu"
+                                                style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                                                <h6 class="dropdown-header"
+                                                    style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                    Filtrar por Estado</h6>
+                                                <div class="px-3 py-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input status-filter" type="checkbox"
+                                                            value="" id="status-all" checked>
+                                                        <label class="form-check-label" for="status-all">Todos</label>
+                                                    </div>
+                                                    @foreach ($statusLabels as $key => $label)
                                                         <div class="form-check">
                                                             <input class="form-check-input status-filter" type="checkbox"
-                                                                value="" id="status-all" checked>
-                                                            <label class="form-check-label" for="status-all">Todos</label>
+                                                                value="{{ $key }}"
+                                                                id="status-{{ $key }}">
+                                                            <label class="form-check-label d-flex align-items-center"
+                                                                for="status-{{ $key }}">
+                                                                <span class="badge badge-pill mr-2"
+                                                                    style="background-color: {{ $statusColors[$key] ?? '#6c757d' }}; color: white; width: 18px; height: 18px; display: inline-block; text-align: center; line-height: 18px; font-size: 0.8em; border-radius: 50%;">
+                                                                    &nbsp;
+                                                                </span>
+                                                                {{ $label }}
+                                                            </label>
                                                         </div>
-                                                        @foreach ($statusLabels as $key => $label)
-                                                            <div class="form-check">
-                                                                <input class="form-check-input status-filter"
-                                                                    type="checkbox" value="{{ $key }}"
-                                                                    id="status-{{ $key }}">
-                                                                <label class="form-check-label d-flex align-items-center"
-                                                                    for="status-{{ $key }}">
-                                                                    <span class="badge badge-pill mr-2"
-                                                                        style="background-color: {{ $statusColors[$key] ?? '#6c757d' }}; color: white; width: 18px; height: 18px; display: inline-block; text-align: center; line-height: 18px; font-size: 0.8em; border-radius: 50%;">
-                                                                        &nbsp;
-                                                                    </span>
-                                                                    {{ $label }}
-                                                                </label>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
+                                                    @endforeach
                                                 </div>
                                             </div>
                                         </div>
-                                    </th>
-                                    <th class="border-0"> <!-- Analistas -->
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <div class="sortable" data-sort="analistas" style="cursor: pointer;">
-                                                <i class="fas fa-users text-primary"></i> Analistas
-                                                <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                            </div>
-                                            <div class="custom-dropdown">
-                                                <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                    type="button" data-filter="analistas" style="padding: 2px 6px;">
-                                                    <i class="fas fa-filter"></i>
-                                                </button>
-                                                <div class="custom-dropdown-menu" id="analistas-filter-menu"
-                                                    style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
-                                                    <h6 class="dropdown-header"
-                                                        style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                        Filtrar por Analista</h6>
-                                                    <div class="px-3 py-2">
+                                    </div>
+                                </th>
+                                <th class="border-0"> <!-- Analistas -->
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="sortable" data-sort="analistas" style="cursor: pointer;">
+                                            <i class="fas fa-users text-primary"></i> Analistas
+                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                        </div>
+                                        <div class="custom-dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
+                                                data-filter="analistas" style="padding: 2px 6px;">
+                                                <i class="fas fa-filter"></i>
+                                            </button>
+                                            <div class="custom-dropdown-menu" id="analistas-filter-menu"
+                                                style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                                                <h6 class="dropdown-header"
+                                                    style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                    Filtrar por Analista</h6>
+                                                <div class="px-3 py-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input analista-filter" type="checkbox"
+                                                            value="" id="analista-all" checked>
+                                                        <label class="form-check-label" for="analista-all">Todos</label>
+                                                    </div>
+                                                    @foreach ($analistas as $analista)
                                                         <div class="form-check">
                                                             <input class="form-check-input analista-filter"
-                                                                type="checkbox" value="" id="analista-all" checked>
+                                                                type="checkbox" value="{{ $analista->id }}"
+                                                                id="analista-{{ $analista->id }}">
                                                             <label class="form-check-label"
-                                                                for="analista-all">Todos</label>
+                                                                for="analista-{{ $analista->id }}">{{ $analista->name }}</label>
                                                         </div>
-                                                        @foreach ($analistas as $analista)
-                                                            <div class="form-check">
-                                                                <input class="form-check-input analista-filter"
-                                                                    type="checkbox" value="{{ $analista->id }}"
-                                                                    id="analista-{{ $analista->id }}">
-                                                                <label class="form-check-label"
-                                                                    for="analista-{{ $analista->id }}">{{ $analista->name }}</label>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
+                                                    @endforeach
                                                 </div>
                                             </div>
                                         </div>
-                                    </th>
-                                    <th class="border-0"> <!-- Requerimientos -->
-                                        <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
-                                    </th>
-                                    <th class="border-0"> <!-- Fecha -->
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
-                                                <i class="fas fa-calendar text-primary"></i> Fecha
-                                                <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                            </div>
-                                            <div class="custom-dropdown">
-                                                <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                    type="button" data-filter="fecha" style="padding: 2px 6px;">
-                                                    <i class="fas fa-filter"></i>
-                                                </button>
-                                                <div class="custom-dropdown-menu" id="fecha-filter-menu"
-                                                    style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 250px;">
-                                                    <h6 class="dropdown-header"
-                                                        style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                        Filtrar por Fecha</h6>
-                                                    <div class="px-3 py-2">
-                                                        <div class="form-group mb-2">
-                                                            <label class="small">Desde:</label>
-                                                            <input type="date" class="form-control form-control-sm"
-                                                                id="fecha-desde-filter">
-                                                        </div>
-                                                        <div class="form-group mb-2">
-                                                            <label class="small">Hasta:</label>
-                                                            <input type="date" class="form-control form-control-sm"
-                                                                id="fecha-hasta-filter">
-                                                        </div>
-                                                        <button class="btn btn-sm btn-primary btn-block"
-                                                            id="apply-date-filter">Aplicar</button>
-                                                        <button class="btn btn-sm btn-outline-secondary btn-block"
-                                                            id="clear-date-filter">Limpiar</button>
+                                    </div>
+                                </th>
+                                <th class="border-0"> <!-- Requerimientos -->
+                                    <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
+                                </th>
+                                <th class="border-0"> <!-- Fecha -->
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
+                                            <i class="fas fa-calendar text-primary"></i> Fecha
+                                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
+                                        </div>
+                                        <div class="custom-dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
+                                                data-filter="fecha" style="padding: 2px 6px;">
+                                                <i class="fas fa-filter"></i>
+                                            </button>
+                                            <div class="custom-dropdown-menu" id="fecha-filter-menu"
+                                                style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 250px;">
+                                                <h6 class="dropdown-header"
+                                                    style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                                    Filtrar por Fecha</h6>
+                                                <div class="px-3 py-2">
+                                                    <div class="form-group mb-2">
+                                                        <label class="small">Desde:</label>
+                                                        <input type="date" class="form-control form-control-sm"
+                                                            id="fecha-desde-filter">
                                                     </div>
+                                                    <div class="form-group mb-2">
+                                                        <label class="small">Hasta:</label>
+                                                        <input type="date" class="form-control form-control-sm"
+                                                            id="fecha-hasta-filter">
+                                                    </div>
+                                                    <button class="btn btn-sm btn-primary btn-block"
+                                                        id="apply-date-filter">Aplicar</button>
+                                                    <button class="btn btn-sm btn-outline-secondary btn-block"
+                                                        id="clear-date-filter">Limpiar</button>
                                                 </div>
                                             </div>
                                         </div>
-                                    </th>
-                                    {{-- <th class="border-0 text-center">
+                                    </div>
+                                </th>
+                                {{-- <th class="border-0 text-center">
             <i class="fas fa-cogs text-primary"></i> Acciones
             </th> --}}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($activities as $activity)
-                                    <tr class="parent-activity activity-row" data-activity-id="{{ $activity->id }}">
-                                        <td class="align-middle">
-                                            <span class="badge badge-outline-primary font-weight-bold">
-                                                {{ $activity->caso }}
-                                            </span>
-                                        </td>
-                                        <td class="align-middle position-relative" style="position: relative;">
-                                            <div class="d-flex align-items-center">
-                                                @if ($activity->subactivities->count() > 0)
-                                                    <span class="toggle-subactivities mr-2" style="cursor: pointer;"
-                                                        data-activity-id="{{ $activity->id }}">
-                                                        <i class="fas fa-chevron-right text-primary"
-                                                            id="icon-{{ $activity->id }}"></i>
-                                                    </span>
-                                                @endif
-                                                <div>
-                                                    <div class="font-weight-bold text-dark small">
-                                                        {{ Str::limit($activity->name, 40) }}
-                                                        @if (strlen($activity->name) > 40)
-                                                            <span class="text-primary" style="cursor: pointer;"
-                                                                title="{{ $activity->name }}" data-toggle="tooltip">
-                                                                <i class="fas fa-info-circle"></i>
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                    @if ($activity->subactivities->count() > 0)
-                                                        <small class="text-muted">
-                                                            <i class="fas fa-sitemap"></i>
-                                                            {{ $activity->subactivities->count() }} subactividad(es)
-                                                        </small>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="action-buttons"
-                                                style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <a href="{{ route('activities.edit', $activity) }}"
-                                                        class="btn btn-warning btn-sm action-btn"
-                                                        data-tooltip="Ver/Editar" title="Ver/Editar">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}"
-                                                        class="btn btn-secondary btn-sm action-btn"
-                                                        data-tooltip="Crear Subactividad" title="Crear Subactividad">
-                                                        <i class="fas fa-plus"></i>
-                                                    </a>
-                                                    <form action="{{ route('activities.destroy', $activity) }}"
-                                                        method="POST" style="display:inline;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger btn-sm action-btn"
-                                                            data-tooltip="Eliminar" title="Eliminar"
-                                                            onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
-                                            data-field="prioridad" data-sort-value="{{ $activity->prioridad ?? 0 }}">
-                                            <span
-                                                class="badge badge-outline-info editable-value">{{ $activity->prioridad ?? '-' }}</span>
-                                            <input type="number" class="form-control form-control-sm editable-input"
-                                                value="{{ $activity->prioridad ?? 1 }}"
-                                                style="display:none; width: 70px;" min="1">
-                                        </td>
-                                        <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
-                                            data-field="orden_analista"
-                                            data-sort-value="{{ $activity->orden_analista ?? 0 }}">
-                                            <span
-                                                class="badge badge-outline-secondary editable-value">{{ $activity->orden_analista ?? '-' }}</span>
-                                            <input type="number" class="form-control form-control-sm editable-input"
-                                                value="{{ $activity->orden_analista ?? 1 }}"
-                                                style="display:none; width: 70px;" min="1">
-                                        </td>
-                                        <td class="align-middle">
-                                            <div class="description-cell">
-                                                {{ Str::limit($activity->description, 30) }}
-                                                @if (strlen($activity->description) > 30)
-                                                    <span class="text-primary" style="cursor: pointer;"
-                                                        title="{{ $activity->description }}" data-toggle="tooltip">
-                                                        <i class="fas fa-info-circle"></i>
-                                                    </span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="align-middle">
-                                            <div class="status-cell" data-activity-id="{{ $activity->id }}">
-                                                <div class="status-display">
-                                                    @if ($activity->statuses->count() > 0)
-                                                        @foreach ($activity->statuses as $status)
-                                                            <span class="badge badge-pill mr-1 mb-1"
-                                                                style="background-color: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
-                                                                <i class="{{ $status->icon ?? 'fas fa-circle' }}"></i>
-                                                                {{ $status->label }}
-                                                            </span>
-                                                        @endforeach
-                                                    @else
-                                                        {{-- Fallback al sistema anterior --}}
-                                                        @php
-                                                            $statusClass = match ($activity->status) {
-                                                                'culminada' => 'success',
-                                                                'en_ejecucion' => 'primary',
-                                                                'en_espera_de_insumos' => 'warning',
-                                                                default => 'secondary',
-                                                            };
-                                                            $statusIcon = match ($activity->status) {
-                                                                'culminada' => 'check-circle',
-                                                                'en_ejecucion' => 'play-circle',
-                                                                'en_espera_de_insumos' => 'pause-circle',
-                                                                default => 'circle',
-                                                            };
-                                                        @endphp
-                                                        <span class="badge badge-{{ $statusClass }} badge-pill">
-                                                            <i class="fas fa-{{ $statusIcon }}"></i>
-                                                            {{ $activity->status_label }}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($activities as $activity)
+                                <tr class="parent-activity activity-row" data-activity-id="{{ $activity->id }}">
+                                    <td class="align-middle">
+                                        <span class="badge badge-outline-primary font-weight-bold">
+                                            {{ $activity->caso }}
+                                        </span>
+                                    </td>
+                                    <td class="align-middle position-relative" style="position: relative;">
+                                        <div class="d-flex align-items-center">
+                                            @if ($activity->subactivities->count() > 0)
+                                                <span class="toggle-subactivities mr-2" style="cursor: pointer;"
+                                                    data-activity-id="{{ $activity->id }}">
+                                                    <i class="fas fa-chevron-right text-primary"
+                                                        id="icon-{{ $activity->id }}"></i>
+                                                </span>
+                                            @endif
+                                            <div>
+                                                <div class="font-weight-bold text-dark small">
+                                                    {{ Str::limit($activity->name, 40) }}
+                                                    @if (strlen($activity->name) > 40)
+                                                        <span class="text-primary" style="cursor: pointer;"
+                                                            title="{{ $activity->name }}" data-toggle="tooltip">
+                                                            <i class="fas fa-info-circle"></i>
                                                         </span>
                                                     @endif
                                                 </div>
-                                                <div class="status-edit-btn">
-                                                    <button class="btn btn-sm btn-outline-secondary edit-status-btn"
-                                                        data-activity-id="{{ $activity->id }}" title="Editar estados">
-                                                        <i class="fas fa-edit"></i>
+                                                @if ($activity->subactivities->count() > 0)
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-sitemap"></i>
+                                                        {{ $activity->subactivities->count() }} subactividad(es)
+                                                    </small>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="action-buttons"
+                                            style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ route('activities.edit', $activity) }}"
+                                                    class="btn btn-warning btn-sm action-btn" data-tooltip="Ver/Editar"
+                                                    title="Ver/Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}"
+                                                    class="btn btn-secondary btn-sm action-btn"
+                                                    data-tooltip="Crear Subactividad" title="Crear Subactividad">
+                                                    <i class="fas fa-plus"></i>
+                                                </a>
+                                                <form action="{{ route('activities.destroy', $activity) }}"
+                                                    method="POST" style="display:inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm action-btn"
+                                                        data-tooltip="Eliminar" title="Eliminar"
+                                                        onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                                                        <i class="fas fa-trash"></i>
                                                     </button>
-                                                </div>
+                                                </form>
                                             </div>
-                                        </td>
-                                        <td class="align-middle">
-                                            <div class="analysts-list d-inline">
-                                                @foreach ($activity->analistas as $analista)
-                                                    <span class="badge badge-light mr-1 mb-1">
-                                                        <i class="fas fa-user"></i> {{ $analista->name }}
+                                        </div>
+                                    </td>
+                                    <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
+                                        data-field="prioridad" data-sort-value="{{ $activity->prioridad ?? 0 }}">
+                                        <span
+                                            class="badge badge-outline-info editable-value">{{ $activity->prioridad ?? '-' }}</span>
+                                        <input type="number" class="form-control form-control-sm editable-input"
+                                            value="{{ $activity->prioridad ?? 1 }}" style="display:none; width: 70px;"
+                                            min="1">
+                                    </td>
+                                    <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
+                                        data-field="orden_analista"
+                                        data-sort-value="{{ $activity->orden_analista ?? 0 }}">
+                                        <span
+                                            class="badge badge-outline-secondary editable-value">{{ $activity->orden_analista ?? '-' }}</span>
+                                        <input type="number" class="form-control form-control-sm editable-input"
+                                            value="{{ $activity->orden_analista ?? 1 }}"
+                                            style="display:none; width: 70px;" min="1">
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="description-cell">
+                                            {{ Str::limit($activity->description, 30) }}
+                                            @if (strlen($activity->description) > 30)
+                                                <span class="text-primary" style="cursor: pointer;"
+                                                    title="{{ $activity->description }}" data-toggle="tooltip">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="status-cell" data-activity-id="{{ $activity->id }}">
+                                            <div class="status-display">
+                                                @if ($activity->statuses->count() > 0)
+                                                    @foreach ($activity->statuses as $status)
+                                                        <span class="badge badge-pill mr-1 mb-1"
+                                                            style="background-color: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
+                                                            <i class="{{ $status->icon ?? 'fas fa-circle' }}"></i>
+                                                            {{ $status->label }}
+                                                        </span>
+                                                    @endforeach
+                                                @else
+                                                    {{-- Fallback al sistema anterior --}}
+                                                    @php
+                                                        $statusClass = match ($activity->status) {
+                                                            'culminada' => 'success',
+                                                            'en_ejecucion' => 'primary',
+                                                            'en_espera_de_insumos' => 'warning',
+                                                            default => 'secondary',
+                                                        };
+                                                        $statusIcon = match ($activity->status) {
+                                                            'culminada' => 'check-circle',
+                                                            'en_ejecucion' => 'play-circle',
+                                                            'en_espera_de_insumos' => 'pause-circle',
+                                                            default => 'circle',
+                                                        };
+                                                    @endphp
+                                                    <span class="badge badge-{{ $statusClass }} badge-pill">
+                                                        <i class="fas fa-{{ $statusIcon }}"></i>
+                                                        {{ $activity->status_label }}
                                                     </span>
-                                                @endforeach
+                                                @endif
                                             </div>
-                                            <div class="analysts-edit-btn-group" style="display: none;">
-                                                <button class="btn btn-sm btn-outline-secondary edit-analysts-btn ml-2"
-                                                    data-activity-id="{{ $activity->id }}" title="Editar analistas">
+                                            <div class="status-edit-btn">
+                                                <button class="btn btn-sm btn-outline-secondary edit-status-btn"
+                                                    data-activity-id="{{ $activity->id }}" title="Editar estados">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
                                             </div>
-                                        </td>
-                                        {{-- <td class="align-middle">
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="analysts-list d-inline">
+                                            @foreach ($activity->analistas as $analista)
+                                                <span class="badge badge-light mr-1 mb-1">
+                                                    <i class="fas fa-user"></i> {{ $analista->name }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                        <div class="analysts-edit-btn-group" style="display: none;">
+                                            <button class="btn btn-sm btn-outline-secondary edit-analysts-btn ml-2"
+                                                data-activity-id="{{ $activity->id }}" title="Editar analistas">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    {{-- <td class="align-middle">
                                                     @if ($activity->comments->count() > 0)
                                                     <div class="comments-info">
                                                         <a href="{{ route('activities.comments', $activity) }}" class="text-decoration-none">
@@ -843,46 +874,46 @@
                                                     </span>
                                                 @endif
                                             </td> --}}
-                                        <td class="align-middle">
-                                            @if ($activity->requirements->count() > 0)
-                                                <div class="requirements-info">
-                                                    <a href="{{ route('requirements.index', ['activity_id' => $activity->id]) }}"
-                                                        class="text-decoration-none">
-                                                        <span class="badge badge-warning badge-pill">
-                                                            <i class="fas fa-clipboard-list"></i>
-                                                            {{ $activity->requirements->count() }}
-                                                        </span>
-                                                    </a>
-                                                    <div class="mt-1">
-                                                        @php
-                                                            $pendientes = $activity->requirements
-                                                                ->where('status', 'pendiente')
-                                                                ->count();
-                                                            $recibidos = $activity->requirements
-                                                                ->where('status', 'recibido')
-                                                                ->count();
-                                                        @endphp
-                                                        <small class="text-muted d-block">
-                                                            <span class="badge badge-sm badge-warning">{{ $pendientes }}
-                                                                pendientes</span>
-                                                            <span class="badge badge-sm badge-success">{{ $recibidos }}
-                                                                recibidos</span>
+                                    <td class="align-middle">
+                                        @if ($activity->requirements->count() > 0)
+                                            <div class="requirements-info">
+                                                <a href="{{ route('requirements.index', ['activity_id' => $activity->id]) }}"
+                                                    class="text-decoration-none">
+                                                    <span class="badge badge-warning badge-pill">
+                                                        <i class="fas fa-clipboard-list"></i>
+                                                        {{ $activity->requirements->count() }}
+                                                    </span>
+                                                </a>
+                                                <div class="mt-1">
+                                                    @php
+                                                        $pendientes = $activity->requirements
+                                                            ->where('status', 'pendiente')
+                                                            ->count();
+                                                        $recibidos = $activity->requirements
+                                                            ->where('status', 'recibido')
+                                                            ->count();
+                                                    @endphp
+                                                    <small class="text-muted d-block">
+                                                        <span class="badge badge-sm badge-warning">{{ $pendientes }}
+                                                            pendientes</span>
+                                                        <span class="badge badge-sm badge-success">{{ $recibidos }}
+                                                            recibidos</span>
+                                                    </small>
+                                                    @if ($activity->requirements->count() > 0)
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-clock"></i>
+                                                            {{ $activity->requirements->sortByDesc('created_at')->first()->created_at->format('d/m/Y H:i') }}
                                                         </small>
-                                                        @if ($activity->requirements->count() > 0)
-                                                            <small class="text-muted">
-                                                                <i class="fas fa-clock"></i>
-                                                                {{ $activity->requirements->sortByDesc('created_at')->first()->created_at->format('d/m/Y H:i') }}
-                                                            </small>
-                                                        @endif
-                                                    </div>
+                                                    @endif
                                                 </div>
-                                            @else
-                                                <span class="text-muted">
-                                                    <i class="fas fa-clipboard"></i> Sin requerimientos
-                                                </span>
-                                            @endif
-                                        </td>
-                                        {{-- <td class="align-middle">
+                                            </div>
+                                        @else
+                                            <span class="text-muted">
+                                                <i class="fas fa-clipboard"></i> Sin requerimientos
+                                            </span>
+                                        @endif
+                                    </td>
+                                    {{-- <td class="align-middle">
                                                         @if ($activity->emails->count() > 0)
                                                             <div class="emails-info">
                                                                 <a href="{{ route('activities.emails', $activity) }}" class="text-decoration-none">
@@ -918,132 +949,132 @@
                                                             </span>
                                                         @endif
                                                     </td> --}}
-                                        <td class="align-middle">
-                                            @if ($activity->fecha_recepcion)
-                                                <div class="date-info">
-                                                    <span class="badge badge-outline-info">
-                                                        <i class="fas fa-calendar-alt"></i>
-                                                        {{ $activity->fecha_recepcion->format('d/m/Y') }}
-                                                    </span>
-                                                    <div class="mt-1">
-                                                        <small class="text-muted">
-                                                            {{ $activity->fecha_recepcion->diffForHumans() }}
-                                                        </small>
-                                                    </div>
+                                    <td class="align-middle">
+                                        @if ($activity->fecha_recepcion)
+                                            <div class="date-info">
+                                                <span class="badge badge-outline-info">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    {{ $activity->fecha_recepcion->format('d/m/Y') }}
+                                                </span>
+                                                <div class="mt-1">
+                                                    <small class="text-muted">
+                                                        {{ $activity->fecha_recepcion->diffForHumans() }}
+                                                    </small>
                                                 </div>
-                                            @else
-                                                <span class="text-muted">
-                                                    <i class="fas fa-calendar-times"></i> No asignada
-                                                </span>
-                                            @endif
-                                        </td>
-
-                                    </tr>
-                                    {{-- Mostrar subactividades (inicialmente ocultas) --}}
-                                    @if ($activity->subactivities->count() > 0)
-                                        @include('activities.partials.subactivities', [
-                                            'subactivities' => $activity->subactivities,
-                                            'parentId' => $activity->id,
-                                            'level' => 1,
-                                        ])
-                                    @endif
-                                @empty
-                                    <tr>
-                                        <td colspan="9" class="text-center py-5">
-                                            <div class="empty-state">
-                                                <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
-                                                <h5 class="text-muted">No hay actividades registradas</h5>
-                                                <p class="text-muted">Comienza creando tu primera actividad</p>
-                                                <a href="{{ route('activities.create') }}" class="btn btn-primary">
-                                                    <i class="fas fa-plus"></i> Crear Primera Actividad
-                                                </a>
                                             </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const topScroll = document.getElementById('top-scroll');
-                        const tableScroll = document.getElementById('main-table-scroll');
+                                        @else
+                                            <span class="text-muted">
+                                                <i class="fas fa-calendar-times"></i> No asignada
+                                            </span>
+                                        @endif
+                                    </td>
 
-                        // Sincroniza scroll horizontal SIEMPRE
-                        if (topScroll && tableScroll) {
-                            topScroll.addEventListener('scroll', function() {
-                                tableScroll.scrollLeft = topScroll.scrollLeft;
-                            });
-                            tableScroll.addEventListener('scroll', function() {
-                                topScroll.scrollLeft = tableScroll.scrollLeft;
-                            });
-                        }
-                    });
-                </script>
-            </div>
-        </div>
-
-        <!-- Modal para Editar Estados -->
-        <div class="modal fade" id="statusEditModal" tabindex="-1" role="dialog"
-            aria-labelledby="statusEditModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="statusEditModalLabel">
-                            <i class="fas fa-edit"></i> Editar Estados de Actividad
-                        </h5>
-                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6 class="font-weight-bold mb-3">
-                                    <i class="fas fa-info-circle text-primary"></i> Información de la Actividad
-                                </h6>
-                                <div class="activity-info">
-                                    <p><strong>Caso:</strong> <span id="modalActivityCaso"></span></p>
-                                    <p><strong>Nombre:</strong> <span id="modalActivityNombre"></span></p>
-                                    <p><strong>Estados Actuales:</strong></p>
-                                    <div id="modalCurrentStatuses" class="mb-3"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="font-weight-bold mb-3">
-                                    <i class="fas fa-tasks text-primary"></i> Seleccionar Estados
-                                </h6>
-                                <div class="status-checkboxes" style="max-height: 400px; overflow-y: auto;">
-                                    @foreach ($statuses as $status)
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input status-checkbox" type="checkbox"
-                                                value="{{ $status->id }}" data-status-name="{{ $status->name }}"
-                                                id="status_{{ $status->id }}">
-                                            <label class="form-check-label d-flex align-items-center"
-                                                for="status_{{ $status->id }}">
-                                                <span class="badge badge-pill mr-2"
-                                                    style="background-color: {{ $status->color }}; color: white;">
-                                                    <i class="fas fa-{{ $status->icon }}"></i> {{ $status->label }}
-                                                </span>
-                                            </label>
+                                </tr>
+                                {{-- Mostrar subactividades (inicialmente ocultas) --}}
+                                @if ($activity->subactivities->count() > 0)
+                                    @include('activities.partials.subactivities', [
+                                        'subactivities' => $activity->subactivities,
+                                        'parentId' => $activity->id,
+                                        'level' => 1,
+                                    ])
+                                @endif
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="text-center py-5">
+                                        <div class="empty-state">
+                                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                                            <h5 class="text-muted">No hay actividades registradas</h5>
+                                            <p class="text-muted">Comienza creando tu primera actividad</p>
+                                            <a href="{{ route('activities.create') }}" class="btn btn-primary">
+                                                <i class="fas fa-plus"></i> Crear Primera Actividad
+                                            </a>
                                         </div>
-                                    @endforeach
-                                </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const topScroll = document.getElementById('top-scroll');
+                    const tableScroll = document.getElementById('main-table-scroll');
+
+                    // Sincroniza scroll horizontal SIEMPRE
+                    if (topScroll && tableScroll) {
+                        topScroll.addEventListener('scroll', function() {
+                            tableScroll.scrollLeft = topScroll.scrollLeft;
+                        });
+                        tableScroll.addEventListener('scroll', function() {
+                            topScroll.scrollLeft = tableScroll.scrollLeft;
+                        });
+                    }
+                });
+            </script>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Estados -->
+    <div class="modal fade" id="statusEditModal" tabindex="-1" role="dialog" aria-labelledby="statusEditModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="statusEditModalLabel">
+                        <i class="fas fa-edit"></i> Editar Estados de Actividad
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold mb-3">
+                                <i class="fas fa-info-circle text-primary"></i> Información de la Actividad
+                            </h6>
+                            <div class="activity-info">
+                                <p><strong>Caso:</strong> <span id="modalActivityCaso"></span></p>
+                                <p><strong>Nombre:</strong> <span id="modalActivityNombre"></span></p>
+                                <p><strong>Estados Actuales:</strong></p>
+                                <div id="modalCurrentStatuses" class="mb-3"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="font-weight-bold mb-3">
+                                <i class="fas fa-tasks text-primary"></i> Seleccionar Estados
+                            </h6>
+                            <div class="status-checkboxes" style="max-height: 400px; overflow-y: auto;">
+                                @foreach ($statuses as $status)
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input status-checkbox" type="checkbox"
+                                            value="{{ $status->id }}" data-status-name="{{ $status->name }}"
+                                            id="status_{{ $status->id }}">
+                                        <label class="form-check-label d-flex align-items-center"
+                                            for="status_{{ $status->id }}">
+                                            <span class="badge badge-pill mr-2"
+                                                style="background-color: {{ $status->color }}; color: white;">
+                                                <i class="fas fa-{{ $status->icon }}"></i> {{ $status->label }}
+                                            </span>
+                                        </label>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                        <button type="button" class="btn btn-primary" id="saveStatusChanges">
-                            <i class="fas fa-save"></i> Guardar Cambios
-                        </button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveStatusChanges">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- Modal para Editar Analistas -->

@@ -16,6 +16,9 @@ use App\Exports\ActivitiesExport;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Requirement; // Asegúrate de importar el modelo Requirement
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory;
+
 
 
 class ActivityController extends Controller
@@ -1288,5 +1291,122 @@ class ActivityController extends Controller
             new ActivitiesExport($ordered, $request->get('status')),
             'actividades.xlsx'
         );
+    }
+
+    public function exportWord(Request $request)
+    {
+        // Copia la lógica de filtrado EXACTA del método export()
+        $statusFilter = $request->get('status_column') ?: $request->get('status');
+        if (is_string($statusFilter) && str_contains($statusFilter, ',')) {
+            $statusFilter = explode(',', $statusFilter);
+        }
+        $analistaFilter = $request->get('analista_column') ?: $request->get('analista_id');
+        if (is_string($analistaFilter) && str_contains($analistaFilter, ',')) {
+            $analistaFilter = explode(',', $analistaFilter);
+        }
+        $fechaDesde = $request->get('fecha_desde_column') ?: $request->get('fecha_desde');
+        $fechaHasta = $request->get('fecha_hasta_column') ?: $request->get('fecha_hasta');
+
+        $filteredActivities = Activity::with(['statuses', 'analistas'])
+            ->when($request->get('query'), function ($queryBuilder, $query) {
+                $queryBuilder->where(function ($q) use ($query) {
+                    $q->where('name', 'LIKE', "%{$query}%")
+                        ->orWhere('description', 'LIKE', "%{$query}%")
+                        ->orWhere('caso', 'LIKE', "%{$query}%")
+                        ->orWhere('status', 'LIKE', "%{$query}%")
+                        ->orWhere('fecha_recepcion', 'LIKE', "%{$query}%")
+                        ->orWhereHas('analistas', function ($subQ) use ($query) {
+                            $subQ->where('name', 'LIKE', "%{$query}%");
+                        })
+                        ->orWhereHas('statuses', function ($subQ) use ($query) {
+                            $subQ->where('name', 'LIKE', "%{$query}%")
+                                ->orWhere('label', 'LIKE', "%{$query}%");
+                        });
+                });
+            })
+            // Filtro por estado: si tiene estados en la relación, filtra por la relación; si no, por el campo antiguo
+            ->when($statusFilter, function ($query) use ($statusFilter) {
+                $query->where(function ($q) use ($statusFilter) {
+                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                        if (is_array($statusFilter)) {
+                            $subQ->whereIn('name', $statusFilter);
+                        } else {
+                            $subQ->where('name', $statusFilter);
+                        }
+                    })
+                        ->orWhere(function ($subQ) use ($statusFilter) {
+                            $subQ->whereDoesntHave('statuses')
+                                ->where(function ($subQ2) use ($statusFilter) {
+                                    if (is_array($statusFilter)) {
+                                        $subQ2->whereIn('status', $statusFilter);
+                                    } else {
+                                        $subQ2->where('status', $statusFilter);
+                                    }
+                                });
+                        });
+                });
+            })
+            // Filtro por analista (usando $analistaFilter procesado)
+            ->when($analistaFilter, function ($query) use ($analistaFilter) {
+                $query->whereHas('analistas', function ($q) use ($analistaFilter) {
+                    $q->whereIn('analistas.id', (array)$analistaFilter);
+                });
+            })
+            // Filtro por fecha desde (usando $fechaDesde procesado)
+            ->when($fechaDesde, function ($query) use ($fechaDesde) {
+                $query->where('fecha_recepcion', '>=', $fechaDesde);
+            })
+            // Filtro por fecha hasta (usando $fechaHasta procesado)
+            ->when($fechaHasta, function ($query) use ($fechaHasta) {
+                $query->where('fecha_recepcion', '<=', $fechaHasta);
+            })
+            // Filtro por caso
+            ->when($request->get('caso'), function ($query, $caso) {
+                $query->where('caso', 'LIKE', "%{$caso}%");
+            })
+            ->get();
+
+        // Ordena igual que en export
+        $ordered = $filteredActivities->sortBy([
+            ['parent_id', 'asc'],
+            ['id', 'asc'],
+        ])->values();
+
+        // Crear el documento Word
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+
+        foreach ($ordered as $activity) {
+            $estados = $activity->statuses->count()
+                ? $activity->statuses->map(function ($status) {
+                    return $status->label ?: $status->name;
+                })->implode(', ')
+                : ($activity->status_label ?? $activity->status ?? '');
+
+            $analistas = $activity->analistas->pluck('name')->implode(', ');
+
+            /* $section->addText("ID: " . $activity->id); */
+            /* $section->addText("Caso:" . ($activity->caso ?? '')); */
+            /* $section->addText("Nombre:" . ($activity->name ?? '')); */
+            $section->addText(($activity->caso ?? '') . ' ' . ($activity->name ?? '')); /* Esta linea concatena Caso y Nombre */
+            /* $section->addText("Descripción: " . ($activity->description ?? '')); */
+            $section->addText("Estatus Operacional: " . ($activity->estatus_operacional ?? ''));
+            /* $section->addText("Fecha Recepción: " . ($activity->fecha_recepcion ?? '')); */
+            /* $section->addText("Prioridad: " . ($activity->prioridad ?? '')); */
+            /* $section->addText("Orden Analista: " . ($activity->orden_analista ?? '')); */
+            $section->addText("Estado: " . $estados);
+            $section->addText("Analista: " . $analistas);
+
+            // Línea separadora entre actividades
+            $section->addText(str_repeat('-', 40));
+            $section->addTextBreak(1);
+        }
+
+        // Descargar el archivo
+        $fileName = 'actividades_' . date('Ymd_His') . '.docx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'word');
+        $phpWord->save($tempFile, 'Word2007');
+
+        return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
     }
 }
