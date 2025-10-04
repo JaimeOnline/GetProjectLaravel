@@ -718,9 +718,9 @@ class ActivityController extends Controller
             'analista_id' => 'required|array|min:1',
             'analista_id.*' => 'exists:analistas,id',
             'requirements' => 'nullable|array',
-            'requirements.*' => 'nullable|string|max:1000',
+            'requirements.*' => 'nullable|string|max:10000',
             'comments' => 'nullable|array',
-            'comments.*' => 'nullable|string|max:1000',
+            'comments.*' => 'nullable|string|max:10000',
             'fecha_recepcion' => 'nullable|date',
             'parent_id' => 'nullable|exists:activities,id',
             'description' => 'nullable|string|max:1000',
@@ -897,7 +897,7 @@ class ActivityController extends Controller
     {
         $request->validate([
             'comments' => 'nullable|array',
-            'comments.*' => 'nullable|string|max:1000',
+            'comments.*' => 'nullable|string|max:10000',
         ]);
 
         // Agregar nuevos comentarios (no eliminar los existentes para mantener el historial)
