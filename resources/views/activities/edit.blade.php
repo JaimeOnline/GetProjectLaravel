@@ -146,7 +146,7 @@
                                     <span class="text-danger">*</span>
                                 </label>
                                 <input type="number" class="form-control" id="prioridad" name="prioridad"
-                                    value="{{ $activity->prioridad ?? 1 }}" min="1" required>
+                                    value="{{ old('prioridad', $activity->prioridad) }}" min="1" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="orden_analista">
@@ -154,7 +154,8 @@
                                     <span class="text-danger">*</span>
                                 </label>
                                 <input type="number" class="form-control" id="orden_analista" name="orden_analista"
-                                    value="{{ $activity->orden_analista ?? 1 }}" min="1" required>
+                                    value="{{ old('orden_analista', $activity->orden_analista) }}" min="1"
+                                    required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="proyecto_id">

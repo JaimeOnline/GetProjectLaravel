@@ -647,7 +647,12 @@ class ActivityController extends Controller
 
     public function update(Request $request, Activity $activity)
     {
-        /* dd($request->all()); */ /* esta linea es para ver que está enniando */
+        // Log para depuración: Verifica que los campos lleguen correctamente
+        Log::info('REQUEST UPDATE ACTIVITY', [
+            'prioridad' => $request->input('prioridad'),
+            'orden_analista' => $request->input('orden_analista'),
+            'all' => $request->all()
+        ]);
 
         Log::info('UPDATE AJAX', [
             'is_ajax' => $request->ajax(),
@@ -655,8 +660,8 @@ class ActivityController extends Controller
             'analista_id' => $request->input('analista_id'),
             'all' => $request->all()
         ]);
-        // Si solo se está actualizando analistas desde el modal
-        if ($request->has('analista_id') && !$request->has('categoria')) {
+        // Si solo se está actualizando analistas desde el modal AJAX (NO desde el formulario principal)
+        if (($request->ajax() || $request->wantsJson()) && $request->has('analista_id') && !$request->has('categoria')) {
             try {
                 $request->validate([
                     'analista_id' => 'required|array|min:1',
@@ -723,14 +728,14 @@ class ActivityController extends Controller
             'comments.*' => 'nullable|string|max:10000',
             'fecha_recepcion' => 'nullable|date',
             'parent_id' => 'nullable|exists:activities,id',
-            'description' => 'nullable|string|max:1000',
+            'description' => 'nullable|string|max:10000',
             'estatus_operacional' => 'nullable|string|max:1000',
             'prioridad' => 'required|integer|min:1',
             'orden_analista' => 'required|integer|min:1',
             'cliente_id' => 'required|exists:clientes,id',
             'tipo_producto_id' => 'nullable|exists:tipos_productos,id',
             'proyecto_id' => 'nullable|exists:proyectos,id',
-            'categoria' => 'required|array|min:1',
+            'categoria' => 'nullable|array',
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
         ];
 
@@ -763,13 +768,30 @@ class ActivityController extends Controller
             $activity->cliente_id = $request->input('cliente_id');
             $activity->tipo_producto_id = $request->input('tipo_producto_id');
             $activity->proyecto_id = $request->input('proyecto_id');
+
+            // Log para verificar antes de guardar
+            Log::info('ANTES DE GUARDAR ACTIVITY', [
+                'prioridad' => $activity->prioridad,
+                'orden_analista' => $activity->orden_analista
+            ]);
+
             $activity->save();
+
+            // Log para verificar después de guardar
+            Log::info('DESPUES DE GUARDAR ACTIVITY', [
+                'prioridad' => $activity->prioridad,
+                'orden_analista' => $activity->orden_analista
+            ]);
 
             // Sincronizar categorías seleccionadas
             // Guardar categorías seleccionadas
-            Log::info('Antes de guardar categorías', ['data' => $request->input('categoria', [])]);
+            $categorias = $request->input('categoria');
+            if (!$categorias || count(array_filter($categorias)) === 0) {
+                $categorias = $request->has('proyecto_id') && $request->input('proyecto_id') ? ['proyecto'] : ['incidencia'];
+            }
+            Log::info('Antes de guardar categorías', ['data' => $categorias]);
             \DB::table('activity_categoria')->where('activity_id', $activity->id)->delete();
-            foreach ($request->input('categoria', []) as $cat) {
+            foreach ($categorias as $cat) {
                 \DB::table('activity_categoria')->insert([
                     'activity_id' => $activity->id,
                     'categoria' => $cat,
