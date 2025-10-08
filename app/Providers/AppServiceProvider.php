@@ -17,8 +17,16 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot()
     {
-        //
+        // Forzar HTTPS si la petición es a ngrok, localtunnel o cloudflare tunnel
+        $host = request()->getHost();
+        if ($host && (
+            str_contains($host, 'ngrok-free.dev') ||
+            str_contains($host, 'loca.lt') ||
+            str_contains($host, 'trycloudflare.com')
+        )) {
+            \URL::forceScheme('https');
+        }
     }
 }
