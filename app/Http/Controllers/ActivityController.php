@@ -295,17 +295,11 @@ class ActivityController extends Controller
 
 
     /**
-     * Búsqueda AJAX en tiempo real
+     * Búsqueda AJAX en tiempo real (devuelve el partial Blade)
      */
     public function search(Request $request)
     {
         $query = $request->get('query', '');
-
-        // Log para debug
-        Log::info('Search request', [
-            'query' => $query,
-            'all_params' => $request->all()
-        ]);
 
         // Construir la consulta base
         $activitiesQuery = Activity::with([
@@ -353,17 +347,15 @@ class ActivityController extends Controller
 
         // Aplicar filtros directamente desde los parámetros de consulta
         if ($request->has('status') && !empty($request->get('status'))) {
-            // Soporte para filtro por múltiples estados
             $statusFilter = $request->get('status');
             if (is_array($statusFilter)) {
                 $activitiesQuery->whereHas('statuses', function ($q) use ($statusFilter) {
                     $q->whereIn('name', $statusFilter);
                 });
             } else {
-                // Mantener compatibilidad con filtro único
                 $activitiesQuery->whereHas('statuses', function ($q) use ($statusFilter) {
                     $q->where('name', $statusFilter);
-                })->orWhere('status', $statusFilter); // Fallback al campo antiguo
+                })->orWhere('status', $statusFilter);
             }
         }
 
@@ -388,39 +380,38 @@ class ActivityController extends Controller
         // Obtener resultados
         $activities = $activitiesQuery->get();
 
-        // También buscar en subactividades si hay query de texto
-        $subactivities = collect();
-        if (!empty($query)) {
-            $subactivitiesQuery = Activity::whereNotNull('parent_id')
-                ->with(['analistas', 'comments', 'emails', 'parent'])
-                ->where(function ($q) use ($query) {
-                    $q->where('name', 'LIKE', "%{$query}%")
-                        ->orWhere('description', 'LIKE', "%{$query}%")
-                        ->orWhere('caso', 'LIKE', "%{$query}%")
-                        ->orWhere('status', 'LIKE', "%{$query}%")
-                        ->orWhere('fecha_recepcion', 'LIKE', "%{$query}%")
-                        ->orWhereHas('analistas', function ($subQ) use ($query) {
-                            $subQ->where('name', 'LIKE', "%{$query}%");
-                        })
-                        ->orWhereHas('comments', function ($subQ) use ($query) {
-                            $subQ->where('comment', 'LIKE', "%{$query}%");
-                        })
-                        ->orWhereHas('emails', function ($subQ) use ($query) {
-                            $subQ->where('subject', 'LIKE', "%{$query}%")
-                                ->orWhere('content', 'LIKE', "%{$query}%");
-                        });
-                });
+        // Variables necesarias para el partial
+        $analistas = Analista::all();
+        $statusLabels = [
+            'no_iniciada' => 'No Iniciada',
+            'en_ejecucion' => 'En Ejecución',
+            'en_espera_de_insumos' => 'En Espera de Insumos',
+            'en_certificacion_por_cliente' => 'En Certificación',
+            'pases_enviados' => 'Pases Enviados',
+            'culminada' => 'Culminada',
+            'pausada' => 'Pausada',
+            'reiterar' => 'Reiterar',
+            'atendiendo_hoy' => 'Atendiendo hoy'
+        ];
+        $statusColors = [
+            'no_iniciada' => '#6c757d',
+            'en_ejecucion' => '#17a2b8',
+            'en_espera_de_insumos' => '#ffc107',
+            'en_certificacion_por_cliente' => '#fd7e14',
+            'pases_enviados' => '#20c997',
+            'culminada' => '#28a745',
+            'pausada' => '#343a40',
+            'reiterar' => '#ff5722',
+            'atendiendo_hoy' => '#007bff'
+        ];
 
-            $subactivities = $subactivitiesQuery->get();
-        }
-
-        return response()->json([
+        // Renderiza el partial y lo devuelve como HTML
+        return response()->view('activities.partials.activity_table', [
             'activities' => $activities,
-            'subactivities' => $subactivities,
-            'total_results' => $activities->count() + $subactivities->count()
-        ])->header('Access-Control-Allow-Origin', '*')
-            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN');
+            'statusLabels' => $statusLabels,
+            'statusColors' => $statusColors,
+            'analistas' => $analistas,
+        ]);
     }
     public function create(Request $request)
     {

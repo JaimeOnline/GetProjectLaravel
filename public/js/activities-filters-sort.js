@@ -1185,15 +1185,33 @@ document.addEventListener('DOMContentLoaded', function () {
             url: '/activities/search',
             method: 'GET',
             data: data,
-            dataType: 'json',
+            dataType: 'html', // Esperamos HTML, no JSON
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            success: function (data) {
-                displaySearchResults(data, query);
+            success: function (html) {
+                // Reemplaza el contenido del contenedor de la tabla con el HTML del partial
+                $('#tableContainer').html(html);
+
+                // Re-inicializa los botones de edición de analistas
+                initEditAnalystsButtons();
+
+                // Re-inicializa la edición en línea de prioridad y orden
+                initInlineEdit();
+
+                // Re-inicializa los filtros de columna y sortables
+                initColumnFiltersAndSort();
+
+                // Re-inicializa la expansión/colapso de subactividades
+                initExpandCollapseSubactivities();
+
                 searchSpinner.style.display = 'none';
             },
+
+
+
+
             error: function () {
                 searchSpinner.style.display = 'none';
                 showErrorMessage('Error al realizar la búsqueda. Inténtalo de nuevo.');
@@ -1201,100 +1219,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function displaySearchResults(data, query) {
-        resultsNumber.textContent = data.total_results;
-        searchResultsCount.style.display = 'inline-block';
-
-        if (data.total_results > 0) {
-            searchResultsText.textContent = `Se encontraron ${data.total_results} resultado(s) para "${query}"`;
-            searchResultsAlert.style.display = 'block';
-            tableTitle.textContent = `Resultados de búsqueda (${data.total_results})`;
-        } else {
-            searchResultsText.textContent = `No se encontraron resultados para "${query}"`;
-            searchResultsAlert.style.display = 'block';
-            tableTitle.textContent = 'Sin resultados';
-        }
-
-        // Renderizar resultados en la tabla (estructura igual al index)
-        let html = `
-            <table class="table table-hover mb-0 modern-table">
-                <thead class="thead-light">
-                    <tr>
-                        <th class="border-0" style="position: relative;">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="sortable" data-sort="caso" style="cursor: pointer;">
-                                    <i class="fas fa-hashtag text-primary"></i> Caso
-                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                </div>
-                            </div>
-                        </th>
-                        <th class="border-0" style="position: relative;">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-file-alt text-primary"></i> Nombre
-                            </div>
-                        </th>
-                        <th class="border-0 sortable" data-sort="prioridad" style="cursor: pointer;">
-                            <i class="fas fa-arrow-up text-primary"></i> Prioridad
-                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                        </th>
-                        <th class="border-0 sortable" data-sort="orden_analista" style="cursor: pointer;">
-                            <i class="fas fa-sort-numeric-up text-primary"></i> Orden
-                            <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                        </th>
-                        <th class="border-0">
-                            <i class="fas fa-align-left text-primary"></i> Descripción
-                        </th>
-                        <th class="border-0" style="position: relative;">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="sortable" data-sort="status" style="cursor: pointer;">
-                                    <i class="fas fa-flag text-primary"></i> Estado
-                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                </div>
-                            </div>
-                        </th>
-                        <th class="border-0" style="position: relative;">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="sortable" data-sort="analistas" style="cursor: pointer;">
-                                    <i class="fas fa-users text-primary"></i> Analistas
-                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                </div>
-                            </div>
-                        </th>
-                        <th class="border-0">
-                            <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
-                        </th>
-                        <th class="border-0" style="position: relative;">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="sortable" data-sort="fecha_recepcion" style="cursor: pointer;">
-                                    <i class="fas fa-calendar text-primary"></i> Fecha
-                                    <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                </div>
-                            </div>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        // Renderizar actividades principales
-        data.activities.forEach(activity => {
-            html += renderActivityRow(activity);
-        });
-
-        // Renderizar subactividades (si las hay)
-        if (data.subactivities && data.subactivities.length > 0) {
-            data.subactivities.forEach(subactivity => {
-                html += renderActivityRow(subactivity, true);
-            });
-        }
-
-        html += `
-                </tbody>
-            </table>
-        `;
-
-        document.getElementById('tableContainer').innerHTML = html;
-    }
 
     // Renderiza una fila de actividad (estructura igual al index)
     function renderActivityRow(activity, isSub = false) {
@@ -1452,13 +1376,250 @@ document.addEventListener('DOMContentLoaded', function () {
         isSearchActive = false;
         // Vuelve a aplicar filtros locales si quieres
         applyFilters();
+
+        // Re-inicializa los filtros de columna y sortables
+        initColumnFiltersAndSort();
+
+        // Re-inicializa la edición en línea de prioridad y orden
+        initInlineEdit();
+
+        // Re-inicializa los botones de edición de analistas
+        initEditAnalystsButtons();
+
+        // Re-inicializa la expansión/colapso de subactividades
+        initExpandCollapseSubactivities();
     }
+
+
 
     // Puedes agregar eventos para limpiar búsqueda con el botón o ESC
     const clearSearchBtn = document.getElementById('clearSearch');
     if (clearSearchBtn) clearSearchBtn.addEventListener('click', clearSearch);
 
+    // Función para inicializar la edición en línea de prioridad y orden
+    function initInlineEdit() {
+        document.querySelectorAll('.editable-cell .editable-value').forEach(function (span) {
+            span.onclick = function () {
+                const cell = span.closest('.editable-cell');
+                const input = cell.querySelector('.editable-input');
+                span.style.display = 'none';
+                input.style.display = 'inline-block';
+                input.focus();
+                input.select();
+            };
+        });
+
+        document.querySelectorAll('.editable-cell .editable-input').forEach(function (input) {
+            input.onblur = saveInlineEdit;
+            input.onkeydown = function (e) {
+                if (e.key === 'Enter') {
+                    saveInlineEdit.call(input, e);
+                }
+            };
+        });
+
+        function saveInlineEdit(e) {
+            const input = this;
+            const cell = input.closest('.editable-cell');
+            const span = cell.querySelector('.editable-value');
+            const activityId = cell.getAttribute('data-activity-id');
+            const field = cell.getAttribute('data-field');
+            const value = input.value;
+
+            fetch(`/activities/${activityId}/inline-update`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    field,
+                    value
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        span.textContent = value;
+                    } else {
+                        alert('Error al actualizar');
+                    }
+                    input.style.display = 'none';
+                    span.style.display = 'inline-block';
+                })
+                .catch(() => {
+                    alert('Error al actualizar');
+                    input.style.display = 'none';
+                    span.style.display = 'inline-block';
+                });
+        }
+    }
+
+    // Inicializar al cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+        initEditAnalystsButtons();
+        initInlineEdit();
+        initColumnFiltersAndSort();
+        initExpandCollapseSubactivities();
+    });
+
+    // Función para inicializar la expansión/colapso de subactividades
+    function initExpandCollapseSubactivities() {
+        // Botón de expandir/colapsar todas las subactividades (en el header)
+        const toggleAllBtn = document.getElementById('toggleAllSubactivitiesBtn');
+        const toggleAllIcon = document.getElementById('toggleAllSubactivitiesIcon');
+        let allExpanded = false;
+
+        if (toggleAllBtn) {
+            toggleAllBtn.onclick = function () {
+                const tableBody = document.querySelector('#main-activities-table tbody');
+                if (!tableBody) return;
+
+                // Todas las filas de subactividad
+                const subRows = tableBody.querySelectorAll('tr.subactivity-row');
+                // Todos los toggles de actividades padre
+                const toggles = tableBody.querySelectorAll('.toggle-subactivities');
+
+                if (!allExpanded) {
+                    // Expandir todas
+                    subRows.forEach(row => row.style.display = 'table-row');
+                    toggles.forEach(toggle => {
+                        toggle.classList.add('expanded');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-right');
+                            icon.classList.add('fa-chevron-down');
+                        }
+                    });
+                    if (toggleAllIcon) {
+                        toggleAllIcon.classList.remove('fa-chevron-down');
+                        toggleAllIcon.classList.add('fa-chevron-up');
+                    }
+                    allExpanded = true;
+                } else {
+                    // Colapsar todas
+                    subRows.forEach(row => row.style.display = 'none');
+                    toggles.forEach(toggle => {
+                        toggle.classList.remove('expanded');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-down');
+                            icon.classList.add('fa-chevron-right');
+                        }
+                    });
+                    if (toggleAllIcon) {
+                        toggleAllIcon.classList.remove('fa-chevron-up');
+                        toggleAllIcon.classList.add('fa-chevron-down');
+                    }
+                    allExpanded = false;
+                }
+            };
+        }
+
+        // Toggle subactividades usando event delegation sobre el tbody
+        const tableBody = document.querySelector('#main-activities-table tbody');
+        if (tableBody) {
+            tableBody.onclick = function (e) {
+                // Asegura que el click fue en el toggle o en su icono
+                let btn = e.target;
+                if (!btn.classList.contains('toggle-subactivities')) {
+                    btn = btn.closest('.toggle-subactivities');
+                }
+                if (!btn) return;
+
+                // El id de la actividad está en el data-activity-id del span
+                const parentId = btn.getAttribute('data-activity-id');
+                if (!parentId) {
+                    return;
+                }
+                const icon = btn.querySelector('i');
+                const subRows = tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`);
+
+                const isExpanded = btn.classList.contains('expanded');
+                if (!isExpanded) {
+                    btn.classList.add('expanded');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-right');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                    // Mostrar subactividades directas
+                    subRows.forEach(row => {
+                        row.style.display = 'table-row';
+                    });
+                } else {
+                    btn.classList.remove('expanded');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-right');
+                    }
+                    // Ocultar subactividades directas y sus descendientes recursivamente
+                    function hideSubtree(parentId) {
+                        tableBody.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`).forEach(row => {
+                            row.style.display = 'none';
+                            // Si la subactividad tiene su propio toggle expandido, colapsar también
+                            const subBtn = row.querySelector('.toggle-subactivities.expanded');
+                            if (subBtn) {
+                                subBtn.classList.remove('expanded');
+                                const subIcon = subBtn.querySelector('i');
+                                if (subIcon) {
+                                    subIcon.classList.remove('fa-chevron-down');
+                                    subIcon.classList.add('fa-chevron-right');
+                                }
+                            }
+                            hideSubtree(row.getAttribute('data-activity-id'));
+                        });
+                    }
+                    hideSubtree(parentId);
+                }
+            };
+        }
+    }
+
+    // Función para inicializar filtros de columna y sortables
+    function initColumnFiltersAndSort() {
+        setupSortHandlersForAllTables && setupSortHandlersForAllTables();
+        setupColumnFilters && setupColumnFilters();
+    }
+
+    // Función para inicializar los botones de edición de analistas (llámala tras cada búsqueda)
+    function initEditAnalystsButtons() {
+        document.querySelectorAll('.edit-analysts-btn').forEach(function (btn) {
+            // Evita duplicar listeners
+            btn.removeEventListener('click', handleEditAnalystsClick);
+            btn.addEventListener('click', handleEditAnalystsClick);
+        });
+    }
+
+    function handleEditAnalystsClick(event) {
+        var btn = event.currentTarget;
+        var activityId = btn.getAttribute('data-activity-id');
+        var analysts = [];
+        btn.closest('td').querySelectorAll('.badge').forEach(function (badge) {
+            analysts.push(badge.textContent.trim());
+        });
+
+        var select = document.getElementById('modalAnalystsSelect');
+        for (var i = 0; i < select.options.length; i++) {
+            select.options[i].selected = false;
+            if (analysts.includes(select.options[i].text.trim())) {
+                select.options[i].selected = true;
+            }
+        }
+
+        var form = document.getElementById('analystsEditForm');
+        form.action = '/activities/' + activityId;
+        document.getElementById('modalAnalystsActivityId').value = activityId;
+
+        $('#analystsEditModal').modal('show');
+    }
+
+    // Inicializar al cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+        initEditAnalystsButtons();
+    });
+
     document.addEventListener('keydown', function (e) {
+
         // Ctrl+K o Ctrl+F: enfocar el input de búsqueda
         if ((e.ctrlKey && (e.key === 'k' || e.key === 'K' || e.key === 'f' || e.key === 'F'))) {
             if (searchInput) {
