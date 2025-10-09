@@ -14,6 +14,7 @@ Route::get('/activities/export', [ActivityController::class, 'export'])->name('a
 Route::get('activities/excel-template', [ActivityController::class, 'downloadExcelTemplate'])->name('activities.excelTemplate');
 Route::post('activities/import-excel', [ActivityController::class, 'importExcel'])->name('activities.importExcel');
 Route::get('/activities/export-word', [ActivityController::class, 'exportWord'])->name('activities.exportWord');
+Route::put('activities/{activity}/analysts', [ActivityController::class, 'updateAnalysts'])->name('activities.updateAnalysts');
 Route::resource('activities', ActivityController::class);
 
 

@@ -1435,3 +1435,9 @@ select.form-control option:hover {
     text-decoration: none;
     font-weight: 500;
 }
+
+/* Mostrar el botón de editar analistas solo al hacer hover sobre la fila */
+.activity-row:hover .analysts-edit-btn-group,
+.subactivity-row:hover .analysts-edit-btn-group {
+    display: inline-block !important;
+}

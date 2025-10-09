@@ -553,8 +553,9 @@
                                 @foreach ($statuses as $status)
                                     <div class="form-check mb-2">
                                         <input class="form-check-input status-checkbox" type="checkbox"
-                                            value="{{ $status->id }}" data-status-name="{{ $status->name }}"
-                                            id="status_{{ $status->id }}">
+                                            name="status_ids[]" value="{{ $status->id }}"
+                                            data-status-name="{{ $status->name }}" id="status_{{ $status->id }}">
+
                                         <label class="form-check-label d-flex align-items-center"
                                             for="status_{{ $status->id }}">
                                             <span class="badge badge-pill mr-2"
@@ -1244,7 +1245,7 @@
                 form.action = '/activities/' + activityId;
                 document.getElementById('modalAnalystsActivityId').value = activityId;
 
-                // Muestra el modal
+                // Muestra el modal de analistas
                 $('#analystsEditModal').modal('show');
             });
         });
@@ -1303,5 +1304,29 @@
                     alert('Error al actualizar analistas');
                 });
         });
+    });
+
+    // Delegación de eventos para el modal de estados (funciona siempre, incluso tras recarga de tabla)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-status-btn')) {
+            e.preventDefault();
+            var btn = e.target.closest('.edit-status-btn');
+            var data = btn.getAttribute('data-current-statuses');
+            var currentStatuses = [];
+            if (data) {
+                currentStatuses = data.split(',').map(function(id) {
+                    return id.trim();
+                });
+            }
+            $('#statusEditModal').off('shown.bs.modal').on('shown.bs.modal', function() {
+                $('#statusEditModal input[type="checkbox"][name="status_ids[]"]').prop('checked',
+                false);
+                currentStatuses.forEach(function(id) {
+                    $('#statusEditModal input[type="checkbox"][name="status_ids[]"][value="' +
+                        id + '"]').prop('checked', true);
+                });
+            });
+            $('#statusEditModal').modal('show');
+        }
     });
 </script>

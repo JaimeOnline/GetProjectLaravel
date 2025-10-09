@@ -1149,6 +1149,31 @@ class ActivityController extends Controller
     }
 
     /**
+     * Editar solo analista en la tabla subactividades
+     */
+    public function updateAnalysts(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'analista_id' => 'required|array|min:1',
+            'analista_id.*' => 'exists:analistas,id',
+        ]);
+
+        $activity->analistas()->sync($request->analista_id);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $analistas = $activity->analistas()->get(['analistas.id', 'analistas.name']);
+            return response()->json([
+                'success' => true,
+                'analistas' => $analistas
+            ]);
+        }
+
+        return back()->with('success', 'Analistas actualizados correctamente.');
+    }
+
+
+
+    /**
      * Exportar actividades filtradas
      */
     public function export(Request $request)

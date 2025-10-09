@@ -1463,6 +1463,213 @@ document.addEventListener('DOMContentLoaded', function () {
         initExpandCollapseSubactivities();
     });
 
+    /**
+     * Unifica la lógica de expandir/colapsar subactividades para index y edit
+     */
+    function initExpandCollapseSubactivities() {
+        // Para index
+        const toggleAllBtn = document.getElementById('toggleAllSubactivitiesBtn');
+        const toggleAllIcon = document.getElementById('toggleAllSubactivitiesIcon');
+        let allExpanded = false;
+
+        if (toggleAllBtn) {
+            toggleAllBtn.onclick = function () {
+                const tableBody = document.querySelector('#main-activities-table tbody');
+                if (!tableBody) return;
+
+                const subRows = tableBody.querySelectorAll('tr.subactivity-row');
+                const toggles = tableBody.querySelectorAll('.toggle-subactivities');
+
+                if (!allExpanded) {
+                    subRows.forEach(row => row.style.display = 'table-row');
+                    toggles.forEach(toggle => {
+                        toggle.classList.add('expanded');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-right');
+                            icon.classList.add('fa-chevron-down');
+                        }
+                    });
+                    if (toggleAllIcon) {
+                        toggleAllIcon.classList.remove('fa-chevron-down');
+                        toggleAllIcon.classList.add('fa-chevron-up');
+                    }
+                    allExpanded = true;
+                } else {
+                    subRows.forEach(row => row.style.display = 'none');
+                    toggles.forEach(toggle => {
+                        toggle.classList.remove('expanded');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-down');
+                            icon.classList.add('fa-chevron-right');
+                        }
+                    });
+                    if (toggleAllIcon) {
+                        toggleAllIcon.classList.remove('fa-chevron-up');
+                        toggleAllIcon.classList.add('fa-chevron-down');
+                    }
+                    allExpanded = false;
+                }
+            };
+        }
+
+        // Para edit
+        const toggleAllBtnEdit = document.getElementById('toggleAllSubactivitiesBtnEdit');
+        const toggleAllIconEdit = document.getElementById('toggleAllSubactivitiesIconEdit');
+        let allExpandedEdit = false;
+
+        if (toggleAllBtnEdit) {
+            toggleAllBtnEdit.onclick = function () {
+                const tableBody = document.querySelector('#subactivitiesTableContainer table tbody');
+                if (!tableBody) return;
+
+                const subRows = tableBody.querySelectorAll('tr.subactivity-row');
+                const toggles = tableBody.querySelectorAll('.toggle-subactivities');
+
+                if (!allExpandedEdit) {
+                    subRows.forEach(row => row.style.display = 'table-row');
+                    toggles.forEach(toggle => {
+                        toggle.classList.add('expanded');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-right');
+                            icon.classList.add('fa-chevron-down');
+                        }
+                    });
+                    if (toggleAllIconEdit) {
+                        toggleAllIconEdit.classList.remove('fa-chevron-down');
+                        toggleAllIconEdit.classList.add('fa-chevron-up');
+                    }
+                    allExpandedEdit = true;
+                } else {
+                    subRows.forEach(row => {
+                        if (row.classList.contains('level-0')) {
+                            row.style.display = 'table-row';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                    toggles.forEach(toggle => {
+                        toggle.classList.remove('expanded');
+                        const icon = toggle.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-down');
+                            icon.classList.add('fa-chevron-right');
+                        }
+                    });
+                    if (toggleAllIconEdit) {
+                        toggleAllIconEdit.classList.remove('fa-chevron-up');
+                        toggleAllIconEdit.classList.add('fa-chevron-down');
+                    }
+                    allExpandedEdit = false;
+                }
+            };
+        }
+
+        // Toggle individual subactividades (index)
+        const tableBodyIndex = document.querySelector('#main-activities-table tbody');
+        if (tableBodyIndex) {
+            tableBodyIndex.onclick = function (e) {
+                let btn = e.target;
+                if (!btn.classList.contains('toggle-subactivities')) {
+                    btn = btn.closest('.toggle-subactivities');
+                }
+                if (!btn) return;
+
+                const parentId = btn.getAttribute('data-activity-id');
+                if (!parentId) return;
+                const icon = btn.querySelector('i');
+                const subRows = tableBodyIndex.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`);
+
+                const isExpanded = btn.classList.contains('expanded');
+                if (!isExpanded) {
+                    btn.classList.add('expanded');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-right');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                    subRows.forEach(row => {
+                        row.style.display = 'table-row';
+                    });
+                } else {
+                    btn.classList.remove('expanded');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-right');
+                    }
+                    function hideSubtree(parentId) {
+                        tableBodyIndex.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`).forEach(row => {
+                            row.style.display = 'none';
+                            const subBtn = row.querySelector('.toggle-subactivities.expanded');
+                            if (subBtn) {
+                                subBtn.classList.remove('expanded');
+                                const subIcon = subBtn.querySelector('i');
+                                if (subIcon) {
+                                    subIcon.classList.remove('fa-chevron-down');
+                                    subIcon.classList.add('fa-chevron-right');
+                                }
+                            }
+                            hideSubtree(row.getAttribute('data-activity-id'));
+                        });
+                    }
+                    hideSubtree(parentId);
+                }
+            };
+        }
+
+        // Toggle individual subactividades (edit)
+        const tableBodyEdit = document.querySelector('#subactivitiesTableContainer table tbody');
+        if (tableBodyEdit) {
+            tableBodyEdit.onclick = function (e) {
+                let btn = e.target;
+                if (!btn.classList.contains('toggle-subactivities')) {
+                    btn = btn.closest('.toggle-subactivities');
+                }
+                if (!btn) return;
+
+                const parentId = btn.getAttribute('data-activity-id');
+                if (!parentId) return;
+                const icon = btn.querySelector('i');
+                const subRows = tableBodyEdit.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`);
+
+                const isExpanded = btn.classList.contains('expanded');
+                if (!isExpanded) {
+                    btn.classList.add('expanded');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-right');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                    subRows.forEach(row => {
+                        row.style.display = 'table-row';
+                    });
+                } else {
+                    btn.classList.remove('expanded');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-right');
+                    }
+                    function hideSubtree(parentId) {
+                        tableBodyEdit.querySelectorAll(`tr.subactivity-row[data-parent-id="${parentId}"]`).forEach(row => {
+                            row.style.display = 'none';
+                            const subBtn = row.querySelector('.toggle-subactivities.expanded');
+                            if (subBtn) {
+                                subBtn.classList.remove('expanded');
+                                const subIcon = subBtn.querySelector('i');
+                                if (subIcon) {
+                                    subIcon.classList.remove('fa-chevron-down');
+                                    subIcon.classList.add('fa-chevron-right');
+                                }
+                            }
+                            hideSubtree(row.getAttribute('data-activity-id'));
+                        });
+                    }
+                    hideSubtree(parentId);
+                }
+            };
+        }
+    }
+
     // Función para inicializar la expansión/colapso de subactividades
     function initExpandCollapseSubactivities() {
         // Botón de expandir/colapsar todas las subactividades (en el header)
@@ -1607,7 +1814,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         var form = document.getElementById('analystsEditForm');
-        form.action = '/activities/' + activityId;
+        form.action = '/activities/' + activityId + '/analysts';
         document.getElementById('modalAnalystsActivityId').value = activityId;
 
         $('#analystsEditModal').modal('show');

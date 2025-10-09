@@ -291,7 +291,8 @@
                         <div class="status-display">
                             @if ($activity->statuses->count() > 0)
                                 @foreach ($activity->statuses as $status)
-                                    <span class="badge badge-pill mr-1 mb-1"
+                                    <span class="badge badge-pill mr-1 mb-1 status-badge"
+                                        data-status-id="{{ $status->id }}"
                                         style="background-color: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
                                         <i class="{{ $status->icon ?? 'fas fa-circle' }}"></i>
                                         {{ $status->label }}
@@ -320,7 +321,8 @@
                         </div>
                         <div class="status-edit-btn">
                             <button class="btn btn-sm btn-outline-secondary edit-status-btn"
-                                data-activity-id="{{ $activity->id }}" title="Editar estados">
+                                data-activity-id="{{ $activity->id }}" title="Editar estados"
+                                data-current-statuses="{{ $activity->statuses->pluck('id')->implode(',') }}">
                                 <i class="fas fa-edit"></i>
                             </button>
                         </div>

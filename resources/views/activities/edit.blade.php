@@ -352,184 +352,32 @@
                     </div>
                 </form>
 
-                @if ($activity->subactivities->count() > 0)
-                    <a id="subactivities-table"></a>
-                    <div class="card mt-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span>
-                                <i class="fas fa-sitemap text-primary"></i>
-                                Subactividades de <strong>{{ $activity->name }}</strong>
-                            </span>
-
+                <!-- Tabla de actividad principal y subactividades (igual que en index) -->
+                <!-- Tabla de actividad principal y subactividades (igual que en index) -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fas fa-sitemap text-primary"></i>
+                            Actividad y Subactividades de <strong>{{ $activity->name }}</strong>
+                        </span>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Scroll horizontal superior opcional -->
+                        <div id="top-scroll" style="overflow-x: auto; width: 100%;">
+                            <div style="width: 1800px; height: 1px;"></div>
                         </div>
-                        <div class="card-body p-0">
-                            <!-- Scroll horizontal superior opcional -->
-                            <div id="top-scroll" style="overflow-x: auto; width: 100%;">
-                                <div style="width: 1800px; height: 1px;"></div>
-                            </div>
-                            <!-- Contenedor con scroll horizontal siempre visible -->
-                            <div style="overflow-x: auto; max-width: 100vw; border-bottom: 1px solid #ccc;"
-                                id="subactivitiesTableContainer">
-                                <table class="table table-hover mb-0 modern-table">
-                                    <thead class="thead-light">
-                                        <tr>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div class="sortable" data-sort="caso" style="cursor: pointer;">
-                                                        <i class="fas fa-hashtag text-primary"></i> Caso
-                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    </div>
-                                                </div>
-                                            </th>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-file-alt text-primary"></i> Nombre
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary ml-2"
-                                                        id="toggleAllSubactivitiesBtnEdit"
-                                                        title="Expandir/Colapsar todas las subactividades"
-                                                        style="margin-left: 8px; padding: 2px 8px;">
-                                                        <i class="fas fa-chevron-down"
-                                                            id="toggleAllSubactivitiesIconEdit"></i>
-                                                    </button>
-                                                </div>
-                                            </th>
-                                            <th class="border-0 sortable" data-sort="prioridad" style="cursor: pointer;">
-                                                <i class="fas fa-arrow-up text-primary"></i> Prioridad
-                                                <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                <div class="custom-dropdown">
-                                                    <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                        type="button" data-filter="prioridad" style="padding: 2px 6px;">
-                                                        <i class="fas fa-filter"></i>
-                                                    </button>
-                                                    <div class="custom-dropdown-menu" id="prioridad-filter-menu"
-                                                        style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 150px;">
-                                                        <h6 class="dropdown-header"
-                                                            style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                            Filtrar por Prioridad</h6>
-                                                        <div class="px-3 py-2">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input prioridad-filter"
-                                                                    type="checkbox" value="" id="prioridad-all"
-                                                                    checked>
-                                                                <label class="form-check-label"
-                                                                    for="prioridad-all">Todas</label>
-                                                            </div>
-                                                            @for ($i = 1; $i <= 10; $i++)
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input prioridad-filter"
-                                                                        type="checkbox" value="{{ $i }}"
-                                                                        id="prioridad-{{ $i }}">
-                                                                    <label class="form-check-label"
-                                                                        for="prioridad-{{ $i }}">{{ $i }}</label>
-                                                                </div>
-                                                            @endfor
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </th>
-                                            <th class="border-0 sortable" data-sort="orden_analista"
-                                                style="cursor: pointer;">
-                                                <i class="fas fa-sort-numeric-up text-primary"></i> Orden
-                                                <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                <div class="custom-dropdown">
-                                                    <button class="btn btn-sm btn-outline-secondary filter-toggle"
-                                                        type="button" data-filter="orden_analista"
-                                                        style="padding: 2px 6px;">
-                                                        <i class="fas fa-filter"></i>
-                                                    </button>
-                                                    <div class="custom-dropdown-menu" id="orden-filter-menu"
-                                                        style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 120px;">
-                                                        <h6 class="dropdown-header"
-                                                            style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
-                                                            Filtrar por Orden</h6>
-                                                        <div class="px-3 py-2">
-                                                            <div class="form-check">
-                                                                <input class="form-check-input orden-filter"
-                                                                    type="checkbox" value="" id="orden-all"
-                                                                    checked>
-                                                                <label class="form-check-label"
-                                                                    for="orden-all">Todos</label>
-                                                            </div>
-                                                            @for ($i = 1; $i <= 10; $i++)
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input orden-filter"
-                                                                        type="checkbox" value="{{ $i }}"
-                                                                        id="orden-{{ $i }}">
-                                                                    <label class="form-check-label"
-                                                                        for="orden-{{ $i }}">{{ $i }}</label>
-                                                                </div>
-                                                            @endfor
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </th>
-                                            <th class="border-0">
-                                                <i class="fas fa-align-left text-primary"></i> Descripción
-                                            </th>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div class="sortable" data-sort="status" style="cursor: pointer;">
-                                                        <i class="fas fa-flag text-primary"></i> Estado
-                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    </div>
-                                                    <!-- Filtro de Estado -->
-                                                    ...
-                                                </div>
-                                            </th>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div class="sortable" data-sort="analistas" style="cursor: pointer;">
-                                                        <i class="fas fa-users text-primary"></i> Analistas
-                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    </div>
-                                                    <!-- Filtro de Analistas -->
-                                                    ...
-                                                </div>
-                                            </th>
-                                            <th class="border-0">
-                                                <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
-                                            </th>
-                                            <th class="border-0" style="position: relative;">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div class="sortable" data-sort="fecha_recepcion"
-                                                        style="cursor: pointer;">
-                                                        <i class="fas fa-calendar text-primary"></i> Fecha
-                                                        <i class="fas fa-sort sort-icon text-muted ml-1"></i>
-                                                    </div>
-                                                    <!-- Filtro de Fecha -->
-                                                    ...
-                                                </div>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @include('activities.partials.subactivities', [
-                                            'subactivities' => $activity->subactivities,
-                                            'parentId' => $activity->id,
-                                            'level' => 0,
-                                            'editMode' => true,
-                                        ])
-                                    </tbody>
-                                </table>
-                            </div>
-                            <!-- Sincroniza el scroll superior e inferior -->
-                            <script>
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    const topScroll = document.getElementById('top-scroll');
-                                    const tableScroll = document.getElementById('subactivitiesTableContainer');
-                                    if (topScroll && tableScroll) {
-                                        topScroll.addEventListener('scroll', function() {
-                                            tableScroll.scrollLeft = topScroll.scrollLeft;
-                                        });
-                                        tableScroll.addEventListener('scroll', function() {
-                                            topScroll.scrollLeft = tableScroll.scrollLeft;
-                                        });
-                                    }
-                                });
-                            </script>
+                        <!-- Contenedor con scroll horizontal siempre visible -->
+                        <div id="subactivitiesTableContainer">
+                            @include('activities.partials.activity_table', [
+                                'activities' => collect([$activity])->merge($activity->subactivities),
+                                'statusLabels' => $statusLabels,
+                                'statusColors' => $statusColors,
+                                'analistas' => $analistas,
+                                'editMode' => true,
+                            ])
                         </div>
                     </div>
-                @endif
+                </div>
             </div>
 
             <!-- Pestaña: Requerimientos -->
@@ -1034,7 +882,8 @@
                                         name="attachments[]" multiple
                                         accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
                                     <small class="form-text text-muted">
-                                        Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG,
+                                        Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT,
+                                        JPG,
                                         PNG, GIF, ZIP, RAR
                                     </small>
                                 </div>
@@ -1500,6 +1349,7 @@
             <form id="analystsEditForm" method="POST">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="activity_id" id="modalAnalystsActivityId">
                 <input type="hidden" name="redirect_to_edit" value="1">
                 <input type="hidden" name="parent_activity_id" id="parentActivityId" value="{{ $activity->id }}">
                 <div class="modal-content">
@@ -1537,8 +1387,7 @@
 
 @endsection
 
-<script src="{{ asset('js/activities-edit-subactivities.js') }}"></script>
-<script src="{{ asset('js/activities-filters-sort.js') }}"></script>
+<script src="{{ asset('js/activities-filters-sort.js') }}?v={{ time() }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Botón para abrir el modal de analistas (funciona para actividades y subactividades)
@@ -1562,11 +1411,75 @@
 
                 // Cambia la acción del formulario
                 var form = document.getElementById('analystsEditForm');
-                form.action = '/activities/' + activityId;
+                form.action = '/activities/' + activityId + '/analysts';
 
                 // Muestra el modal
                 $('#analystsEditModal').modal('show');
             });
         });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var analystsForm = document.getElementById('analystsEditForm');
+        if (analystsForm) {
+            analystsForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var form = this;
+                var url = form.action;
+                var formData = new FormData(form);
+
+                // Deshabilita el botón para evitar doble submit
+                var submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.disabled = true;
+
+                fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                .content,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Cierra el modal
+                            $('#analystsEditModal').modal('hide');
+                            // Actualiza la tabla de analistas en la fila correspondiente
+                            var activityId = form.action.match(/activities\/(\d+)/)[1];
+                            var row = document.querySelector('tr[data-activity-id="' + activityId +
+                                '"]');
+                            if (row) {
+                                var analystsCell = row.querySelector(
+                                    'td .analysts-list, td .analysts-cell, td .analysts');
+                                if (!analystsCell) {
+                                    // Busca la celda de analistas (ajusta el selector si tu partial cambia)
+                                    analystsCell = row.querySelectorAll('td')[6];
+                                }
+                                if (analystsCell && data.analistas) {
+                                    var html = '';
+                                    data.analistas.forEach(function(a) {
+                                        html +=
+                                            '<span class="badge badge-light mr-1 mb-1"><i class="fas fa-user"></i> ' +
+                                            a.name + '</span>';
+                                    });
+                                    analystsCell.innerHTML = html;
+                                }
+                            }
+                        } else {
+                            alert('Error al actualizar analistas');
+                        }
+                    })
+                    .catch(() => {
+                        alert('Error al actualizar analistas');
+                    })
+                    .finally(() => {
+                        if (submitBtn) submitBtn.disabled = false;
+                    });
+            });
+        }
     });
 </script>
