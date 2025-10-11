@@ -251,6 +251,13 @@
                                 <textarea class="form-control" id="estatus_operacional" name="estatus_operacional" rows="3"
                                     placeholder="Ingrese el estatus operacional de la actividad...">{{ $activity->estatus_operacional }}</textarea>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label" for="basic_comment">
+                                    <i class="fas fa-comment-dots text-primary"></i> Comentario
+                                </label>
+                                <textarea class="form-control" id="basic_comment" name="basic_comment" rows="3"
+                                    placeholder="Agrega un comentario sobre la actividad..."></textarea>
+                            </div>
 
                             <div class="form-group">
                                 <label class="form-label">

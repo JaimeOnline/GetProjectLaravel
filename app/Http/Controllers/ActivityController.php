@@ -717,6 +717,7 @@ class ActivityController extends Controller
             'requirements.*' => 'nullable|string|max:10000',
             'comments' => 'nullable|array',
             'comments.*' => 'nullable|string|max:10000',
+            'basic_comment' => 'nullable|string|max:10000', // Nuevo campo para el comentario de Información Básica
             'fecha_recepcion' => 'nullable|date',
             'parent_id' => 'nullable|exists:activities,id',
             'description' => 'nullable|string|max:10000',
@@ -766,7 +767,26 @@ class ActivityController extends Controller
                 'orden_analista' => $activity->orden_analista
             ]);
 
+            // Guardar el valor anterior de estatus operacional antes de actualizar
+            $oldEstatusOperacional = $activity->getOriginal('estatus_operacional');
+
             $activity->save();
+
+            // Guardar comentario si cambió el estatus operacional
+            if ($oldEstatusOperacional !== $activity->estatus_operacional) {
+                Comment::create([
+                    'activity_id' => $activity->id,
+                    'comment' => $activity->estatus_operacional,
+                ]);
+            }
+
+            // Guardar comentario si se ingresó un nuevo comentario en Información Básica
+            if ($request->filled('basic_comment')) {
+                Comment::create([
+                    'activity_id' => $activity->id,
+                    'comment' => $request->input('basic_comment'),
+                ]);
+            }
 
             // Log para verificar después de guardar
             Log::info('DESPUES DE GUARDAR ACTIVITY', [
