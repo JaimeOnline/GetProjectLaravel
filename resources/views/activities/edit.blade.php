@@ -485,7 +485,7 @@
                                                 <tr>
                                                     <td>
                                                         <div>
-                                                            {{ Str::limit($requirement->description, 80) }}
+                                                            {{ Str::limit($requirement->description, 1000) }}
                                                             @if ($requirement->notas)
                                                                 <br><small class="text-muted">
                                                                     <i class="fas fa-sticky-note"></i>
