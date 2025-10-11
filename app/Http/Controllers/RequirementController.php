@@ -26,13 +26,13 @@ class RequirementController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('notas', 'like', "%{$search}%")
-                  ->orWhereHas('activity', function($actQuery) use ($search) {
-                      $actQuery->where('name', 'like', "%{$search}%")
-                               ->orWhere('caso', 'like', "%{$search}%");
-                  });
+                    ->orWhere('notas', 'like', "%{$search}%")
+                    ->orWhereHas('activity', function ($actQuery) use ($search) {
+                        $actQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('caso', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -56,7 +56,7 @@ class RequirementController extends Controller
     {
         $activities = Activity::orderBy('name')->get();
         $selectedActivityId = $request->get('activity_id');
-        
+
         return view('requirements.create', compact('activities', 'selectedActivityId'));
     }
 
@@ -74,16 +74,25 @@ class RequirementController extends Controller
         ]);
 
         $data = $request->all();
-        
+
         // Si el estado es recibido y no se proporcionó fecha, usar la fecha actual
         if ($data['status'] === 'recibido' && empty($data['fecha_recepcion'])) {
             $data['fecha_recepcion'] = now();
         }
 
-        Requirement::create($data);
+        $requirement = Requirement::create($data);
+
+        // Si el requerimiento es pendiente, agregar estado "En espera de insumos" a la actividad
+        if ($requirement->status === 'pendiente') {
+            $activity = $requirement->activity;
+            $status = \App\Models\Status::where('name', 'en_espera_de_insumos')->first();
+            if ($status && !$activity->hasStatus('en_espera_de_insumos')) {
+                $activity->statuses()->attach($status->id);
+            }
+        }
 
         return redirect()->route('requirements.index')
-                        ->with('success', 'Requerimiento creado exitosamente.');
+            ->with('success', 'Requerimiento creado exitosamente.');
     }
 
     /**
@@ -118,12 +127,12 @@ class RequirementController extends Controller
         ]);
 
         $data = $request->all();
-        
+
         // Si cambia a recibido y no se proporcionó fecha, usar la fecha actual
         if ($data['status'] === 'recibido' && empty($data['fecha_recepcion']) && $requirement->status !== 'recibido') {
             $data['fecha_recepcion'] = now();
         }
-        
+
         // Si cambia a pendiente, limpiar la fecha de recepción
         if ($data['status'] === 'pendiente') {
             $data['fecha_recepcion'] = null;
@@ -131,20 +140,46 @@ class RequirementController extends Controller
 
         $requirement->update($data);
 
+        $activity = $requirement->activity;
+        $status = \App\Models\Status::where('name', 'en_espera_de_insumos')->first();
+
+        if ($data['status'] === 'pendiente') {
+            // Si hay al menos un requerimiento pendiente, asegúrate de que el estado esté presente
+            if ($status && !$activity->hasStatus('en_espera_de_insumos')) {
+                $activity->statuses()->attach($status->id);
+            }
+        } else {
+            // Si ya no hay requerimientos pendientes, quita el estado
+            $pendientes = $activity->requirements()->where('status', 'pendiente')->count();
+            if ($status && $pendientes === 0 && $activity->hasStatus('en_espera_de_insumos')) {
+                $activity->statuses()->detach($status->id);
+            }
+        }
+
         return redirect()->route('requirements.index')
-                        ->with('success', 'Requerimiento actualizado exitosamente.');
+            ->with('success', 'Requerimiento actualizado exitosamente.');
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(Requirement $requirement)
     {
+        $activity = $requirement->activity;
         $requirement->delete();
 
+        // Si ya no hay requerimientos pendientes, quita el estado "En espera de insumos"
+        $status = \App\Models\Status::where('name', 'en_espera_de_insumos')->first();
+        $pendientes = $activity->requirements()->where('status', 'pendiente')->count();
+        if ($status && $pendientes === 0 && $activity->hasStatus('en_espera_de_insumos')) {
+            $activity->statuses()->detach($status->id);
+        }
+
         return redirect()->route('requirements.index')
-                        ->with('success', 'Requerimiento eliminado exitosamente.');
+            ->with('success', 'Requerimiento eliminado exitosamente.');
     }
+
 
     /**
      * Marcar requerimiento como recibido
@@ -156,15 +191,24 @@ class RequirementController extends Controller
             'fecha_recepcion' => now(),
         ]);
 
+        // Si ya no hay requerimientos pendientes, quita el estado "En espera de insumos"
+        $activity = $requirement->activity;
+        $status = \App\Models\Status::where('name', 'en_espera_de_insumos')->first();
+        $pendientes = $activity->requirements()->where('status', 'pendiente')->count();
+        if ($status && $pendientes === 0 && $activity->hasStatus('en_espera_de_insumos')) {
+            $activity->statuses()->detach($status->id);
+        }
+
         // Si viene desde la edición de actividad, redirigir a la pestaña de requerimientos
         if ($request->has('from_activity')) {
             return redirect()->route('activities.edit', $requirement->activity_id)
-                           ->with('success', 'Requerimiento marcado como recibido.')
-                           ->with('active_tab', 'requirements');
+                ->with('success', 'Requerimiento marcado como recibido.')
+                ->with('active_tab', 'requirements');
         }
 
         return back()->with('success', 'Requerimiento marcado como recibido.');
     }
+
 
     /**
      * Marcar requerimiento como pendiente
@@ -176,15 +220,23 @@ class RequirementController extends Controller
             'fecha_recepcion' => null,
         ]);
 
+        // Si hay al menos un requerimiento pendiente, asegúrate de que el estado esté presente
+        $activity = $requirement->activity;
+        $status = \App\Models\Status::where('name', 'en_espera_de_insumos')->first();
+        if ($status && !$activity->hasStatus('en_espera_de_insumos')) {
+            $activity->statuses()->attach($status->id);
+        }
+
         // Si viene desde la edición de actividad, redirigir a la pestaña de requerimientos
         if ($request->has('from_activity')) {
             return redirect()->route('activities.edit', $requirement->activity_id)
-                           ->with('success', 'Requerimiento marcado como pendiente.')
-                           ->with('active_tab', 'requirements');
+                ->with('success', 'Requerimiento marcado como pendiente.')
+                ->with('active_tab', 'requirements');
         }
 
         return back()->with('success', 'Requerimiento marcado como pendiente.');
     }
+
 
     /**
      * Mostrar reporte de requerimientos
@@ -233,23 +285,23 @@ class RequirementController extends Controller
             'recibidos' => $requirements->where('status', 'recibido')->count(),
             'tiempo_promedio_respuesta' => $this->calculateAverageResponseTime($requirements->where('status', 'recibido')),
             'requerimientos_vencidos' => $requirements->where('status', 'pendiente')
-                                                    ->filter(function($req) {
-                                                        return $req->created_at->diffInDays(now()) > 7;
-                                                    })->count(),
+                ->filter(function ($req) {
+                    return $req->created_at->diffInDays(now()) > 7;
+                })->count(),
         ];
 
         // Agrupación por actividad
         $requirementsByActivity = $requirements->groupBy('activity.name');
 
         // Agrupación por estado y mes
-        $requirementsByMonth = $requirements->groupBy(function($requirement) {
+        $requirementsByMonth = $requirements->groupBy(function ($requirement) {
             return $requirement->created_at->format('Y-m');
         });
 
         return view('requirements.report', compact(
-            'requirements', 
-            'activities', 
-            'stats', 
+            'requirements',
+            'activities',
+            'stats',
             'requirementsByActivity',
             'requirementsByMonth'
         ));
@@ -264,7 +316,7 @@ class RequirementController extends Controller
             return 0;
         }
 
-        $totalDays = $receivedRequirements->sum(function($requirement) {
+        $totalDays = $receivedRequirements->sum(function ($requirement) {
             return $requirement->created_at->diffInDays($requirement->fecha_recepcion);
         });
 
@@ -304,12 +356,12 @@ class RequirementController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($requirements) {
+        $callback = function () use ($requirements) {
             $file = fopen('php://output', 'w');
-            
+
             // Escribir BOM para UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
             // Encabezados
             fputcsv($file, [
                 'ID',
