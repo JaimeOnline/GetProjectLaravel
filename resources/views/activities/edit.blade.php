@@ -317,14 +317,70 @@
                                         <label class="form-label" for="parent_id">
                                             <i class="fas fa-sitemap text-primary"></i> Actividad Padre
                                         </label>
-                                        <select class="form-control" id="parent_id" name="parent_id">
-                                            <option value="">Ninguna</option>
-                                            @foreach ($activities as $parentActivity)
-                                                <option value="{{ $parentActivity->id }}"
-                                                    {{ $activity->parent_id == $parentActivity->id ? 'selected' : '' }}>
-                                                    {{ $parentActivity->name }}</option>
-                                            @endforeach
-                                        </select>
+                                        <input type="text" class="form-control" id="parent_id_search"
+                                            placeholder="Buscar actividad padre...">
+                                        <input type="hidden" name="parent_id" id="parent_id"
+                                            value="{{ $activity->parent_id }}">
+                                        <div id="parent_id_results" class="list-group"
+                                            style="position: absolute; z-index: 1000; width: 100%; display: none; max-height: 200px; overflow-y: auto;">
+                                        </div>
+                                        <script>
+                                            document.addEventListener('DOMContentLoaded', function() {
+                                                // Prepara el array de actividades para búsqueda rápida
+                                                const activities = [
+                                                    @foreach ($activities as $parentActivity)
+                                                        {
+                                                            id: {{ $parentActivity->id }},
+                                                            name: @json($parentActivity->name)
+                                                        },
+                                                    @endforeach
+                                                ];
+                                                const searchInput = document.getElementById('parent_id_search');
+                                                const resultsDiv = document.getElementById('parent_id_results');
+                                                const hiddenInput = document.getElementById('parent_id');
+
+                                                // Si ya hay un valor seleccionado, muestra el nombre
+                                                @if ($activity->parent_id)
+                                                    const selected = activities.find(a => a.id == {{ $activity->parent_id }});
+                                                    if (selected) searchInput.value = selected.name;
+                                                @endif
+
+                                                searchInput.addEventListener('input', function() {
+                                                    const query = this.value.trim().toLowerCase();
+                                                    resultsDiv.innerHTML = '';
+                                                    if (query.length === 0) {
+                                                        resultsDiv.style.display = 'none';
+                                                        hiddenInput.value = '';
+                                                        return;
+                                                    }
+                                                    const matches = activities.filter(a => a.name.toLowerCase().includes(query));
+                                                    if (matches.length === 0) {
+                                                        resultsDiv.style.display = 'none';
+                                                        return;
+                                                    }
+                                                    matches.slice(0, 20).forEach(a => {
+                                                        const item = document.createElement('button');
+                                                        item.type = 'button';
+                                                        item.className = 'list-group-item list-group-item-action';
+                                                        item.textContent = a.name;
+                                                        item.onclick = function() {
+                                                            searchInput.value = a.name;
+                                                            hiddenInput.value = a.id;
+                                                            resultsDiv.style.display = 'none';
+                                                        };
+                                                        resultsDiv.appendChild(item);
+                                                    });
+                                                    resultsDiv.style.display = 'block';
+                                                });
+
+                                                // Oculta la lista si se hace click fuera
+                                                document.addEventListener('click', function(e) {
+                                                    if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                                                        resultsDiv.style.display = 'none';
+                                                    }
+                                                });
+                                            });
+                                        </script>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
