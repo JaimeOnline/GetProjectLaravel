@@ -966,7 +966,11 @@ class ActivityController extends Controller
 
         $attachments = [];
         if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
+            $files = $request->file('attachments');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach ($files as $file) {
                 if ($file && $file->isValid()) {
                     // Generar nombre único para el archivo
                     $originalName = $file->getClientOriginalName();

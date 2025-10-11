@@ -725,8 +725,11 @@
             <!-- Pestaña: Correos -->
             <div class="tab-pane fade" id="emails" role="tabpanel">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-envelope"></i> Gestión de Correos</h5>
+                        <button type="button" class="btn btn-success btn-sm" id="nuevoCorreoBtn">
+                            <i class="fas fa-plus"></i> Nuevo Correo
+                        </button>
                     </div>
                     <div class="card-body">
                         <!-- Mostrar correos existentes -->
@@ -758,8 +761,8 @@
                                                         <div class="mb-2">
                                                             <strong>Contenido:</strong>
                                                             <div class="bg-light p-2 rounded mt-1"
-                                                                style="max-height: 150px; overflow-y: auto;">
-                                                                {!! nl2br(e($email->content)) !!}
+                                                                style="max-height: 350px; overflow-y: auto;">
+                                                                {!! $email->content !!}
                                                             </div>
                                                         </div>
 
@@ -832,7 +835,7 @@
                         @endif
 
                         <!-- Formulario para agregar nuevo correo -->
-                        <form action="{{ route('activities.emails.store', $activity) }}" method="POST"
+                        <form id="emailForm" action="{{ route('activities.emails.store', $activity) }}" method="POST"
                             enctype="multipart/form-data">
                             @csrf
                             <div class="form-group">
@@ -871,51 +874,228 @@
                                     <input type="text" class="form-control" id="subject" name="subject"
                                         placeholder="Asunto del correo" required>
                                 </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        // Obtener el asunto del correo más reciente (si existe)
+                                        @if ($activity->emails->count() > 0)
+                                            var lastSubject = @json($activity->emails->sortByDesc('created_at')->first()->subject);
+                                            document.getElementById('subject').value = lastSubject;
+                                        @endif
+                                        // Seleccionar "Correo Enviado" por defecto
+                                        var typeSelect = document.getElementById('type');
+                                        if (typeSelect) {
+                                            typeSelect.value = "sent";
+                                        }
+                                    });
+                                </script>
 
-                                <div class="form-group">
+                                <div class="form-group" id="nuevo-correo-formulario">
                                     <label for="content">
                                         <i class="fas fa-align-left text-primary"></i> Contenido
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <textarea class="form-control" id="content" name="content" rows="4" placeholder="Contenido del correo..."
-                                        required></textarea>
+                                    <!-- Quill editor container -->
+                                    <div id="quill-editor" style="height: 250px;"></div>
+                                    <!-- Hidden textarea to submit HTML content -->
+                                    <textarea id="content" name="content" style="display:none;"></textarea>
                                 </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var btn = document.getElementById('nuevoCorreoBtn');
+                                        if (btn) {
+                                            btn.addEventListener('click', function() {
+                                                // Cambia a la pestaña de correos si no está activa
+                                                var emailsTab = document.querySelector('#activityTabs a[href="#emails"]');
+                                                if (emailsTab && !emailsTab.classList.contains('active')) {
+                                                    emailsTab.click();
+                                                }
+                                                // Espera un poco para que la pestaña se muestre antes de hacer scroll
+                                                setTimeout(function() {
+                                                    var target = document.getElementById('nuevo-correo-formulario');
+                                                    if (target) {
+                                                        target.scrollIntoView({
+                                                            behavior: 'smooth',
+                                                            block: 'center'
+                                                        });
+                                                    }
+                                                }, 200);
+                                            });
+                                        }
+                                    });
+                                </script>
+
+                                <!-- Quill Editor (sin registro, sin advertencias) -->
+                                <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+                                <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var quill = new Quill('#quill-editor', {
+                                            theme: 'snow',
+                                            placeholder: 'Contenido del correo...',
+                                            modules: {
+                                                toolbar: [
+                                                    [{
+                                                        'header': [1, 2, false]
+                                                    }],
+                                                    ['bold', 'italic', 'underline', 'strike'],
+                                                    [{
+                                                        'color': []
+                                                    }, {
+                                                        'background': []
+                                                    }],
+                                                    [{
+                                                        'list': 'ordered'
+                                                    }, {
+                                                        'list': 'bullet'
+                                                    }],
+                                                    [{
+                                                        'align': []
+                                                    }],
+                                                    ['blockquote', 'code-block'],
+                                                    ['link', 'image'],
+                                                    ['clean']
+                                                ]
+                                            }
+                                        });
+
+                                        var form = document.getElementById('emailForm');
+                                        if (form) {
+                                            form.addEventListener('submit', function(e) {
+                                                var html = quill.root.innerHTML.trim();
+                                                // Quitar el <p><br></p> vacío que pone Quill por defecto
+                                                if (html === '<p><br></p>' || html === '') {
+                                                    alert('El contenido del correo no puede estar vacío.');
+                                                    e.preventDefault();
+                                                    return false;
+                                                }
+                                                document.getElementById('content').value = html;
+                                            });
+                                        }
+                                    });
+                                </script>
+
 
                                 <div class="form-group">
                                     <label for="attachments">
                                         <i class="fas fa-paperclip text-primary"></i> Archivos Adjuntos
                                     </label>
-                                    <input type="file" class="form-control-file" id="attachments"
-                                        name="attachments[]" multiple
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                                    <div id="drop-area"
+                                        style="border: 2px dashed #aaa; border-radius: 8px; padding: 16px; text-align: center; background: #f8f9fa; cursor: pointer;">
+                                        <span id="drop-area-text">Arrastra y suelta archivos aquí o haz clic en "Agregar
+                                            archivo(s)"</span>
+                                        <input type="file" class="form-control-file" id="attachments"
+                                            name="attachments[]" multiple
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar"
+                                            style="display:none;">
+                                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="addFileBtn">
+                                            <i class="fas fa-plus"></i> Agregar archivo(s)
+                                        </button>
+                                        <div id="file-list" class="mt-2"></div>
+                                    </div>
                                     <small class="form-text text-muted">
                                         Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT,
-                                        JPG,
-                                        PNG, GIF, ZIP, RAR
+                                        JPG, PNG, GIF, ZIP, RAR
                                     </small>
-                                </div>
+                                    <script>
+                                        let selectedFiles = [];
 
-                                <!-- Botón de Agregar Correo -->
-                                <div class="mt-4 pt-3 border-top">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <button type="submit" class="btn btn-success btn-lg">
-                                                <i class="fas fa-plus"></i> Agregar Correo
-                                            </button>
-                                            <a href="{{ route('activities.emails', $activity) }}"
-                                                class="btn btn-info btn-lg ml-2">
-                                                <i class="fas fa-eye"></i> Ver Todos los Correos
-                                            </a>
-                                        </div>
-                                        <div>
-                                            <small class="text-muted">
-                                                <i class="fas fa-info-circle"></i>
-                                                El correo se agregará al hacer clic en "Agregar Correo"
-                                            </small>
+                                        document.getElementById('addFileBtn').addEventListener('click', function() {
+                                            document.getElementById('attachments').click();
+                                        });
+
+                                        document.getElementById('attachments').addEventListener('change', function(e) {
+                                            handleFiles(e.target.files);
+                                            e.target.value = '';
+                                        });
+
+                                        // Drag & Drop
+                                        const dropArea = document.getElementById('drop-area');
+                                        dropArea.addEventListener('dragover', function(e) {
+                                            e.preventDefault();
+                                            dropArea.style.background = '#e2e6ea';
+                                        });
+                                        dropArea.addEventListener('dragleave', function(e) {
+                                            e.preventDefault();
+                                            dropArea.style.background = '#f8f9fa';
+                                        });
+                                        dropArea.addEventListener('drop', function(e) {
+                                            e.preventDefault();
+                                            dropArea.style.background = '#f8f9fa';
+                                            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                                handleFiles(e.dataTransfer.files);
+                                            }
+                                        });
+                                        dropArea.addEventListener('click', function(e) {
+                                            // Solo abrir el input si no se hizo click en el botón eliminar
+                                            if (!e.target.closest('.btn-danger')) {
+                                                document.getElementById('attachments').click();
+                                            }
+                                        });
+
+                                        function handleFiles(fileList) {
+                                            for (let i = 0; i < fileList.length; i++) {
+                                                let file = fileList[i];
+                                                if (!selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                                                    selectedFiles.push(file);
+                                                }
+                                            }
+                                            renderFileList();
+                                        }
+
+                                        function renderFileList() {
+                                            const fileListDiv = document.getElementById('file-list');
+                                            fileListDiv.innerHTML = '';
+                                            selectedFiles.forEach((file, idx) => {
+                                                const fileRow = document.createElement('div');
+                                                fileRow.className = 'd-flex align-items-center mb-1';
+                                                fileRow.innerHTML = `
+<span class="mr-2">${file.name}</span>
+<button type="button" class="btn btn-sm btn-danger" onclick="removeFile(${idx}); event.stopPropagation();">
+    <i class="fas fa-trash"></i> Eliminar
+</button>
+`;
+                                                fileListDiv.appendChild(fileRow);
+                                            });
+                                            // Actualizar el input file con todos los archivos seleccionados
+                                            const dataTransfer = new DataTransfer();
+                                            selectedFiles.forEach(file => dataTransfer.items.add(file));
+                                            document.getElementById('attachments').files = dataTransfer.files;
+                                        }
+
+                                        window.removeFile = function(idx) {
+                                            selectedFiles.splice(idx, 1);
+                                            renderFileList();
+                                        };
+
+                                        // Al enviar el formulario, asegúrate de que el input tenga los archivos correctos
+                                        document.getElementById('emailForm').addEventListener('submit', function(e) {
+                                            const dataTransfer = new DataTransfer();
+                                            selectedFiles.forEach(file => dataTransfer.items.add(file));
+                                            document.getElementById('attachments').files = dataTransfer.files;
+                                        });
+                                    </script>
+
+                                    <!-- Botón de Agregar Correo -->
+                                    <div class="mt-4 pt-3 border-top">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <button type="submit" class="btn btn-success btn-lg">
+                                                    <i class="fas fa-plus"></i> Agregar Correo
+                                                </button>
+                                                <a href="{{ route('activities.emails', $activity) }}"
+                                                    class="btn btn-info btn-lg ml-2">
+                                                    <i class="fas fa-eye"></i> Ver Todos los Correos
+                                                </a>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    El correo se agregará al hacer clic en "Agregar Correo"
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                         </form>
                     </div>
                 </div>
