@@ -962,6 +962,7 @@ class ActivityController extends Controller
             'content' => 'required|string',
             'attachments' => 'nullable|array',
             'attachments.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,txt,jpg,jpeg,png,gif,zip,rar',
+            'email_type' => 'nullable|string|in:Solicitud de Insumos,Invitación a certificar,Envío de Pases',
         ]);
 
         $attachments = [];
@@ -999,7 +1000,52 @@ class ActivityController extends Controller
             'sender_recipient' => $request->sender_recipient,
             'content' => $request->content,
             'attachments' => $attachments,
+            'email_type' => $request->email_type,
         ]);
+
+        // Lógica para actualizar el estado de la actividad según el tipo de correo especial
+        $emailTypeToStatus = [
+            'Solicitud de Insumos' => 'en_espera_de_insumos',
+            'Invitación a certificar' => 'en_certificacion_por_cliente',
+            'Envío de Pases' => 'pases_enviados',
+        ];
+        if ($request->filled('email_type') && isset($emailTypeToStatus[$request->email_type])) {
+            $statusName = $emailTypeToStatus[$request->email_type];
+            $status = \App\Models\Status::where('name', $statusName)->first();
+            if ($status && !$activity->hasStatus($statusName)) {
+                $activity->statuses()->attach($status->id);
+            }
+
+            // Si es "Solicitud de Insumos" y el correo es "sent", crear requerimiento pendiente
+            if (
+                $request->email_type === 'Solicitud de Insumos'
+                && $request->type === 'sent'
+            ) {
+                // Eliminar imágenes del HTML
+                $html = preg_replace('/<img[^>]*>/i', '', $request->content);
+
+                // Reemplazar <br> y <br/> por saltos de línea
+                $html = preg_replace('/<br\s*\/?>/i', "\n", $html);
+
+                // Reemplazar </p> y </div> por saltos de línea
+                $html = preg_replace('/<\/(p|div)>/i', "\n", $html);
+
+                // Quitar el resto de etiquetas HTML
+                $plainText = trim(strip_tags($html));
+
+                // Normalizar saltos de línea múltiples a uno solo
+                $plainText = preg_replace("/\n{2,}/", "\n\n", $plainText);
+
+                if (!empty($plainText)) {
+                    \App\Models\Requirement::create([
+                        'activity_id' => $activity->id,
+                        'description' => $plainText,
+                        'status' => 'pendiente',
+                        'fecha_recepcion' => null,
+                    ]);
+                }
+            }
+        }
 
         $typeLabel = $request->type === 'sent' ? 'enviado' : 'recibido';
         $successMessage = "Correo {$typeLabel} agregado exitosamente: \"{$email->subject}\"";
@@ -1015,6 +1061,7 @@ class ActivityController extends Controller
             ->with('success', $successMessage)
             ->with('active_tab', 'emails');
     }
+
 
     /**
      * Eliminar un correo

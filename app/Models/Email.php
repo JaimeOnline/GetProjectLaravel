@@ -16,6 +16,7 @@ class Email extends Model
         'sender_recipient',
         'content',
         'attachments',
+        'email_type', 
     ];
 
     protected $casts = [

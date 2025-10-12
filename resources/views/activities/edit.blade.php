@@ -910,6 +910,22 @@
                                                 <option value="sent">Correo Enviado</option>
                                             </select>
                                         </div>
+                                        <div class="form-group">
+                                            <label for="email_type">
+                                                <i class="fas fa-envelope-open-text text-primary"></i> Tipo de Correo
+                                                Especial
+                                            </label>
+                                            <select class="form-control" id="email_type" name="email_type">
+                                                <option value="">-- Ninguno --</option>
+                                                <option value="Solicitud de Insumos">Solicitud de Insumos</option>
+                                                <option value="Invitación a certificar">Invitación a certificar</option>
+                                                <option value="Envío de Pases">Envío de Pases</option>
+                                            </select>
+                                            <small class="form-text text-muted">
+                                                Si seleccionas una opción, se actualizará el estado de la actividad
+                                                automáticamente.
+                                            </small>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
