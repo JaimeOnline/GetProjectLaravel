@@ -961,9 +961,10 @@ class ActivityController extends Controller
             'sender_recipient' => 'nullable|string|max:255',
             'content' => 'required|string',
             'attachments' => 'nullable|array',
-            'attachments.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,txt,jpg,jpeg,png,gif,zip,rar',
+            'attachments.*' => 'nullable|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,txt,jpg,jpeg,png,gif,zip,rar,7z',
             'email_type' => 'nullable|string|in:Solicitud de Insumos,Invitación a certificar,Envío de Pases',
         ]);
+
 
         $attachments = [];
         if ($request->hasFile('attachments')) {
