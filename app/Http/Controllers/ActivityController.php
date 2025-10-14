@@ -323,24 +323,49 @@ class ActivityController extends Controller
         // Aplicar búsqueda por texto si existe
         if (!empty($query)) {
             $activitiesQuery->where(function ($q) use ($query) {
-                $q->where('name', 'LIKE', "%{$query}%")
-                    ->orWhere('description', 'LIKE', "%{$query}%")
-                    ->orWhere('caso', 'LIKE', "%{$query}%")
-                    ->orWhere('status', 'LIKE', "%{$query}%")
-                    ->orWhere('fecha_recepcion', 'LIKE', "%{$query}%")
-                    ->orWhereHas('analistas', function ($subQ) use ($query) {
+                $ilike = function ($field) use ($q, $query) {
+                    if (app('db')->getDriverName() === 'pgsql') {
+                        $q->orWhere($field, 'ILIKE', "%{$query}%");
+                    } else {
+                        $q->orWhere($field, 'LIKE', "%{$query}%");
+                    }
+                };
+                $ilike('name');
+                $ilike('description');
+                $ilike('caso');
+                $ilike('status');
+                $ilike('fecha_recepcion');
+                $q->orWhereHas('analistas', function ($subQ) use ($query) {
+                    if (app('db')->getDriverName() === 'pgsql') {
+                        $subQ->where('name', 'ILIKE', "%{$query}%");
+                    } else {
                         $subQ->where('name', 'LIKE', "%{$query}%");
-                    })
+                    }
+                })
                     ->orWhereHas('comments', function ($subQ) use ($query) {
-                        $subQ->where('comment', 'LIKE', "%{$query}%");
+                        if (app('db')->getDriverName() === 'pgsql') {
+                            $subQ->where('comment', 'ILIKE', "%{$query}%");
+                        } else {
+                            $subQ->where('comment', 'LIKE', "%{$query}%");
+                        }
                     })
                     ->orWhereHas('emails', function ($subQ) use ($query) {
-                        $subQ->where('subject', 'LIKE', "%{$query}%")
-                            ->orWhere('content', 'LIKE', "%{$query}%");
+                        if (app('db')->getDriverName() === 'pgsql') {
+                            $subQ->where('subject', 'ILIKE', "%{$query}%")
+                                ->orWhere('content', 'ILIKE', "%{$query}%");
+                        } else {
+                            $subQ->where('subject', 'LIKE', "%{$query}%")
+                                ->orWhere('content', 'LIKE', "%{$query}%");
+                        }
                     })
                     ->orWhereHas('statuses', function ($subQ) use ($query) {
-                        $subQ->where('name', 'LIKE', "%{$query}%")
-                            ->orWhere('label', 'LIKE', "%{$query}%");
+                        if (app('db')->getDriverName() === 'pgsql') {
+                            $subQ->where('name', 'ILIKE', "%{$query}%")
+                                ->orWhere('label', 'ILIKE', "%{$query}%");
+                        } else {
+                            $subQ->where('name', 'LIKE', "%{$query}%")
+                                ->orWhere('label', 'LIKE', "%{$query}%");
+                        }
                     });
             });
         }
