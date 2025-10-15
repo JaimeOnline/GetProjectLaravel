@@ -1548,4 +1548,10 @@ class ActivityController extends Controller
 
         return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
     }
+
+    public function showJson(Activity $activity)
+    {
+        $activity->load(['statuses', 'analistas', 'comments', 'emails', 'requirements', 'subactivities']);
+        return response()->json($activity);
+    }
 }

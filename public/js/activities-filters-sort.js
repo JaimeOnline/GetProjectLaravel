@@ -871,9 +871,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                // Filtro por fecha (columna 8)
-                if (shouldShow && (activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[8]) {
-                    const fechaText = cells[8].textContent.trim();
+                // Filtro por fecha (columna 11)
+                if (shouldShow && (activeFilters.fechaDesde || activeFilters.fechaHasta) && cells[11]) {
+                    const fechaText = cells[11].textContent.trim();
                     const fechaMatch = fechaText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
 
                     if (fechaMatch) {
@@ -1442,10 +1442,28 @@ document.addEventListener('DOMContentLoaded', function () {
             };
         });
 
+        function syncAdvancedAndColumnFilters() {
+            // Sincroniza el filtro avanzado de estado con los checkboxes de columna
+            const estadoSelect = document.getElementById('filterStatus');
+            if (estadoSelect) {
+                const value = estadoSelect.value;
+                document.querySelectorAll('.status-filter').forEach(cb => {
+                    cb.checked = (cb.value === value) || (value === '' && cb.value === '');
+                });
+            }
+            // Sincroniza el filtro avanzado de analista con los checkboxes de columna
+            const analistaSelect = document.getElementById('filterAnalista');
+            if (analistaSelect) {
+                const value = analistaSelect.value;
+                document.querySelectorAll('.analista-filter').forEach(cb => {
+                    cb.checked = (cb.value === value) || (value === '' && cb.value === '');
+                });
+            }
+        }
+
         function saveInlineEdit(e) {
             const input = this;
             const cell = input.closest('.editable-cell');
-            const span = cell.querySelector('.editable-value');
             const activityId = cell.getAttribute('data-activity-id');
             const field = cell.getAttribute('data-field');
             let value = input.value;
@@ -1472,24 +1490,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        if (field === 'porcentaje_avance') {
-                            span.textContent = value + '%';
+                        // Sincroniza filtros antes de recargar la tabla
+                        syncAdvancedAndColumnFilters();
+                        if (typeof performSearch === 'function') {
+                            performSearch(document.getElementById('searchInput').value, getCurrentFilters());
                         } else {
-                            span.textContent = value;
+                            location.reload();
                         }
-                        input.value = value;
                     } else {
                         alert('Error al actualizar');
+                        input.style.display = 'none';
+                        cell.querySelector('.editable-value').style.display = 'inline-block';
                     }
-                    input.style.display = 'none';
-                    span.style.display = 'inline-block';
                 })
                 .catch(() => {
                     alert('Error al actualizar');
                     input.style.display = 'none';
-                    span.style.display = 'inline-block';
+                    cell.querySelector('.editable-value').style.display = 'inline-block';
                 });
         }
+
+
     }
 
     // Inicializar al cargar la página

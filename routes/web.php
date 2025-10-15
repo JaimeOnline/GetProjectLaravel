@@ -54,3 +54,5 @@ Route::patch('/activities/{activity}/inline-update', [App\Http\Controllers\Activ
 Route::get('/proyectos', [ProyectoController::class, 'index'])->name('projects.index');
 Route::get('/proyectos/crear', [ProyectoController::class, 'create'])->name('projects.create');
 Route::post('/proyectos', [ProyectoController::class, 'store'])->name('projects.store');
+
+Route::get('/activities/{activity}/json', [ActivityController::class, 'showJson']);

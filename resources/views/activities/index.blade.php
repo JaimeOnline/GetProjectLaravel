@@ -240,7 +240,7 @@
                 </div>
             </div>
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card bg-secondary">
+                <div class="stats-card bg-secondary stats-filter-card" data-status="no_iniciada" style="cursor:pointer;">
                     <div class="stats-icon">
                         <i class="fas fa-clock"></i>
                     </div>
@@ -252,7 +252,7 @@
                 </div>
             </div>
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card bg-info">
+                <div class="stats-card bg-info stats-filter-card" data-status="en_ejecucion" style="cursor:pointer;">
                     <div class="stats-icon">
                         <i class="fas fa-play-circle"></i>
                     </div>
@@ -264,7 +264,7 @@
                 </div>
             </div>
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card bg-success">
+                <div class="stats-card bg-success stats-filter-card" data-status="culminada" style="cursor:pointer;">
                     <div class="stats-icon">
                         <i class="fas fa-check-circle"></i>
                     </div>
@@ -280,7 +280,8 @@
         <!-- Segunda fila: Estados intermedios y especiales -->
         <div class="row mb-4">
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card bg-warning">
+                <div class="stats-card bg-warning stats-filter-card" data-status="en_espera_de_insumos"
+                    style="cursor:pointer;">
                     <div class="stats-icon">
                         <i class="fas fa-pause-circle"></i>
                     </div>
@@ -292,7 +293,8 @@
                 </div>
             </div>
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card" style="background-color: #fd7e14;">
+                <div class="stats-card stats-filter-card" data-status="en_certificacion_por_cliente"
+                    style="background-color:#fd7e14; cursor:pointer;">
                     <div class="stats-icon">
                         <i class="fas fa-certificate"></i>
                     </div>
@@ -304,7 +306,8 @@
                 </div>
             </div>
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card" style="background-color: #20c997;">
+                <div class="stats-card stats-filter-card" data-status="pases_enviados"
+                    style="background-color:#fd7e14; cursor:pointer;">
                     <div class="stats-icon">
                         <i class="fas fa-paper-plane"></i>
                     </div>
@@ -332,7 +335,8 @@
         <!-- Tercera fila: Estados finales -->
         <div class="row mb-4">
             <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card" style="background-color: #6c757d;">
+                <div class="stats-card stats-filter-card" data-status="pausada"
+                    style="background-color: #6c757d; cursor:pointer;">
                     <div class="stats-icon">
                         <i class="fas fa-pause"></i>
                     </div>
@@ -344,7 +348,8 @@
                 </div>
             </div>
             <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card bg-danger">
+                <div class="stats-card bg-danger" data-status="cancelada" style="cursor:pointer;">
+
                     <div class="stats-icon">
                         <i class="fas fa-times-circle"></i>
                     </div>
@@ -368,6 +373,39 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.stats-filter-card[data-status]').forEach(function(card) {
+                card.addEventListener('click', function() {
+                    // 1. Muestra la sección de filtros si está oculta
+                    var filtersSection = document.getElementById('filtersSection');
+                    var toggleFiltersBtn = document.getElementById('toggleFilters');
+                    var filterToggleText = document.getElementById('filterToggleText');
+                    if (filtersSection && filtersSection.style.display === 'none') {
+                        filtersSection.style.display = 'block';
+                        if (filterToggleText) filterToggleText.textContent = 'Ocultar Filtros';
+                    }
+
+                    // 2. Selecciona el filtro de estado avanzado
+                    var filterStatus = document.getElementById('filterStatus');
+                    if (filterStatus) {
+                        filterStatus.value = card.getAttribute('data-status');
+                        // 3. Dispara el evento change para que se aplique el filtro
+                        filterStatus.dispatchEvent(new Event('change'));
+                    }
+
+                    // 4. Haz scroll suave a la tabla
+                    var table = document.getElementById('main-table-scroll');
+                    if (table) {
+                        table.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -1320,7 +1358,7 @@
             }
             $('#statusEditModal').off('shown.bs.modal').on('shown.bs.modal', function() {
                 $('#statusEditModal input[type="checkbox"][name="status_ids[]"]').prop('checked',
-                false);
+                    false);
                 currentStatuses.forEach(function(id) {
                     $('#statusEditModal input[type="checkbox"][name="status_ids[]"][value="' +
                         id + '"]').prop('checked', true);

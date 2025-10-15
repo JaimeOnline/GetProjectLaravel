@@ -4,18 +4,18 @@ let rowsCache = [];
 // Función para inicializar la edición de estados
 function initializeStatusEditing() {
     console.log('Inicializando edición de estados optimizada...');
-    
+
     // Verificar que el modal existe
     const modal = document.getElementById('statusEditModal');
     if (!modal) {
         console.error('Modal statusEditModal no encontrado');
         return;
     }
-    
+
     console.log('Modal encontrado correctamente');
-    
+
     // Manejar clics en botones de editar estado
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.closest('.edit-status-btn')) {
             console.log('Click en botón de editar estado detectado');
             const button = e.target.closest('.edit-status-btn');
@@ -28,47 +28,45 @@ function initializeStatusEditing() {
     // Manejar guardado de cambios de estado
     const saveButton = document.getElementById('saveStatusChanges');
     if (saveButton) {
-        saveButton.addEventListener('click', function() {
+        saveButton.addEventListener('click', function () {
             saveStatusChanges();
         });
     }
-    
+
     console.log('Event listeners configurados');
 }
 
-// Función para abrir el modal de edición de estados
 function openStatusEditModal(activityId) {
     console.log('Abriendo modal para actividad:', activityId);
-    
-    // Buscar la actividad en los datos cargados
-    const activity = rowsCache.find(row => row.id == activityId);
-    
-    if (!activity) {
-        console.error('Actividad no encontrada:', activityId);
-        console.log('Actividades disponibles:', rowsCache.map(r => r.id));
-        
-        // Si no encontramos en rowsCache, intentar obtener datos del DOM
-        const activityRow = document.querySelector(`tr[data-activity-id="${activityId}"]`);
-        if (activityRow) {
-            console.log('Encontrada fila de actividad en DOM');
-            // Extraer datos básicos del DOM
-            const cells = activityRow.querySelectorAll('td');
-            const basicActivity = {
-                id: activityId,
-                caso: cells[0] ? cells[0].textContent.trim() : 'Sin caso',
-                nombre: cells[1] ? cells[1].textContent.trim() : 'Sin nombre',
-                statuses: []
-            };
-            
-            fillModalWithActivity(basicActivity);
-            $('#statusEditModal').modal('show');
-        }
-        return;
-    }
-    
-    console.log('Actividad encontrada:', activity);
-    fillModalWithActivity(activity);
+
+    // Muestra el modal inmediatamente con un spinner de carga
     $('#statusEditModal').modal('show');
+    const modalBody = document.getElementById('statusModalBody');
+    if (modalBody) {
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                <p class="mt-2">Cargando estados...</p>
+            </div>
+        `;
+    }
+
+    const checkboxesContainer = document.querySelector('.status-checkboxes');
+    if (checkboxesContainer) {
+        checkboxesContainer.style.visibility = 'hidden';
+    }
+
+    // Ahora pide los datos y llena el modal
+    fetch(`/activities/${activityId}/json`)
+        .then(response => response.json())
+        .then(activity => {
+            fillModalWithActivity(activity);
+        })
+        .catch(() => {
+            if (modalBody) {
+                modalBody.innerHTML = '<div class="alert alert-danger">No se pudo cargar la información de la actividad.</div>';
+            }
+        });
 }
 
 // Función para llenar el modal con datos de la actividad
@@ -76,11 +74,11 @@ function fillModalWithActivity(activity) {
     // Llenar información de la actividad
     document.getElementById('modalActivityCaso').textContent = activity.caso || 'Sin caso';
     document.getElementById('modalActivityNombre').textContent = activity.nombre || 'Sin nombre';
-    
+
     // Mostrar estados actuales
     const currentStatusesDiv = document.getElementById('modalCurrentStatuses');
     currentStatusesDiv.innerHTML = '';
-    
+
     if (activity.statuses && activity.statuses.length > 0) {
         activity.statuses.forEach(status => {
             const badge = document.createElement('span');
@@ -98,19 +96,26 @@ function fillModalWithActivity(activity) {
     const checkboxes = document.querySelectorAll('.status-checkbox');
     checkboxes.forEach(checkbox => {
         const statusId = parseInt(checkbox.value);
-        const hasStatus = activity.statuses && activity.statuses.some(s => s.id === statusId);
+        const hasStatus = activity.statuses && activity.statuses.some(s => parseInt(s.id) === parseInt(statusId));
         checkbox.checked = hasStatus;
+
     });
 
     // Guardar el ID de la actividad en el modal
     document.getElementById('statusEditModal').setAttribute('data-activity-id', activity.id);
+
+    const checkboxesContainer = document.querySelector('.status-checkboxes');
+    if (checkboxesContainer) {
+        checkboxesContainer.style.visibility = 'visible';
+    }
+
 }
 
 // Función para guardar cambios de estado (optimizada)
 function saveStatusChanges() {
     const modal = document.getElementById('statusEditModal');
     const activityId = modal.getAttribute('data-activity-id');
-    
+
     // Obtener IDs de estados seleccionados
     const selectedStatusIds = [];
     document.querySelectorAll('.status-checkbox:checked').forEach(checkbox => {
@@ -136,54 +141,80 @@ function saveStatusChanges() {
             status_ids: selectedStatusIds
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Respuesta del servidor:', data);
-        if (data.success) {
-            // Cerrar modal
-            $('#statusEditModal').modal('hide');
-            
-            // Mostrar mensaje de éxito
-            showAlert('Estados actualizados correctamente', 'success');
-            
-            // Actualizar la fila de la tabla sin recargar la página
-            updateActivityRowInTable(activityId, data.statuses);
-            
-            // Actualizar el cache local
-            updateActivityInCache(activityId, data.statuses);
-            
-        } else {
-            showAlert(data.message || 'Error al actualizar estados', 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Error al actualizar estados', 'danger');
-    })
-    .finally(() => {
-        // Restaurar botón
-        saveButton.innerHTML = originalText;
-        saveButton.disabled = false;
-    });
+        .then(response => response.json())
+        .then(data => {
+            console.log('Respuesta del servidor:', data);
+            if (data.success) {
+                // Cerrar modal
+                $('#statusEditModal').modal('hide');
+
+                // Mostrar mensaje de éxito
+                showAlert('Estados actualizados correctamente', 'success');
+
+                // Actualizar la fila de la tabla sin recargar la página
+                updateActivityRowInTable(activityId, data.statuses);
+
+                // Actualizar el cache local (pero ahora recarga toda la actividad)
+                fetch(`/activities/${activityId}/json`)
+                    .then(response => response.json())
+                    .then(activityData => {
+                        updateActivityInCacheFull(activityId, activityData);
+                    });
+
+            } else {
+                showAlert(data.message || 'Error al actualizar estados', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error al actualizar estados', 'danger');
+        })
+        .finally(() => {
+            // Restaurar botón
+            saveButton.innerHTML = originalText;
+            saveButton.disabled = false;
+        });
+}
+
+// Actualiza toda la actividad en el cache local
+function updateActivityInCacheFull(activityId, activityData) {
+    const activityIndex = rowsCache.findIndex(a => a.id == activityId);
+    if (activityIndex !== -1) {
+        rowsCache[activityIndex] = {
+            id: activityData.id,
+            caso: activityData.caso,
+            nombre: activityData.name,
+            description: activityData.description,
+            statuses: activityData.statuses || [],
+            analistas: activityData.analistas || [],
+            comments: activityData.comments || [],
+            emails: activityData.emails || [],
+            requirements: activityData.requirements || [],
+            fecha_recepcion: activityData.fecha_recepcion,
+            isSubactivity: activityData.parent_id ? true : false,
+            parent_id: activityData.parent_id
+        };
+        console.log('Cache local actualizado completamente para actividad:', activityId);
+    }
 }
 
 // Función para actualizar la fila de la tabla sin recargar la página
 function updateActivityRowInTable(activityId, newStatuses) {
     console.log('Actualizando fila de actividad:', activityId, 'con estados:', newStatuses);
-    
+
     // Buscar la fila de la actividad en la tabla
     let activityRow = document.querySelector(`tr[data-activity-id="${activityId}"]`);
-    
+
     if (!activityRow) {
         console.log('Fila no encontrada por data-activity-id, buscando por otros métodos...');
-        
+
         // Buscar por el contenedor de status-cell que tiene data-activity-id
         const statusCell = document.querySelector(`.status-cell[data-activity-id="${activityId}"]`);
         if (statusCell) {
             activityRow = statusCell.closest('tr');
             console.log('Fila encontrada por status-cell');
         }
-        
+
         // Si aún no se encuentra, buscar por contenido de caso
         if (!activityRow) {
             const activity = rowsCache.find(a => a.id == activityId);
@@ -199,35 +230,35 @@ function updateActivityRowInTable(activityId, newStatuses) {
                 }
             }
         }
-        
+
         // Si encontramos la fila, agregar el atributo data-activity-id
         if (activityRow) {
             activityRow.setAttribute('data-activity-id', activityId);
             console.log('Agregado data-activity-id a la fila');
         }
     }
-    
+
     if (!activityRow) {
         console.error('No se pudo encontrar la fila de la actividad:', activityId);
         return;
     }
-    
+
     updateStatusCell(activityRow, newStatuses);
 }
 
 // Función para actualizar la celda de estados
 function updateStatusCell(row, newStatuses) {
-    // Buscar la celda de estados (generalmente la 6ta columna)
-    const statusCell = row.querySelector('td:nth-child(6)');
+    // Buscar la celda de estados (ahora la 9na columna)
+    const statusCell = row.querySelector('td:nth-child(9)');
     if (!statusCell) {
         console.log('Celda de estados no encontrada');
         return;
     }
-    
+
     // Buscar el contenedor de estados y el botón de editar
     let statusContainer = statusCell.querySelector('.status-display');
     let editButton = statusCell.querySelector('.edit-status-btn');
-    
+
     // Si no existe la estructura, crearla
     if (!statusContainer) {
         // Crear la estructura completa
@@ -246,10 +277,10 @@ function updateStatusCell(row, newStatuses) {
         statusContainer = statusCell.querySelector('.status-display');
         editButton = statusCell.querySelector('.edit-status-btn');
     }
-    
+
     // Limpiar solo el contenedor de badges, no el botón
     statusContainer.innerHTML = '';
-    
+
     // Agregar nuevos badges de estados
     if (newStatuses && newStatuses.length > 0) {
         newStatuses.forEach(status => {
@@ -263,22 +294,22 @@ function updateStatusCell(row, newStatuses) {
     } else {
         statusContainer.innerHTML = '<span class="text-muted">Sin estados</span>';
     }
-    
+
     // Asegurar que el botón tenga el ID correcto
     if (editButton) {
-        const activityId = row.getAttribute('data-activity-id') || 
-                          row.querySelector('[data-activity-id]')?.getAttribute('data-activity-id');
+        const activityId = row.getAttribute('data-activity-id') ||
+            row.querySelector('[data-activity-id]')?.getAttribute('data-activity-id');
         if (activityId) {
             editButton.setAttribute('data-activity-id', activityId);
         }
     }
-    
+
     // Agregar efecto visual de actualización
     statusCell.style.backgroundColor = '#d4edda';
     setTimeout(() => {
         statusCell.style.backgroundColor = '';
     }, 2000);
-    
+
     console.log('Celda de estados actualizada correctamente con botón preservado');
 }
 
@@ -302,13 +333,13 @@ function showAlert(message, type = 'info') {
             <span aria-hidden="true">&times;</span>
         </button>
     `;
-    
+
     // Insertar al inicio del contenedor
     const container = document.querySelector('.container-fluid');
     if (container) {
         container.insertBefore(alertDiv, container.firstChild);
     }
-    
+
     // Auto-remover después de 3 segundos (reducido para mejor UX)
     setTimeout(() => {
         if (alertDiv.parentNode) {
@@ -320,7 +351,7 @@ function showAlert(message, type = 'info') {
 // Función para procesar datos de actividades
 function processActivitiesData(activitiesData) {
     rowsCache = [];
-    
+
     function processActivity(activity, isSubactivity = false) {
         const processedActivity = {
             id: activity.id,
@@ -336,9 +367,9 @@ function processActivitiesData(activitiesData) {
             isSubactivity: isSubactivity,
             parent_id: activity.parent_id
         };
-        
+
         rowsCache.push(processedActivity);
-        
+
         // Procesar subactividades recursivamente
         if (activity.subactivities && activity.subactivities.length > 0) {
             activity.subactivities.forEach(subactivity => {
@@ -346,17 +377,17 @@ function processActivitiesData(activitiesData) {
             });
         }
     }
-    
+
     // Procesar todas las actividades
     activitiesData.forEach(activity => {
         processActivity(activity);
     });
-    
+
     console.log('Datos de actividades procesados:', rowsCache.length, 'actividades');
 }
 
 // Inicialización cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM listo - Inicializando modal de estados optimizado');
     initializeStatusEditing();
 });
