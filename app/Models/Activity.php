@@ -13,6 +13,7 @@ class Activity extends Model
         'name',
         'description',
         'estatus_operacional',
+        'porcentaje_avance',
         'status',
         'fecha_recepcion',
         'caso',
@@ -24,7 +25,6 @@ class Activity extends Model
         'categoria',
         'proyecto_id',
     ];
-
     // Campos que deben ser tratados como fechas
     protected $casts = [
         'fecha_recepcion' => 'datetime',

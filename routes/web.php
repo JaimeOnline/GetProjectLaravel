@@ -6,7 +6,7 @@ use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\RequirementController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('activities.index');
 });
 
 Route::get('activities/search', [ActivityController::class, 'search'])->name('activities.search');

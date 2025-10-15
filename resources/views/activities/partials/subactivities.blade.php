@@ -79,6 +79,27 @@
                 value="{{ $subactivity->orden_analista ?? 1 }}" style="display:none; width: 70px;" min="1">
         </td>
         <td class="align-middle">
+            {{ $subactivity->cliente ? \Illuminate\Support\Str::before($subactivity->cliente->nombre, ' ') : '-' }}
+        </td>
+        <td class="align-middle">
+            {{ Str::limit($subactivity->estatus_operacional, 40) }}
+            @if (strlen($subactivity->estatus_operacional) > 40)
+                <span class="text-primary" style="cursor: pointer;" title="{{ $subactivity->estatus_operacional }}">
+                    <i class="fas fa-info-circle"></i>
+                </span>
+            @endif
+        </td>
+        <td class="align-middle editable-cell" data-activity-id="{{ $subactivity->id }}" data-field="porcentaje_avance"
+            data-sort-value="{{ $subactivity->porcentaje_avance ?? 0 }}">
+            <span class="badge editable-value"
+                style="background-color: {{ heatmap_color($subactivity->porcentaje_avance ?? 0) }}; color: #fff;">
+                {{ $subactivity->porcentaje_avance ?? 0 }}%
+            </span>
+            <input type="number" class="form-control form-control-sm editable-input"
+                value="{{ $subactivity->porcentaje_avance ?? 0 }}" style="display:none; width: 70px;" min="0"
+                max="100">
+        </td>
+        <td class="align-middle">
             <div class="description-cell">
                 {{ Str::limit($subactivity->description, 30) }}
                 @if (strlen($subactivity->description) > 30)

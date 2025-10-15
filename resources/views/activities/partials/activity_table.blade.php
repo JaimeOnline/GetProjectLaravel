@@ -1,3 +1,20 @@
+@php
+    function heatmap_color($value)
+    {
+        $value = (int) $value;
+        if ($value <= 0) {
+            return '#dc3545';
+        } // rojo
+        if ($value < 50) {
+            return '#fd7e14';
+        } // naranja
+        if ($value < 80) {
+            return '#ffc107';
+        } // amarillo
+        return '#28a745'; // verde
+    }
+@endphp
+
 <table id="main-activities-table" class="table table-hover mb-0 modern-table" style="min-width: 1100px;">
     <thead class="thead-light sticky-thead">
         <tr>
@@ -79,6 +96,15 @@
                         </div>
                     </div>
                 </div>
+            </th>
+            <th class="border-0">
+                <i class="fas fa-user-tie text-primary"></i> Cliente
+            </th>
+            <th class="border-0">
+                <i class="fas fa-tasks text-primary"></i> Estado Operacional
+            </th>
+            <th class="border-0">
+                <i class="fas fa-percentage text-primary"></i> % Avance
             </th>
             <th class="border-0">
                 <i class="fas fa-align-left text-primary"></i> Descripción
@@ -274,6 +300,28 @@
                     <input type="number" class="form-control form-control-sm editable-input"
                         value="{{ $activity->orden_analista ?? 1 }}" style="display:none; width: 70px;"
                         min="1">
+                </td>
+                <td class="align-middle">
+                    {{ $activity->cliente ? \Illuminate\Support\Str::before($activity->cliente->nombre, ' ') : '-' }}
+                </td>
+                <td class="align-middle">
+                    {{ Str::limit($activity->estatus_operacional, 40) }}
+                    @if (strlen($activity->estatus_operacional) > 40)
+                        <span class="text-primary" style="cursor: pointer;"
+                            title="{{ $activity->estatus_operacional }}">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                    @endif
+                </td>
+                <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
+                    data-field="porcentaje_avance" data-sort-value="{{ $activity->porcentaje_avance ?? 0 }}">
+                    <span class="badge editable-value"
+                        style="background-color: {{ heatmap_color($activity->porcentaje_avance ?? 0) }}; color: #fff;">
+                        {{ $activity->porcentaje_avance ?? 0 }}%
+                    </span>
+                    <input type="number" class="form-control form-control-sm editable-input"
+                        value="{{ $activity->porcentaje_avance ?? 0 }}" style="display:none; width: 70px;"
+                        min="0" max="100">
                 </td>
                 <td class="align-middle">
                     <div class="description-cell">

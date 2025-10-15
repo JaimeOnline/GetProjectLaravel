@@ -511,6 +511,7 @@ class ActivityController extends Controller
             'fecha_recepcion' => 'nullable|date', // Validar que la fecha de recepción sea una fecha válida si se proporciona
             'parent_id' => 'nullable|exists:activities,id', // Validar que el parent_id exista si se proporciona
             'estatus_operacional' => 'nullable|string|max:1000', // Validar el nuevo campo estatus_operacional
+            'porcentaje_avance' => 'nullable|integer|min:0|max:100',
             'prioridad' => 'required|integer|min:1',
             'orden_analista' => 'required|integer|min:1',
             'cliente_id' => 'required|exists:clientes,id',
@@ -541,6 +542,7 @@ class ActivityController extends Controller
         $activity->name = $request->input('name');
         $activity->description = $request->input('description');
         $activity->estatus_operacional = $request->input('estatus_operacional');
+        $activity->porcentaje_avance = $request->input('porcentaje_avance', 0);
         $activity->fecha_recepcion = $request->input('fecha_recepcion');
         $activity->parent_id = $request->input('parent_id');
         $activity->prioridad = $request->input('prioridad');
@@ -747,6 +749,7 @@ class ActivityController extends Controller
             'parent_id' => 'nullable|exists:activities,id',
             'description' => 'nullable|string|max:10000',
             'estatus_operacional' => 'nullable|string|max:1000',
+            'porcentaje_avance' => 'nullable|integer|min:0|max:100',
             'prioridad' => 'required|integer|min:1',
             'orden_analista' => 'required|integer|min:1',
             'cliente_id' => 'required|exists:clientes,id',
@@ -777,6 +780,7 @@ class ActivityController extends Controller
             $activity->name = $request->input('name');
             $activity->description = $request->input('description');
             $activity->estatus_operacional = $request->input('estatus_operacional');
+            $activity->porcentaje_avance = $request->input('porcentaje_avance', 0);
             $activity->status = $request->input('status');
             $activity->fecha_recepcion = $request->input('fecha_recepcion');
             $activity->parent_id = $request->input('parent_id');
@@ -1230,13 +1234,13 @@ class ActivityController extends Controller
     }
 
     /**
-     * Editar prioridad y orden en la tabla
+     * Editar prioridad, orden y porcentaje en la tabla
      */
     public function inlineUpdate(Request $request, Activity $activity)
     {
         $request->validate([
-            'field' => 'required|in:prioridad,orden_analista',
-            'value' => 'required|integer|min:1'
+            'field' => 'required|in:prioridad,orden_analista,porcentaje_avance',
+            'value' => 'required|integer|min:0|max:100'
         ]);
 
         $activity->{$request->field} = $request->value;

@@ -326,11 +326,14 @@ document.addEventListener('DOMContentLoaded', function () {
             'nombre': 1,
             'prioridad': 2,
             'orden_analista': 3,
-            'descripcion': 4,
-            'status': 5,
-            'analistas': 6,
-            'requerimientos': 7,
-            'fecha_recepcion': 8
+            'cliente': 4,
+            'estatus_operacional': 5,
+            'porcentaje_avance': 6,
+            'descripcion': 7,
+            'status': 8,
+            'analistas': 9,
+            'requerimientos': 10,
+            'fecha_recepcion': 11
         };
         const cells = row.querySelectorAll('td');
         let value = '';
@@ -798,10 +801,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 let shouldShow = true;
                 const cells = row.querySelectorAll('td');
 
-                // Filtro por estado (columna 5)
-                if (activeFilters.status.length > 0 && cells[5]) {
+                // Filtro por estado (columna 8)
+                if (activeFilters.status.length > 0 && cells[8]) {
                     // Extraer todos los textos de los badges dentro de la celda de estado
-                    const badgeTexts = Array.from(cells[5].querySelectorAll('.badge'))
+                    const badgeTexts = Array.from(cells[8].querySelectorAll('.badge'))
                         .map(badge => badge.textContent.trim().toLowerCase());
 
                     const statusMatch = activeFilters.status.some(status => {
@@ -828,9 +831,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!statusMatch) shouldShow = false;
                 }
 
-                // Filtro por analista (columna 6)
-                if (shouldShow && activeFilters.analistas.length > 0 && cells[6]) {
-                    const analistaText = cells[6].textContent.trim().toLowerCase();
+                // Filtro por analista (columna 9)
+                if (shouldShow && activeFilters.analistas.length > 0 && cells[9]) {
+                    const analistaText = cells[9].textContent.trim().toLowerCase();
                     const analistaMatch = activeFilters.analistas.some(analistaId => {
                         const analistaLabel = document.querySelector(`.analista-filter[value="${analistaId}"] + label`);
                         if (!analistaLabel) return false;
@@ -840,7 +843,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!analistaMatch) shouldShow = false;
                 }
 
-                // Filtro por prioridad
+                // Filtro por prioridad (columna 2)
                 const prioridadFilterCheckboxes = document.querySelectorAll('.prioridad-filter:checked');
                 const prioridadValues = Array.from(prioridadFilterCheckboxes)
                     .map(cb => cb.value)
@@ -854,7 +857,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                // Filtro por orden
+                // Filtro por orden (columna 3)
                 const ordenFilterCheckboxes = document.querySelectorAll('.orden-filter:checked');
                 const ordenValues = Array.from(ordenFilterCheckboxes)
                     .map(cb => cb.value)
@@ -1167,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Devuelve los filtros en el formato que espera el backend
         return {
             status: activeFilters.status,
-            analista_id: activeFilters.analistas.length > 0 ? activeFilters.analistas[0] : '',
+            analista_id: activeFilters.analistas, // Enviar el array completo
             fecha_desde: activeFilters.fechaDesde,
             fecha_hasta: activeFilters.fechaHasta
         };
@@ -1220,6 +1223,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
+    // Helper para heatmap color
+    function heatmapColor(value) {
+        value = parseInt(value, 10) || 0;
+        if (value <= 0) return '#dc3545';
+        if (value < 50) return '#fd7e14';
+        if (value < 80) return '#ffc107';
+        return '#28a745';
+    }
+
     // Renderiza una fila de actividad (estructura igual al index)
     function renderActivityRow(activity, isSub = false) {
         // Estado
@@ -1227,8 +1239,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (activity.statuses && activity.statuses.length > 0) {
             activity.statuses.forEach(status => {
                 statusHtml += `<span class="badge badge-pill mr-1 mb-1" style="background-color: ${status.color}; color: #fff;">
-                    <i class="${status.icon || 'fas fa-circle'}"></i> ${status.label}
-                </span>`;
+                <i class="${status.icon || 'fas fa-circle'}"></i> ${status.label}
+            </span>`;
             });
         } else {
             statusHtml = `<span class="badge badge-secondary badge-pill">${activity.status_label || activity.status || ''}</span>`;
@@ -1263,98 +1275,110 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Prioridad y Orden
-        let prioridad = activity.prioridad !== undefined && activity.prioridad !== null
+        let prioridad = (activity.prioridad !== undefined && activity.prioridad !== null)
             ? `<span class="badge badge-outline-info editable-value">${activity.prioridad}</span>`
-            : '-';
-        let orden = activity.orden_analista !== undefined && activity.orden_analista !== null
+            : '<span class="badge badge-outline-info editable-value">-</span>';
+        let orden = (activity.orden_analista !== undefined && activity.orden_analista !== null)
             ? `<span class="badge badge-outline-secondary editable-value">${activity.orden_analista}</span>`
+            : '<span class="badge badge-outline-secondary editable-value">-</span>';
+
+        // Cliente (solo la primera palabra)
+        let cliente = (activity.cliente && activity.cliente.nombre)
+            ? activity.cliente.nombre.split(' ')[0]
             : '-';
+
+        // Estado Operacional (limitado a 40 caracteres)
+        let estatus_operacional = activity.estatus_operacional
+            ? (activity.estatus_operacional.length > 40
+                ? activity.estatus_operacional.substring(0, 40) + '...'
+                : activity.estatus_operacional)
+            : '-';
+
+        // Porcentaje de avance (con heatmap)
+        let porcentaje = `<span class="badge editable-value" style="background-color: ${heatmapColor(activity.porcentaje_avance ?? 0)}; color: #fff;">
+        ${activity.porcentaje_avance ?? 0}%
+    </span>
+    <input type="number" class="form-control form-control-sm editable-input" value="${activity.porcentaje_avance ?? 0}" style="display:none; width: 70px;" min="0" max="100">`;
+
+        // Descripción
+        let descripcion = activity.description
+            ? activity.description.substring(0, 30)
+            : '';
 
         return `
-        <tr class="${isSub ? 'subactivity-row' : 'parent-activity activity-row'}">
-            <td class="align-middle">
-                <span class="badge badge-outline-primary font-weight-bold">
-                    ${activity.caso || ''}
-                </span>
-            </td>
-            <td class="align-middle position-relative" style="position: relative;">
-                <div class="d-flex align-items-center">
-                    ${activity.subactivities && activity.subactivities.length > 0
+    <tr class="${isSub ? 'subactivity-row' : 'parent-activity activity-row'}">
+        <td class="align-middle"><span class="badge badge-outline-primary font-weight-bold">${activity.caso || ''}</span></td>
+        <td class="align-middle position-relative" style="position: relative;">
+            <div class="d-flex align-items-center">
+                ${activity.subactivities && activity.subactivities.length > 0
                 ? `<span class="toggle-subactivities mr-2" style="cursor: pointer;" data-activity-id="${activity.id}">
-                                <i class="fas fa-chevron-right text-primary" id="icon-${activity.id}"></i>
-                            </span>`
+                            <i class="fas fa-chevron-right text-primary" id="icon-${activity.id}"></i>
+                        </span>`
                 : ''
             }
-                    <div>
-                        <div class="font-weight-bold text-dark small">
-                            ${activity.name ? activity.name.substring(0, 40) : ''}
-                            ${activity.name && activity.name.length > 40
+                <div>
+                    <div class="font-weight-bold text-dark small">
+                        ${activity.name ? activity.name.substring(0, 40) : ''}
+                        ${activity.name && activity.name.length > 40
                 ? `<span class="text-primary" style="cursor: pointer;" title="${activity.name}" data-toggle="tooltip">
-                                        <i class="fas fa-info-circle"></i>
-                                    </span>`
+                                    <i class="fas fa-info-circle"></i>
+                                </span>`
                 : ''
             }
-                        </div>
-                        ${activity.subactivities && activity.subactivities.length > 0
+                    </div>
+                    ${activity.subactivities && activity.subactivities.length > 0
                 ? `<small class="text-muted">
-                                    <i class="fas fa-sitemap"></i>
-                                    ${activity.subactivities.length} subactividad(es)
-                                </small>`
-                : ''
-            }
-                    </div>
-                </div>
-                <div class="action-buttons"
-                    style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
-                    <div class="btn-group btn-group-sm" role="group">
-                        <a href="/activities/${activity.id}/edit"
-                            class="btn btn-warning btn-sm action-btn"
-                            data-tooltip="Ver/Editar" title="Ver/Editar">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <a href="/activities/create?parentId=${activity.id}"
-                            class="btn btn-secondary btn-sm action-btn"
-                            data-tooltip="Crear Subactividad" title="Crear Subactividad">
-                            <i class="fas fa-plus"></i>
-                        </a>
-                        <form action="/activities/${activity.id}" method="POST" style="display:inline;">
-                            <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="btn btn-danger btn-sm action-btn"
-                                data-tooltip="Eliminar" title="Eliminar"
-                                onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </td>
-            <td class="align-middle editable-cell" data-activity-id="${activity.id}" data-field="prioridad" data-sort-value="${activity.prioridad ?? 0}">
-                ${prioridad}
-            </td>
-            <td class="align-middle editable-cell" data-activity-id="${activity.id}" data-field="orden_analista" data-sort-value="${activity.orden_analista ?? 0}">
-                ${orden}
-            </td>
-            <td class="align-middle">
-                <div class="description-cell">
-                    ${activity.description ? activity.description.substring(0, 30) : ''}
-                    ${activity.description && activity.description.length > 30
-                ? `<span class="text-primary" style="cursor: pointer;" title="${activity.description}" data-toggle="tooltip">
-                                <i class="fas fa-info-circle"></i>
-                            </span>`
+                                <i class="fas fa-sitemap"></i>
+                                ${activity.subactivities.length} subactividad(es)
+                            </small>`
                 : ''
             }
                 </div>
-            </td>
-            <td class="align-middle">${statusHtml}</td>
-            <td class="align-middle">${analistasHtml}</td>
-            <td class="align-middle">${reqHtml}</td>
-            <td class="align-middle">${fechaHtml}</td>
-        </tr>
+            </div>
+            <div class="action-buttons"
+                style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="/activities/${activity.id}/edit"
+                        class="btn btn-warning btn-sm action-btn"
+                        data-tooltip="Ver/Editar" title="Ver/Editar">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="/activities/create?parentId=${activity.id}"
+                        class="btn btn-secondary btn-sm action-btn"
+                        data-tooltip="Crear Subactividad" title="Crear Subactividad">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                    <form action="/activities/${activity.id}" method="POST" style="display:inline;">
+                        <input type="hidden" name="_token" value="${$('meta[name="csrf-token"]').attr('content')}">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="btn btn-danger btn-sm action-btn"
+                            data-tooltip="Eliminar" title="Eliminar"
+                            onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </td>
+        <td class="align-middle editable-cell" data-activity-id="${activity.id}" data-field="prioridad" data-sort-value="${activity.prioridad ?? 0}">
+            ${prioridad}
+        </td>
+        <td class="align-middle editable-cell" data-activity-id="${activity.id}" data-field="orden_analista" data-sort-value="${activity.orden_analista ?? 0}">
+            ${orden}
+        </td>
+        <td class="align-middle">${cliente}</td>
+        <td class="align-middle">${estatus_operacional}</td>
+        <td class="align-middle editable-cell" data-activity-id="${activity.id}" data-field="porcentaje_avance" data-sort-value="${activity.porcentaje_avance ?? 0}">
+            ${porcentaje}
+        </td>
+        <td class="align-middle"><div class="description-cell">${descripcion}</div></td>
+        <td class="align-middle">${statusHtml}</td>
+        <td class="align-middle">${analistasHtml}</td>
+        <td class="align-middle">${reqHtml}</td>
+        <td class="align-middle">${fechaHtml}</td>
+    </tr>
     `;
     }
-
-
 
     function clearSearch() {
         if (searchInput) {
@@ -1424,7 +1448,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const span = cell.querySelector('.editable-value');
             const activityId = cell.getAttribute('data-activity-id');
             const field = cell.getAttribute('data-field');
-            const value = input.value;
+            let value = input.value;
+
+            // Validación para los campos
+            if (field === 'prioridad' || field === 'orden_analista') {
+                value = Math.max(1, parseInt(value, 10) || 1);
+            }
+            if (field === 'porcentaje_avance') {
+                value = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+            }
 
             fetch(`/activities/${activityId}/inline-update`, {
                 method: 'PATCH',
@@ -1440,7 +1472,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        span.textContent = value;
+                        if (field === 'porcentaje_avance') {
+                            span.textContent = value + '%';
+                        } else {
+                            span.textContent = value;
+                        }
+                        input.value = value;
                     } else {
                         alert('Error al actualizar');
                     }

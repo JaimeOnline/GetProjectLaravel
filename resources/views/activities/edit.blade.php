@@ -252,6 +252,14 @@
                                     placeholder="Ingrese el estatus operacional de la actividad...">{{ $activity->estatus_operacional }}</textarea>
                             </div>
                             <div class="form-group">
+                                <label class="form-label" for="porcentaje_avance">
+                                    <i class="fas fa-percentage text-primary"></i> Porcentaje de Avance (%)
+                                </label>
+                                <input type="number" class="form-control" id="porcentaje_avance"
+                                    name="porcentaje_avance" min="0" max="100"
+                                    value="{{ old('porcentaje_avance', $activity->porcentaje_avance ?? 0) }}">
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label" for="basic_comment">
                                     <i class="fas fa-comment-dots text-primary"></i> Comentario
                                 </label>
@@ -430,19 +438,37 @@
                             <div style="width: 1800px; height: 1px;"></div>
                         </div>
                         <!-- Contenedor con scroll horizontal siempre visible -->
-                        <div id="subactivitiesTableContainer">
-                            @include('activities.partials.activity_table', [
-                                'activities' => collect([$activity])->merge($activity->subactivities),
-                                'statusLabels' => $statusLabels,
-                                'statusColors' => $statusColors,
-                                'analistas' => $analistas,
-                                'editMode' => true,
-                            ])
+                        <div id="subactivitiesTableContainer" style="overflow-x: auto; width: 100%;">
+                            <div style="min-width: 1800px;">
+                                @include('activities.partials.activity_table', [
+                                    'activities' => collect([$activity])->merge($activity->subactivities),
+                                    'statusLabels' => $statusLabels,
+                                    'statusColors' => $statusColors,
+                                    'analistas' => $analistas,
+                                    'editMode' => true,
+                                ])
+                            </div>
                         </div>
+
                     </div>
                 </div>
             </div>
-
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var topScroll = document.getElementById('top-scroll');
+                    var tableScroll = document.getElementById('subactivitiesTableContainer');
+                    if (topScroll && tableScroll) {
+                        // Cuando haces scroll en la barra superior, mueve la tabla
+                        topScroll.addEventListener('scroll', function() {
+                            tableScroll.scrollLeft = topScroll.scrollLeft;
+                        });
+                        // Cuando haces scroll en la tabla, mueve la barra superior
+                        tableScroll.addEventListener('scroll', function() {
+                            topScroll.scrollLeft = tableScroll.scrollLeft;
+                        });
+                    }
+                });
+            </script>
             <!-- Pestaña: Requerimientos -->
             <div class="tab-pane fade" id="requirements" role="tabpanel">
                 <div class="card">

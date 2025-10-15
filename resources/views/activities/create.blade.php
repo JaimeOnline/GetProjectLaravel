@@ -253,6 +253,13 @@
                         <textarea class="form-control" id="estatus_operacional" name="estatus_operacional" rows="3"
                             placeholder="Ingrese el estatus operacional de la actividad..."></textarea>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label" for="porcentaje_avance">
+                            <i class="fas fa-percentage text-primary"></i> Porcentaje de Avance (%)
+                        </label>
+                        <input type="number" class="form-control" id="porcentaje_avance" name="porcentaje_avance"
+                            min="0" max="100" value="{{ old('porcentaje_avance', 0) }}">
+                    </div>
 
                     <div class="form-group">
                         <label class="form-label">

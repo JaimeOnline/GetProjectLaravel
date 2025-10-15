@@ -287,7 +287,7 @@
                     <div class="stats-content">
                         <h3>{{ $activities->filter(function ($activity) {return $activity->hasStatus('en_espera_de_insumos');})->count() }}
                         </h3>
-                        <p>En Espera</p>
+                        <p>En Espera de Insumos</p>
                     </div>
                 </div>
             </div>
