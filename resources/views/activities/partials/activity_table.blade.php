@@ -234,8 +234,32 @@
                     <span class="badge badge-outline-primary font-weight-bold">
                         {{ $activity->caso }}
                     </span>
+                    <div class="action-buttons" style="display: none;">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{{ route('activities.edit', $activity) }}"
+                                class="btn btn-warning btn-sm action-btn" data-tooltip="Ver/Editar"
+                                title="Ver/Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}"
+                                class="btn btn-secondary btn-sm action-btn" data-tooltip="Crear Subactividad"
+                                title="Crear Subactividad">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                            <form action="{{ route('activities.destroy', $activity) }}" method="POST"
+                                style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm action-btn"
+                                    data-tooltip="Eliminar" title="Eliminar"
+                                    onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </td>
-                <td class="align-middle position-relative" style="position: relative;">
+                <td class="align-middle" style="vertical-align: middle;">
                     <div class="d-flex align-items-center">
                         @if ($activity->subactivities->count() > 0)
                             <span class="toggle-subactivities mr-2" style="cursor: pointer;"
@@ -259,31 +283,6 @@
                                     {{ $activity->subactivities->count() }} subactividad(es)
                                 </small>
                             @endif
-                        </div>
-                    </div>
-                    <div class="action-buttons"
-                        style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); display: none; z-index: 2;">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a href="{{ route('activities.edit', $activity) }}"
-                                class="btn btn-warning btn-sm action-btn" data-tooltip="Ver/Editar"
-                                title="Ver/Editar">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{{ route('activities.create', ['parentId' => $activity->id]) }}"
-                                class="btn btn-secondary btn-sm action-btn" data-tooltip="Crear Subactividad"
-                                title="Crear Subactividad">
-                                <i class="fas fa-plus"></i>
-                            </a>
-                            <form action="{{ route('activities.destroy', $activity) }}" method="POST"
-                                style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm action-btn"
-                                    data-tooltip="Eliminar" title="Eliminar"
-                                    onclick="return confirm('¿Estás seguro de eliminar esta actividad y todas sus subactividades?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
                         </div>
                     </div>
                 </td>

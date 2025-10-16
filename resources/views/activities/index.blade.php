@@ -514,7 +514,7 @@
                     <i class="fas fa-list"></i> <span id="tableTitle">Lista de Actividades</span>
                 </h5>
                 <div class="header-actions">
-                    <button class="btn btn-sm btn-warning mr-2" id="clearAllColumnFilters" style="display: block;">
+                    <button class="btn btn-sm    mr-2" id="clearAllColumnFilters" style="display: block;">
                         <i class="fas fa-times-circle"></i> Limpiar Filtros
                     </button>
                     <small class="text-light">
@@ -811,43 +811,7 @@
         text-align: center;
     }
 
-    /* Botones de acción */
-    .action-buttons .btn.btn-sm {
-        margin: 0.1rem 0;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        padding: 0.2rem 0.4rem;
-        transition: all 0.2s ease;
-    }
-
-    .action-buttons .btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Oculta los botones de acción por defecto */
-    /* .action-buttons {
-        display: none;
-    } */
-
-    /* Muestra los botones de acción al hacer hover sobre la fila */
-    .activity-row:hover .action-buttons,
-    .subactivity-row:hover .action-buttons {
-        display: block !important;
-    }
-
-    /* Oculta el botón de editar analistas por defecto */
-    .analysts-edit-btn-group {
-        display: none;
-    }
-
-    /* Muestra el botón al hacer hover sobre la fila */
-    .activity-row:hover .analysts-edit-btn-group,
-    .subactivity-row:hover .analysts-edit-btn-group {
-        display: inline-block !important;
-    }
-
-    /* Sticky header para la tabla de actividades */
+        /* Sticky header para la tabla de actividades */
     .sticky-thead th {
         position: sticky;
         top: 0;

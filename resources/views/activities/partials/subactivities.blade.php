@@ -234,34 +234,3 @@
         ])
     @endif
 @endforeach
-
-<style>
-    /* Botones de acción */
-    .action-buttons .btn.btn-sm {
-        margin: 0.1rem 0;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        padding: 0.2rem 0.4rem;
-        transition: all 0.2s ease;
-    }
-
-    .action-buttons {
-        display: none;
-    }
-
-    .activity-row:hover .action-buttons,
-    .subactivity-row:hover .action-buttons {
-        display: block !important;
-    }
-
-    /* Oculta el botón de editar analistas por defecto */
-    .analysts-edit-btn-group {
-        display: none;
-    }
-
-    /* Muestra el botón al hacer hover sobre la fila */
-    .activity-row:hover .analysts-edit-btn-group,
-    .subactivity-row:hover .analysts-edit-btn-group {
-        display: inline-block !important;
-    }
-</style>
