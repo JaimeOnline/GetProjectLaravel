@@ -4,16 +4,20 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Activity;
-use App\Models\User; 
+use App\Models\User;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-use App\Models\Analista; 
+use App\Models\Analista;
+use Illuminate\Support\Facades\DB;
+
 
 
 class ActivitiesTestSeeder extends Seeder
 {
     public function run()
     {
+        // Vacía la tabla antes de poblarla
+        DB::table('activities')->truncate();
 
         // Crea algunos analistas de prueba si no existen
         $analistas = [];
@@ -36,8 +40,35 @@ class ActivitiesTestSeeder extends Seeder
             'cancelada'
         ];
 
-        // Crea 20 actividades principales
-        for ($i = 1; $i <= 20; $i++) {
+        // Obtén todos los IDs de proyectos existentes
+        $proyectoIds = \App\Models\Proyecto::pluck('id')->toArray();
+
+        // Obtén todos los IDs de clientes existentes
+        $clienteIds = \App\Models\Cliente::pluck('id')->toArray();
+
+        // Frases para estatus_operacional
+        $estatusOperacionalList = [
+            'Enviado pases a Master',
+            'Entregado para certificar',
+            'Esperando archivos de as400',
+            'En revisión por el cliente',
+            'Pendiente de documentación',
+            'Listo para producción'
+        ];
+
+        // Depuración: Verifica que los arrays no estén vacíos
+        if (empty($proyectoIds)) {
+            \Log::warning('No hay proyectos en la base de datos, proyecto_id será null en activities');
+        }
+        if (empty($estatusOperacionalList)) {
+            \Log::warning('No hay frases para estatus_operacional');
+        }
+
+        // Crea 100 actividades principales
+        for ($i = 1; $i <= 100; $i++) {
+            // Elige un cliente aleatorio para la actividad principal y sus subactividades
+            $clienteId = !empty($clienteIds) ? $clienteIds[array_rand($clienteIds)] : null;
+
             $activity = Activity::create([
                 'name' => "Actividad Principal $i",
                 'description' => "Descripción de la actividad principal $i",
@@ -47,7 +78,12 @@ class ActivitiesTestSeeder extends Seeder
                 'status' => $statusList[array_rand($statusList)],
                 'fecha_recepcion' => Carbon::now()->subDays(rand(0, 365)),
                 'parent_id' => null,
+                'proyecto_id' => !empty($proyectoIds) ? $proyectoIds[array_rand($proyectoIds)] : 1,
+                'estatus_operacional' => !empty($estatusOperacionalList) ? $estatusOperacionalList[array_rand($estatusOperacionalList)] : 'Sin estatus',
+                'porcentaje_avance' => rand(1, 10) * 10,
+                'cliente_id' => $clienteId,
             ]);
+
 
             // Asigna analistas aleatorios
             $activity->analistas()->sync(
@@ -74,7 +110,12 @@ class ActivitiesTestSeeder extends Seeder
                     'status' => $statusList[array_rand($statusList)],
                     'fecha_recepcion' => Carbon::now()->subDays(rand(0, 365)),
                     'parent_id' => $activity->id,
+                    'proyecto_id' => !empty($proyectoIds) ? $proyectoIds[array_rand($proyectoIds)] : null,
+                    'estatus_operacional' => $estatusOperacionalList[array_rand($estatusOperacionalList)],
+                    'porcentaje_avance' => rand(1, 10) * 10,
+                    'cliente_id' => $clienteId,
                 ]);
+
                 $sub->analistas()->sync(
                     collect($analistaIds)->random(rand(1, 2))->all()
                 );
@@ -97,6 +138,10 @@ class ActivitiesTestSeeder extends Seeder
                         'status' => $statusList[array_rand($statusList)],
                         'fecha_recepcion' => Carbon::now()->subDays(rand(0, 365)),
                         'parent_id' => $sub->id,
+                        'proyecto_id' => !empty($proyectoIds) ? $proyectoIds[array_rand($proyectoIds)] : null,
+                        'estatus_operacional' => $estatusOperacionalList[array_rand($estatusOperacionalList)],
+                        'porcentaje_avance' => rand(1, 10) * 10,
+                        'cliente_id' => $clienteId,
                     ]);
                     $subsub->analistas()->sync(
                         collect($analistaIds)->random(rand(1, 2))->all()

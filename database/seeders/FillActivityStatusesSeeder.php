@@ -29,4 +29,3 @@ class FillActivityStatusesSeeder extends Seeder
         });
     }
 }
-php artisan db:seed --class=FillActivityStatusesSeeder
