@@ -801,8 +801,11 @@ class ActivityController extends Controller
 
             $activity->save();
 
-            // Guardar comentario si cambió el estatus operacional
-            if ($oldEstatusOperacional !== $activity->estatus_operacional) {
+            // Guardar comentario si cambió el estatus operacional y el nuevo valor NO está vacío
+            if (
+                $oldEstatusOperacional !== $activity->estatus_operacional &&
+                !empty($activity->estatus_operacional)
+            ) {
                 Comment::create([
                     'activity_id' => $activity->id,
                     'comment' => $activity->estatus_operacional,
@@ -842,9 +845,10 @@ class ActivityController extends Controller
             // Asignar analistas a la actividad
             $activity->analistas()->sync($request->analista_id);
 
-            // Limpiar los requerimientos existentes y agregar los nuevos solo si existen
-            $activity->requirements()->delete();
+            // Solo actualizar requerimientos si el formulario los envía (pestaña de requerimientos)
             if ($request->has('requirements')) {
+                // Limpiar los requerimientos existentes y agregar los nuevos solo si existen
+                $activity->requirements()->delete();
                 foreach ($request->requirements as $requirementDescription) {
                     if (!empty($requirementDescription)) {
                         Requirement::create([
