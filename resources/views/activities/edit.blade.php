@@ -1083,7 +1083,7 @@
                                             archivo(s)"</span>
                                         <input type="file" class="form-control-file" id="attachments"
                                             name="attachments[]" multiple
-                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar"
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar,.csv"
                                             style="display:none;">
                                         <button type="button" class="btn btn-secondary btn-sm mt-2" id="addFileBtn">
                                             <i class="fas fa-plus"></i> Agregar archivo(s)
@@ -1092,7 +1092,7 @@
                                     </div>
                                     <small class="form-text text-muted">
                                         Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT,
-                                        JPG, PNG, GIF, ZIP, RAR
+                                        JPG, PNG, GIF, ZIP, RAR, CSV
                                     </small>
                                     <script>
                                         let selectedFiles = [];

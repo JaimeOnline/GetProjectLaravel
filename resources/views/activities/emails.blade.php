@@ -242,9 +242,9 @@
                         <i class="fas fa-paperclip text-primary"></i> Archivos Adjuntos
                     </label>
                     <input type="file" class="form-control-file" id="attachments" name="attachments[]" multiple
-                           accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar">
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar,.csv">
                     <small class="form-text text-muted">
-                        Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, GIF, ZIP, RAR
+                        Máximo 10MB por archivo. Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, GIF, ZIP, RAR, CSV
                     </small>
                 </div>
                 
