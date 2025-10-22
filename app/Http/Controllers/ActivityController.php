@@ -246,7 +246,7 @@ class ActivityController extends Controller
         if ($proyectoId) {
             $query->where('proyecto_id', $proyectoId);
         }
-        $activities = $query->get();
+        $activities = $query->orderBy('updated_at', 'desc')->get(); //Ordena la tabla según las ultimas editadas.
 
         // Analistas para el filtro
         $analistas = Analista::all();
