@@ -994,7 +994,7 @@ class ActivityController extends Controller
             'sender_recipient' => 'nullable|string|max:255',
             'content' => 'required|string',
             'attachments' => 'nullable|array',
-            'attachments.*' => 'nullable|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,txt,jpg,jpeg,png,gif,zip,rar,7z,csv',
+            'attachments.*' => 'nullable|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,txt,jpg,jpeg,png,gif,zip,rar,7z,csv,xml,PDF,DOC,DOCX,XLS,XLSX,TXT,JPG,JPEG,PNG,GIF,ZIP,RAR,7Z,CSV,XML',
             'email_type' => 'nullable|string|in:Solicitud de Insumos,Invitación a certificar,Envío de Pases',
         ]);
 
