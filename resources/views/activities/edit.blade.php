@@ -186,32 +186,6 @@
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="caso">
-                                        <i class="fas fa-hashtag text-primary"></i> Caso <span
-                                            class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="caso" name="caso" required
-                                        value="{{ old('caso', $defaultCaso ?? '') }}">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="name">
-                                        <i class="fas fa-tag text-primary"></i> Nombre de la Actividad <span
-                                            class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="name" name="name" required>
-                                </div>
-                            </div>
-                            <div class="form-group mb-3">
-                                <label class="form-label" for="description">
-                                    <i class="fas fa-align-left text-primary"></i> Descripción
-                                </label>
-                                <textarea class="form-control" id="description" name="description" rows="4"
-                                    placeholder="Describe los detalles de la actividad..."></textarea>
-                            </div>
-
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
                                     <label class="form-label" for="cliente_id">
                                         <i class="fas fa-user-tie text-primary"></i> Cliente <span
                                             class="text-danger">*</span>
