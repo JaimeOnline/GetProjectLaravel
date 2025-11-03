@@ -521,11 +521,17 @@ class ActivityController extends Controller
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
         ];
 
-        // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
+        // Permitir vacío en 'caso' para todas las actividades.
+        // Si se coloca un valor en 'caso' y es actividad principal, debe ser único.
         if (is_null($request->input('parent_id'))) {
-            $rules['caso'] = 'required|unique:activities,caso';
+            $rules['caso'] = [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('activities', 'caso')->whereNull('parent_id')
+            ];
         } else {
-            $rules['caso'] = 'required';
+            $rules['caso'] = 'nullable|string|max:255';
         }
 
         $request->validate($rules);
@@ -759,10 +765,11 @@ class ActivityController extends Controller
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
         ];
 
-        // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
+        // Permitir vacío en 'caso' para todas las actividades.
+        // Si se coloca un valor en 'caso' y es actividad principal, debe ser único.
         if (is_null($request->input('parent_id'))) {
             $rules['caso'] = [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
                 Rule::unique('activities', 'caso')
@@ -770,7 +777,7 @@ class ActivityController extends Controller
                     ->ignore($activity->id)
             ];
         } else {
-            $rules['caso'] = 'required|string|max:255';
+            $rules['caso'] = 'nullable|string|max:255';
         }
         $request->validate($rules);
 
