@@ -234,13 +234,6 @@
                                     Mejora Continua</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label" for="description">
-                                <i class="fas fa-align-left text-primary"></i> Descripción
-                            </label>
-                            <textarea class="form-control" id="description" name="description" rows="4"
-                                placeholder="Describe los detalles de la actividad..."></textarea>
-                        </div>
                     </div>
 
                     <div class="row">
