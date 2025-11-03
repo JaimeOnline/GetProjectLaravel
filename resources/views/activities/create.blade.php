@@ -108,9 +108,9 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label" for="caso">
-                                <i class="fas fa-hashtag text-primary"></i> Caso <span class="text-danger">*</span>
+                                <i class="fas fa-hashtag text-primary"></i> Caso
                             </label>
-                            <input type="text" class="form-control" id="caso" name="caso" required
+                            <input type="text" class="form-control" id="caso" name="caso"
                                 value="{{ old('caso', $defaultCaso ?? '') }}">
                         </div>
                         <div class="col-md-6 mb-3">
@@ -304,7 +304,9 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            @if (!isset($parentActivity))
+                            @if (isset($parentActivity))
+                                <input type="hidden" name="parent_id" value="{{ $parentActivity->id }}">
+                            @else
                                 <label class="form-label" for="parent_id">
                                     <i class="fas fa-sitemap text-primary"></i> Actividad Padre
                                 </label>
