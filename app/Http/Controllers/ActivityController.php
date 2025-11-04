@@ -1565,4 +1565,92 @@ class ActivityController extends Controller
         $activity->load(['statuses', 'analistas', 'comments', 'emails', 'requirements', 'subactivities']);
         return response()->json($activity);
     }
+
+    // --- Vistas para el menú desplegable de Actividades ---
+
+    public function porAnalistas(Request $request)
+    {
+        $statuses = \App\Models\Status::orderBy('order')->get();
+
+        // Buscar el id del estado "En Ejecución"
+        $enEjecucionStatus = $statuses->first(function ($s) {
+            return stripos($s->label, 'ejecucion') !== false;
+        });
+
+        // Si no hay filtro, preselecciona "En Ejecución"
+        $statusFilter = $request->query('status', null);
+        if (
+            (is_null($statusFilter) || $statusFilter === [] || $statusFilter === '' || (is_array($statusFilter) && count($statusFilter) === 0))
+            && $enEjecucionStatus
+        ) {
+            $statusFilter = [$enEjecucionStatus->id];
+            // Forzar el parámetro en la request para la vista (para que los checkboxes lo vean)
+            request()->merge(['status' => [$enEjecucionStatus->id]]);
+        }
+
+        $analistas = \App\Models\Analista::orderBy('name')->get();
+
+        return view('activities.analistas', compact('analistas', 'statuses', 'statusFilter'));
+    }
+
+
+    // Nueva función para AJAX
+    public function actividadesPorAnalista(Request $request, $analistaId)
+    {
+        $statusFilter = $request->query('status');
+        $page = $request->query('page', 1);
+        $activityId = $request->query('activity_id');
+
+        $query = \App\Models\Activity::with('statuses')
+            ->whereHas('analistas', function ($q) use ($analistaId) {
+                $q->where('analistas.id', $analistaId);
+            });
+
+        if ($statusFilter) {
+            $query->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                $subQ->whereIn('statuses.id', (array)$statusFilter);
+            });
+        }
+
+        // Siempre cargar los statuses para la vista parcial
+        $statuses = \App\Models\Status::orderBy('order')->get();
+
+        // Si se solicita solo una actividad (para recarga individual)
+        if ($activityId) {
+            $activities = $query->where('id', $activityId)->get();
+            return response()->json([
+                'html' => view('activities.partials.analista_activities_table', [
+                    'activities' => $activities,
+                    'statuses' => $statuses
+                ])->render(),
+                'next_page' => null
+            ]);
+        }
+
+        $activities = $query->orderBy('fecha_recepcion', 'desc')->paginate(10);
+
+        return response()->json([
+            'html' => view('activities.partials.analista_activities_table', [
+                'activities' => $activities,
+                'statuses' => $statuses
+            ])->render(),
+            'next_page' => $activities->nextPageUrl()
+        ]);
+    }
+
+
+
+
+
+    public function enAtencionHoy()
+    {
+        // Puedes pasar datos reales más adelante
+        return view('activities.hoy');
+    }
+
+    public function enEsperaInsumos()
+    {
+        // Puedes pasar datos reales más adelante
+        return view('activities.insumos');
+    }
 }

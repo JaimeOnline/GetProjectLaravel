@@ -15,9 +15,12 @@ Route::get('activities/excel-template', [ActivityController::class, 'downloadExc
 Route::post('activities/import-excel', [ActivityController::class, 'importExcel'])->name('activities.importExcel');
 Route::get('/activities/export-word', [ActivityController::class, 'exportWord'])->name('activities.exportWord');
 Route::put('activities/{activity}/analysts', [ActivityController::class, 'updateAnalysts'])->name('activities.updateAnalysts');
+Route::get('/activities/analistas', [ActivityController::class, 'porAnalistas'])->name('activities.analistas');
+Route::get('/activities/analistas/{analista}/actividades', [ActivityController::class, 'actividadesPorAnalista'])->name('activities.analistas.actividades');
+Route::get('/activities/hoy', [ActivityController::class, 'enAtencionHoy'])->name('activities.hoy');
+Route::get('/activities/insumos', [ActivityController::class, 'enEsperaInsumos'])->name('activities.insumos');
+
 Route::resource('activities', ActivityController::class);
-
-
 // Rutas para gestión de estados múltiples
 Route::put('activities/{activity}/statuses', [ActivityController::class, 'updateStatuses'])->name('activities.statuses.update');
 Route::get('statuses', [ActivityController::class, 'getStatuses'])->name('statuses.index');
