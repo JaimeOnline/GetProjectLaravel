@@ -33,6 +33,7 @@
                 </div>
             </form>
         </div>
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 // --- Preseleccionar "En Ejecución" en el front si no hay filtro ---
@@ -80,6 +81,42 @@
                     });
                 });
 
+                function initSortable(analistaId) {
+                    var tbody = document.getElementById('sortable-tbody-' + analistaId);
+                    if (tbody && typeof Sortable !== "undefined") {
+                        if (tbody._sortable) {
+                            tbody._sortable.destroy();
+                        }
+                        tbody._sortable = new Sortable(tbody, {
+                            handle: '.orden-analista-handle',
+                            animation: 150,
+                            onEnd: function(evt) {
+                                const ids = Array.from(tbody.querySelectorAll('tr')).map(tr => tr
+                                    .getAttribute('data-activity-id'));
+                                fetch('/activities/reorder', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector(
+                                            'meta[name="csrf-token"]').content
+                                    },
+                                    body: JSON.stringify({
+                                        ids: ids
+                                    })
+                                }).then(res => res.json()).then(data => {
+                                    Array.from(tbody.querySelectorAll('tr')).forEach(function(tr,
+                                        idx) {
+                                        tr.querySelector('.orden-analista-handle .badge')
+                                            .textContent = idx + 1;
+                                    });
+                                });
+                            }
+                        });
+                    }
+                }
+
+
+
                 // loadActivities ya no necesita statusFilterOverride, siempre toma el filtro actual
                 window.loadActivities = function(analistaId, page = 1, append = false) {
                     const tableDiv = document.getElementById('activities-table-' + analistaId);
@@ -102,10 +139,11 @@
                         .then(data => {
                             if (!append) {
                                 tableDiv.innerHTML = data.html;
+                                initSortable(analistaId);
                             } else {
                                 tableDiv.querySelector('tbody').insertAdjacentHTML('beforeend', data.html
-                                    .replace(
-                                        /^[\s\S]*<tbody>|<\/tbody>[\s\S]*$/g, ''));
+                                    .replace(/^[\s\S]*<tbody>|<\/tbody>[\s\S]*$/g, ''));
+                                initSortable(analistaId);
                             }
                             // Actualizar badge de cantidad
                             const tempDiv = document.createElement('div');
@@ -156,6 +194,7 @@
                             }, 200);
                         });
                 }
+
             });
         </script>
 
@@ -207,88 +246,6 @@
 
                 // Nueva versión de loadActivities: siempre toma el filtro actual
                 // loadActivities ya no necesita statusFilterOverride, siempre toma el filtro actual
-                function loadActivities(analistaId, page = 1, append = false) {
-                    const tableDiv = document.getElementById('activities-table-' + analistaId);
-                    const loadMoreDiv = document.getElementById('load-more-' + analistaId);
-                    const statusFilter = Array.from(document.querySelectorAll('input[name="status[]"]:checked')).map(
-                        cb => cb.value);
-
-                    if (!append) {
-                        tableDiv.innerHTML = '<div class="text-center text-muted py-3">Cargando actividades...</div>';
-                        loadMoreDiv.innerHTML = '';
-                    } else {
-                        loadMoreDiv.innerHTML = '<div class="text-center text-muted py-2">Cargando más...</div>';
-                    }
-                    let url = "{{ url('/activities/analistas') }}/" + analistaId + "/actividades";
-                    const params = [];
-                    params.push("page=" + page);
-                    if (statusFilter.length) {
-                        statusFilter.forEach(s => params.push("status[]=" + encodeURIComponent(s)));
-                    }
-                    if (params.length) {
-                        url += "?" + params.join("&");
-                    }
-
-                    fetch(url)
-                        .then(res => {
-                            if (!res.ok) throw new Error('No response');
-                            return res.json();
-                        })
-                        .then(data => {
-                            if (!append) {
-                                tableDiv.innerHTML = data.html;
-                            } else {
-                                tableDiv.querySelector('tbody').insertAdjacentHTML('beforeend', data.html.replace(
-                                    /^[\s\S]*<tbody>|<\/tbody>[\s\S]*$/g, ''));
-                            }
-                            // Actualizar badge de cantidad
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = data.html;
-                            const count = (tempDiv.querySelectorAll('tbody tr').length) || 0;
-                            document.getElementById('badge-count-' + analistaId).textContent = count;
-
-                            if (data.next_page) {
-                                loadMoreDiv.innerHTML = '<button class="btn btn-link btn-sm" data-next-page="' + (
-                                    page + 1) + '">Cargar más</button>';
-                                loadMoreDiv.querySelector('button').onclick = function() {
-                                    loadActivities(analistaId, page + 1, true);
-                                };
-                            } else {
-                                loadMoreDiv.innerHTML = '';
-                            }
-
-                            // --- Activar recarga individual tras editar ---
-                            setTimeout(function() {
-                                document.querySelectorAll('.edit-activity-link').forEach(function(link) {
-                                    link.addEventListener('click', function(e) {
-                                        // Marcar el botón de recarga como visible para esta actividad
-                                        const btn = this.closest('td').querySelector(
-                                            '.reload-activity-btn');
-                                        if (btn) {
-                                            btn.style.display = 'inline-block';
-                                            // Guardar el ID de la actividad en localStorage para saber cuál recargar
-                                            localStorage.setItem('reload_activity_id', btn
-                                                .dataset.activityId);
-                                            localStorage.setItem('reload_analista_id',
-                                                analistaId);
-                                        }
-                                    });
-                                });
-                                document.querySelectorAll('.reload-activity-btn').forEach(function(btn) {
-                                    btn.addEventListener('click', function() {
-                                        // Recargar solo la fila de la actividad editada
-                                        const activityId = this.dataset.activityId;
-                                        const analistaId = analistaIdFromBtn(this);
-                                        reloadSingleActivity(analistaId, activityId, this);
-                                    });
-                                });
-                            }, 200);
-                        })
-                        .catch(function() {
-                            tableDiv.innerHTML =
-                                '<div class="text-danger py-3">No se pudo cargar la información. Intenta recargar la página.</div>';
-                        });
-                }
 
                 // Recargar solo una fila de actividad (tras editar)
                 function reloadSingleActivity(analistaId, activityId, btn) {

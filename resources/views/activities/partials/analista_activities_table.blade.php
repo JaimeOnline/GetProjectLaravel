@@ -5,9 +5,10 @@
 @endif
 
 @if ($activities->count())
-    <table class="table table-sm table-hover bg-white rounded">
+    <table class="table table-sm table-hover bg-white rounded" id="activities-table-{{ $analistaId ?? '' }}">
         <thead class="thead-light">
             <tr>
+                <th>Orden</th>
                 <th>Caso</th>
                 <th>Nombre</th>
                 <th>Estados</th>
@@ -15,9 +16,13 @@
                 <th>Acciones</th>
             </tr>
         </thead>
-        <tbody>
-            @foreach ($activities as $activity)
+        <tbody id="sortable-tbody-{{ $analistaId ?? '' }}">
+            @foreach ($activities->sortBy('orden_analista') as $activity)
                 <tr data-activity-id="{{ $activity->id }}">
+                    <td class="orden-analista-handle" style="cursor:move;">
+                        <span class="badge badge-info">{{ $activity->orden_analista }}</span>
+                        <i class="fas fa-arrows-alt"></i>
+                    </td>
                     <td>{{ $activity->caso }}</td>
                     <td>{{ $activity->name }}</td>
                     <td>
@@ -29,7 +34,8 @@
                                 </span>
                             @endforeach
                         @else
-                            <span class="badge badge-secondary">{{ $activity->status_label ?? $activity->status }}</span>
+                            <span
+                                class="badge badge-secondary">{{ $activity->status_label ?? $activity->status }}</span>
                         @endif
                     </td>
                     <td style="white-space: pre-line;">{{ $activity->estatus_operacional }}</td>
