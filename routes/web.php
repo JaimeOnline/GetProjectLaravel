@@ -59,3 +59,6 @@ Route::get('/proyectos/crear', [ProyectoController::class, 'create'])->name('pro
 Route::post('/proyectos', [ProyectoController::class, 'store'])->name('projects.store');
 
 Route::get('/activities/{activity}/json', [ActivityController::class, 'showJson']);
+
+// Ruta para reordenar actividades por analista (drag & drop)
+Route::post('/activities/reorder', [ActivityController::class, 'reorder'])->name('activities.reorder');

@@ -1621,7 +1621,8 @@ class ActivityController extends Controller
             return response()->json([
                 'html' => view('activities.partials.analista_activities_table', [
                     'activities' => $activities,
-                    'statuses' => $statuses
+                    'statuses' => $statuses,
+                    'analistaId' => $analistaId,
                 ])->render(),
                 'next_page' => null
             ]);
@@ -1632,15 +1633,22 @@ class ActivityController extends Controller
         return response()->json([
             'html' => view('activities.partials.analista_activities_table', [
                 'activities' => $activities,
-                'statuses' => $statuses
+                'statuses' => $statuses,
+                'analistaId' => $analistaId,
             ])->render(),
             'next_page' => $activities->nextPageUrl()
         ]);
     }
 
-
-
-
+    /*** Reordenar actividades por analista (drag & drop)*/
+    public function reorder(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        foreach ($ids as $index => $id) {
+            \App\Models\Activity::where('id', $id)->update(['orden_analista' => $index + 1]);
+        }
+        return response()->json(['success' => true]);
+    }
 
     public function enAtencionHoy()
     {
