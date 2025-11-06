@@ -24,6 +24,8 @@ class Activity extends Model
         'tipo_producto_id',
         'categoria',
         'proyecto_id',
+        'fecha_estimacion_entrega',
+
     ];
     // Campos que deben ser tratados como fechas
     protected $casts = [
