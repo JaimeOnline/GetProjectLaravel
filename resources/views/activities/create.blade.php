@@ -325,6 +325,13 @@
                             <input type="date" class="form-control" id="fecha_recepcion" name="fecha_recepcion"
                                 value="{{ date('Y-m-d') }}">
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="fecha_estimacion_entrega">
+                                <i class="fas fa-calendar-check text-primary"></i> Estimación de entrega
+                            </label>
+                            <input type="date" class="form-control" id="fecha_estimacion_entrega"
+                                name="fecha_estimacion_entrega" value="{{ old('fecha_estimacion_entrega') }}">
+                        </div>
                     </div>
 
                     <div class="mt-4 pt-3 border-top">

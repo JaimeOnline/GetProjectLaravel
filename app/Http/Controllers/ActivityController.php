@@ -519,6 +519,8 @@ class ActivityController extends Controller
             'proyecto_id' => 'nullable|exists:proyectos,id',
             'categoria' => 'nullable|array',
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
+            'fecha_estimacion_entrega' => 'nullable|date',
+
         ];
 
         // Permitir vacío en 'caso' para todas las actividades.
@@ -763,6 +765,7 @@ class ActivityController extends Controller
             'proyecto_id' => 'nullable|exists:proyectos,id',
             'categoria' => 'nullable|array',
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
+            'fecha_estimacion_entrega' => 'nullable|date',
         ];
 
         // Permitir vacío en 'caso' para todas las actividades.
@@ -796,13 +799,13 @@ class ActivityController extends Controller
             $activity->cliente_id = $request->input('cliente_id');
             $activity->tipo_producto_id = $request->input('tipo_producto_id');
             $activity->proyecto_id = $request->input('proyecto_id');
+            $activity->fecha_estimacion_entrega = $request->input('fecha_estimacion_entrega');
 
             // Log para verificar antes de guardar
             Log::info('ANTES DE GUARDAR ACTIVITY', [
                 'prioridad' => $activity->prioridad,
                 'orden_analista' => $activity->orden_analista
             ]);
-
             // Guardar el valor anterior de estatus operacional antes de actualizar
             $oldEstatusOperacional = $activity->getOriginal('estatus_operacional');
 
@@ -1652,13 +1655,28 @@ class ActivityController extends Controller
 
     public function enAtencionHoy()
     {
-        // Puedes pasar datos reales más adelante
-        return view('activities.hoy');
+        $activities = \App\Models\Activity::with(['statuses', 'analistas'])
+            ->whereHas('statuses', function ($subQ) {
+                $subQ->whereIn('name', ['en_ejecucion', 'atendiendo_hoy']);
+            })
+            ->get();
+
+        return view('activities.hoy', compact('activities'));
     }
+
+
+
 
     public function enEsperaInsumos()
     {
-        // Puedes pasar datos reales más adelante
-        return view('activities.insumos');
+        $activities = \App\Models\Activity::with(['statuses'])
+            ->whereHas('statuses', function ($query) {
+                $query->where('name', 'en_espera_de_insumos');
+            })
+            ->withMax('requirements as last_requirement_update', 'updated_at')
+            ->orderByDesc('last_requirement_update')
+            ->get();
+
+        return view('activities.insumos', compact('activities'));
     }
 }
