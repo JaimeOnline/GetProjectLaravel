@@ -1147,9 +1147,9 @@ class ActivityController extends Controller
     }
 
     /**
-     * Mostrar todos los correos de una actividad padre y sus subactividades
+     * Mostrar todos los correos de una actividad padre y sus subactividades, con filtro por tipo
      */
-    public function showEmails(Activity $activity)
+    public function showEmails(Request $request, Activity $activity)
     {
         // Obtener todos los IDs de actividades relacionadas (padre + subactividades)
         $activityIds = [$activity->id];
@@ -1167,13 +1167,43 @@ class ActivityController extends Controller
             $activity = $parentActivity; // Para mostrar el nombre correcto en la vista
         }
 
-        // Obtener todos los correos de las actividades relacionadas, ordenados por fecha
-        $emails = Email::whereIn('activity_id', $activityIds)
+        // Filtro por tipo de correo
+        $type = $request->input('type');
+        $emailsQuery = Email::whereIn('activity_id', $activityIds)
             ->with('activity')
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+        if ($type === 'sent' || $type === 'received') {
+            $emailsQuery->where('type', $type);
+        }
+        $emails = $emailsQuery->get();
 
-        return view('activities.emails', compact('activity', 'emails'));
+        return view('activities.emails', compact('activity', 'emails', 'type'));
+    }
+
+    /**
+     * Mostrar el histórico de correos de todas las actividades, con filtro por tipo y actividad
+     */
+    public function showAllEmails(Request $request)
+    {
+        $type = $request->input('type');
+        $activityId = $request->input('activity_id');
+
+        $emailsQuery = Email::with('activity')->orderBy('created_at', 'desc');
+        if ($type === 'sent' || $type === 'received') {
+            $emailsQuery->where('type', $type);
+        }
+        if ($activityId) {
+            $emailsQuery->where('activity_id', $activityId);
+            $activity = Activity::find($activityId);
+        } else {
+            $activity = null;
+        }
+        $emails = $emailsQuery->get();
+
+        // Para el filtro de actividades en el select
+        $activities = Activity::orderBy('name')->get();
+
+        return view('activities.emails', compact('emails', 'type', 'activity', 'activities'));
     }
 
     /**

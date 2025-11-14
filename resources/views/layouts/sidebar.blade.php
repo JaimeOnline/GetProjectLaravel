@@ -49,6 +49,12 @@
                     href="{{ route('projects.create') }}">Crear Proyecto</a>
             </div>
         </div>
+        <div class="sidebar-dropdown">
+            <a href="{{ route('emails.historico') }}"
+                class="{{ request()->routeIs('emails.historico') ? 'activo' : '' }}">
+                <i class="fas fa-envelope-open-text"></i> Histórico de Correos
+            </a>
+        </div>
     </nav>
     <div class="cerrar-sesion-mobile">
         <form method="POST" action="{{ url('/logout') }}">
