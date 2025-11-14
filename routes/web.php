@@ -41,6 +41,7 @@ Route::get('activities/{activity}/emails', [ActivityController::class, 'showEmai
 Route::post('activities/{activity}/emails', [ActivityController::class, 'storeEmail'])->name('activities.emails.store');
 Route::delete('emails/{email}', [ActivityController::class, 'destroyEmail'])->name('emails.destroy');
 Route::get('emails/{email}/attachment/{fileIndex}', [ActivityController::class, 'downloadAttachment'])->name('emails.download');
+Route::get('/emails/historico', [ActivityController::class, 'showAllEmails'])->name('emails.historico');
 
 // Rutas para gestión completa de requerimientos
 Route::get('requirements-report', [RequirementController::class, 'report'])->name('requirements.report');

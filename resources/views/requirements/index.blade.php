@@ -219,7 +219,7 @@
                                         </td>
                                         <td>
                                             <div class="requirement-description">
-                                                {{ Str::limit($requirement->description, 1000) }}
+                                                {!! nl2br(e(Str::limit($requirement->description, 1000))) !!}
                                                 @if ($requirement->notas)
                                                     <br><small class="text-muted">
                                                         <i class="fas fa-sticky-note"></i>
@@ -228,6 +228,7 @@
                                                 @endif
                                             </div>
                                         </td>
+
                                         <td>
                                             @if ($requirement->status === 'pendiente')
                                                 <span class="badge badge-warning">

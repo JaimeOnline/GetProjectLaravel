@@ -335,7 +335,8 @@
                                                 @foreach ($activities as $parentActivity)
                                                     {
                                                         id: {{ $parentActivity->id }},
-                                                        name: @json($parentActivity->name)
+                                                        name: @json($parentActivity->name),
+                                                        caso: @json($parentActivity->caso)
                                                     },
                                                 @endforeach
                                             ];
@@ -357,7 +358,10 @@
                                                     hiddenInput.value = '';
                                                     return;
                                                 }
-                                                const matches = activities.filter(a => a.name.toLowerCase().includes(query));
+                                                const matches = activities.filter(a =>
+                                                    (a.name && a.name.toLowerCase().includes(query)) ||
+                                                    (a.caso && a.caso.toLowerCase().includes(query))
+                                                );
                                                 if (matches.length === 0) {
                                                     resultsDiv.style.display = 'none';
                                                     return;
@@ -366,9 +370,9 @@
                                                     const item = document.createElement('button');
                                                     item.type = 'button';
                                                     item.className = 'list-group-item list-group-item-action';
-                                                    item.textContent = a.name;
+                                                    item.textContent = (a.caso ? a.caso + ' - ' : '') + a.name;
                                                     item.onclick = function() {
-                                                        searchInput.value = a.name;
+                                                        searchInput.value = (a.caso ? a.caso + ' - ' : '') + a.name;
                                                         hiddenInput.value = a.id;
                                                         resultsDiv.style.display = 'none';
                                                     };
@@ -572,7 +576,7 @@
                                                 <tr>
                                                     <td>
                                                         <div>
-                                                            {{ Str::limit($requirement->description, 1000) }}
+                                                            {!! nl2br(e(Str::limit($requirement->description, 1000))) !!}
                                                             @if ($requirement->notas)
                                                                 <br><small class="text-muted">
                                                                     <i class="fas fa-sticky-note"></i>

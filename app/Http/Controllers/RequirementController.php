@@ -149,10 +149,16 @@ class RequirementController extends Controller
                 $activity->statuses()->attach($status->id);
             }
         } else {
-            // Si ya no hay requerimientos pendientes, quita el estado
+            // Si ya no hay requerimientos pendientes, quita el estado y agrega "En ejecución"
             $pendientes = $activity->requirements()->where('status', 'pendiente')->count();
             if ($status && $pendientes === 0 && $activity->hasStatus('en_espera_de_insumos')) {
                 $activity->statuses()->detach($status->id);
+
+                // Agregar "En ejecución" si no lo tiene
+                $ejecucion = \App\Models\Status::where('name', 'en_ejecucion')->first();
+                if ($ejecucion && !$activity->hasStatus('en_ejecucion')) {
+                    $activity->statuses()->attach($ejecucion->id);
+                }
             }
         }
 
@@ -169,11 +175,17 @@ class RequirementController extends Controller
         $activity = $requirement->activity;
         $requirement->delete();
 
-        // Si ya no hay requerimientos pendientes, quita el estado "En espera de insumos"
+        // Si ya no hay requerimientos pendientes, quita el estado "En espera de insumos" y agrega "En ejecución"
         $status = \App\Models\Status::where('name', 'en_espera_de_insumos')->first();
         $pendientes = $activity->requirements()->where('status', 'pendiente')->count();
         if ($status && $pendientes === 0 && $activity->hasStatus('en_espera_de_insumos')) {
             $activity->statuses()->detach($status->id);
+
+            // Agregar "En ejecución" si no lo tiene
+            $ejecucion = \App\Models\Status::where('name', 'en_ejecucion')->first();
+            if ($ejecucion && !$activity->hasStatus('en_ejecucion')) {
+                $activity->statuses()->attach($ejecucion->id);
+            }
         }
 
         return redirect()->route('requirements.index')
@@ -191,13 +203,20 @@ class RequirementController extends Controller
             'fecha_recepcion' => now(),
         ]);
 
-        // Si ya no hay requerimientos pendientes, quita el estado "En espera de insumos"
+        // Si ya no hay requerimientos pendientes, quita el estado "En espera de insumos" y agrega "En ejecución"
         $activity = $requirement->activity;
         $status = \App\Models\Status::where('name', 'en_espera_de_insumos')->first();
         $pendientes = $activity->requirements()->where('status', 'pendiente')->count();
         if ($status && $pendientes === 0 && $activity->hasStatus('en_espera_de_insumos')) {
             $activity->statuses()->detach($status->id);
+
+            // Agregar "En ejecución" si no lo tiene
+            $ejecucion = \App\Models\Status::where('name', 'en_ejecucion')->first();
+            if ($ejecucion && !$activity->hasStatus('en_ejecucion')) {
+                $activity->statuses()->attach($ejecucion->id);
+            }
         }
+
 
         // Si viene desde la edición de actividad, redirigir a la pestaña de requerimientos
         if ($request->has('from_activity')) {
