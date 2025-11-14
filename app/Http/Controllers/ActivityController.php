@@ -1068,17 +1068,22 @@ class ActivityController extends Controller
                 // Eliminar imágenes del HTML
                 $html = preg_replace('/<img[^>]*>/i', '', $request->content);
 
-                // Reemplazar <br> y <br/> por saltos de línea
+                // Reemplazar <li> por guion y espacio
+                $html = preg_replace('/<li[^>]*>/i', "- ", $html);
+                // Reemplazar </li> por salto de línea
+                $html = preg_replace('/<\/li>/i', "\n", $html);
+
+                // Reemplazar <br> y <br/> por salto de línea
                 $html = preg_replace('/<br\s*\/?>/i', "\n", $html);
 
-                // Reemplazar </p> y </div> por saltos de línea
-                $html = preg_replace('/<\/(p|div)>/i', "\n", $html);
+                // Reemplazar </p> y </div> por doble salto de línea (párrafo)
+                $html = preg_replace('/<\/(p|div)>/i', "\n\n", $html);
 
                 // Quitar el resto de etiquetas HTML
                 $plainText = trim(strip_tags($html));
 
-                // Normalizar saltos de línea múltiples a uno solo
-                $plainText = preg_replace("/\n{2,}/", "\n\n", $plainText);
+                // Normalizar saltos de línea múltiples a dos (párrafos)
+                $plainText = preg_replace("/\n{3,}/", "\n\n", $plainText);
 
                 if (!empty($plainText)) {
                     \App\Models\Requirement::create([
