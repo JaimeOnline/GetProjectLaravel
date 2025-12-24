@@ -23,6 +23,46 @@ use PhpOffice\PhpWord\IOFactory;
 
 class ActivityController extends Controller
 {
+    /**
+     * Normaliza una cadena: minúsculas y sin acentos/diacríticos.
+     */
+    protected function normalizeString(?string $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        // Pasar a minúsculas
+        $value = mb_strtolower($value, 'UTF-8');
+
+        // Reemplazar caracteres acentuados más comunes
+        $replacements = [
+            'á' => 'a',
+            'à' => 'a',
+            'ä' => 'a',
+            'â' => 'a',
+            'é' => 'e',
+            'è' => 'e',
+            'ë' => 'e',
+            'ê' => 'e',
+            'í' => 'i',
+            'ì' => 'i',
+            'ï' => 'i',
+            'î' => 'i',
+            'ó' => 'o',
+            'ò' => 'o',
+            'ö' => 'o',
+            'ô' => 'o',
+            'ú' => 'u',
+            'ù' => 'u',
+            'ü' => 'u',
+            'û' => 'u',
+            'ñ' => 'n',
+        ];
+
+        return strtr($value, $replacements);
+    }
+
     public function downloadExcelTemplate()
     {
         // Busca primero .xlsm, luego .xlsx, luego sin extensión
@@ -301,6 +341,9 @@ class ActivityController extends Controller
     {
         $query = $request->get('query', '');
 
+        // Normalizar el término de búsqueda: convertir a minúsculas y quitar acentos
+        $normalizedQuery = $this->normalizeString($query);
+
         // Construir la consulta base
         $activitiesQuery = Activity::with([
             'analistas',
@@ -320,55 +363,8 @@ class ActivityController extends Controller
             'subactivities.subactivities.statuses'
         ]);
 
-        // Aplicar búsqueda por texto si existe
-        if (!empty($query)) {
-            $activitiesQuery->where(function ($q) use ($query) {
-                $ilike = function ($field) use ($q, $query) {
-                    if (app('db')->getDriverName() === 'pgsql') {
-                        $q->orWhere($field, 'ILIKE', "%{$query}%");
-                    } else {
-                        $q->orWhere($field, 'LIKE', "%{$query}%");
-                    }
-                };
-                $ilike('name');
-                $ilike('description');
-                $ilike('caso');
-                $ilike('status');
-                $ilike('fecha_recepcion');
-                $q->orWhereHas('analistas', function ($subQ) use ($query) {
-                    if (app('db')->getDriverName() === 'pgsql') {
-                        $subQ->where('name', 'ILIKE', "%{$query}%");
-                    } else {
-                        $subQ->where('name', 'LIKE', "%{$query}%");
-                    }
-                })
-                    ->orWhereHas('comments', function ($subQ) use ($query) {
-                        if (app('db')->getDriverName() === 'pgsql') {
-                            $subQ->where('comment', 'ILIKE', "%{$query}%");
-                        } else {
-                            $subQ->where('comment', 'LIKE', "%{$query}%");
-                        }
-                    })
-                    ->orWhereHas('emails', function ($subQ) use ($query) {
-                        if (app('db')->getDriverName() === 'pgsql') {
-                            $subQ->where('subject', 'ILIKE', "%{$query}%")
-                                ->orWhere('content', 'ILIKE', "%{$query}%");
-                        } else {
-                            $subQ->where('subject', 'LIKE', "%{$query}%")
-                                ->orWhere('content', 'LIKE', "%{$query}%");
-                        }
-                    })
-                    ->orWhereHas('statuses', function ($subQ) use ($query) {
-                        if (app('db')->getDriverName() === 'pgsql') {
-                            $subQ->where('name', 'ILIKE', "%{$query}%")
-                                ->orWhere('label', 'ILIKE', "%{$query}%");
-                        } else {
-                            $subQ->where('name', 'LIKE', "%{$query}%")
-                                ->orWhere('label', 'LIKE', "%{$query}%");
-                        }
-                    });
-            });
-        }
+        /// Por ahora NO filtramos por texto en SQL; lo haremos en PHP para poder ignorar acentos.
+        // Más abajo, una vez obtenido $activities, se aplica el filtro con normalizeString().
 
         // Aplicar filtros directamente desde los parámetros de consulta
         if ($request->has('status') && !empty($request->get('status'))) {
@@ -404,6 +400,17 @@ class ActivityController extends Controller
 
         // Obtener resultados
         $activities = $activitiesQuery->get();
+
+        // Si hay texto de búsqueda, afinamos en PHP ignorando acentos
+        if (!empty($query)) {
+            $normalizedSearch = $this->normalizeString($query);
+
+            $activities = $activities->filter(function ($activity) use ($normalizedSearch) {
+                $name = $this->normalizeString($activity->name ?? '');
+                $caso = $this->normalizeString($activity->caso ?? '');
+                return str_contains($name, $normalizedSearch) || str_contains($caso, $normalizedSearch);
+            })->values();
+        }
 
         // Variables necesarias para el partial
         $analistas = Analista::all();

@@ -1145,7 +1145,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (searchInput) {
-        searchInput.addEventListener('input', function () {
+        // Buscar solo cuando se presiona Enter
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+
             const query = this.value.trim();
             currentSearchQuery = query;
 
@@ -1159,11 +1162,22 @@ document.addEventListener('DOMContentLoaded', function () {
             searchSpinner.style.display = 'inline-block';
             searchResultsCount.style.display = 'none';
 
+            // Puedes incluso quitar el debounce si quieres respuesta inmediata
             searchTimeout = setTimeout(function () {
                 performSearch(query, getCurrentFilters());
-            }, 300);
+            }, 0);
+        });
+
+        // Si quieres seguir limpiando al borrar todo, puedes opcionalmente
+        // escuchar input pero solo para detectar campo vacío:
+        searchInput.addEventListener('input', function () {
+            if (this.value.trim().length === 0) {
+                clearTimeout(searchTimeout);
+                clearSearch();
+            }
         });
     }
+
 
 
     function getCurrentFilters() {
