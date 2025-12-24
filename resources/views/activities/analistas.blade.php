@@ -8,7 +8,7 @@
             style="position:sticky;top:0;z-index:20;background:#fff;padding-top:1rem;padding-bottom:0.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
             <form method="GET" class="mb-0" id="status-filter-form" autocomplete="off" onsubmit="return false;">
                 <div class="row align-items-end">
-                    <div class="col-md-9">
+                    <div class="col-md-7">
                         <label class="font-weight-bold mb-1 d-block">Filtrar por Estado:</label>
                         <div class="btn-group btn-group-toggle flex-wrap" data-toggle="buttons" id="status-btn-group">
                             @foreach ($statuses as $status)
@@ -25,7 +25,21 @@
                         <small class="text-muted d-block mt-1">Haz clic en los botones para seleccionar/deseleccionar
                             estados.</small>
                     </div>
+
                     <div class="col-md-3">
+                        <label class="font-weight-bold mb-1 d-block">Cliente:</label>
+                        <select id="filterCliente" class="form-control form-control-sm">
+                            <option value="">Todos</option>
+                            @foreach ($clientes ?? [] as $cliente)
+                                <option value="{{ $cliente->id }}">
+                                    {{ \Illuminate\Support\Str::before($cliente->nombre, ' ') }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted d-block mt-1">Aplica a todas las actividades cargadas.</small>
+                    </div>
+
+                    <div class="col-md-2">
                         <a href="{{ route('activities.analistas') }}" class="btn btn-secondary mb-2 ml-2">
                             Limpiar
                         </a>
@@ -134,7 +148,16 @@
                     if (statusFilter.length) {
                         url += "&" + statusFilter.map(s => "status[]=" + encodeURIComponent(s)).join("&");
                     }
-                    fetch(url)
+
+                    // Filtro de cliente (si está seleccionado)
+                    const clienteSelect = document.getElementById('filterCliente');
+                    if (clienteSelect && clienteSelect.value) {
+                        url += "&cliente_id=" + encodeURIComponent(clienteSelect.value);
+                    }
+
+                    fetch(url, {
+                            cache: 'no-store'
+                        })
                         .then(res => res.json())
                         .then(data => {
                             if (!append) {
@@ -319,27 +342,39 @@
                     }, 300);
                 @endif
 
-                // Al cambiar el filtro, recarga solo los acordeones abiertos y los mantiene abiertos
+                // Al cambiar el filtro de estado, recarga solo los acordeones abiertos y los mantiene abiertos
                 document.querySelectorAll('input[name="status[]"]').forEach(function(cb) {
                     cb.addEventListener('change', function() {
-                        // Guardar los IDs de los acordeones abiertos
                         const openAnalistas = Array.from(document.querySelectorAll('.collapse.show'))
-                            .map(div =>
-                                div.id.replace('collapse-', '')
-                            );
-                        // Recargar solo los abiertos y mantenerlos abiertos
+                            .map(div => div.id.replace('collapse-', ''));
                         openAnalistas.forEach(function(analistaId) {
                             const collapseDiv = document.getElementById('collapse-' +
                                 analistaId);
                             if (collapseDiv) {
                                 collapseDiv.classList.remove('loaded');
                                 loadActivities(analistaId);
-                                // Asegurarse de que permanezca abierto
                                 collapseDiv.classList.add('show');
                             }
                         });
                     });
                 });
+
+                // Al cambiar el filtro de cliente, recargar también los acordeones abiertos
+                const filterCliente = document.getElementById('filterCliente');
+                if (filterCliente) {
+                    filterCliente.addEventListener('change', function() {
+                        const openAnalistas = Array.from(document.querySelectorAll('.collapse.show'))
+                            .map(div => div.id.replace('collapse-', ''));
+                        openAnalistas.forEach(function(analistaId) {
+                            const collapseDiv = document.getElementById('collapse-' + analistaId);
+                            if (collapseDiv) {
+                                collapseDiv.classList.remove('loaded');
+                                loadActivities(analistaId);
+                                collapseDiv.classList.add('show');
+                            }
+                        });
+                    });
+                }
 
                 // --- Al volver de editar, mostrar botón de recarga ---
                 window.addEventListener('focus', function() {
