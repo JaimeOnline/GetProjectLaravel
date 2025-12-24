@@ -1595,8 +1595,9 @@ class ActivityController extends Controller
         }
 
         $analistas = \App\Models\Analista::orderBy('name')->get();
+        $clientes  = \App\Models\Cliente::orderBy('nombre')->get();
 
-        return view('activities.analistas', compact('analistas', 'statuses', 'statusFilter'));
+        return view('activities.analistas', compact('analistas', 'statuses', 'statusFilter', 'clientes'));
     }
 
 
@@ -1604,13 +1605,18 @@ class ActivityController extends Controller
     public function actividadesPorAnalista(Request $request, $analistaId)
     {
         $statusFilter = $request->query('status');
-        $page = $request->query('page', 1);
-        $activityId = $request->query('activity_id');
+        $clienteId    = $request->query('cliente_id');
+        $page         = $request->query('page', 1);
+        $activityId   = $request->query('activity_id');
 
         $query = \App\Models\Activity::with('statuses')
             ->whereHas('analistas', function ($q) use ($analistaId) {
                 $q->where('analistas.id', $analistaId);
+            })
+            ->when($clienteId, function ($q) use ($clienteId) {
+                $q->where('cliente_id', $clienteId);
             });
+
 
         if ($statusFilter) {
             $query->whereHas('statuses', function ($subQ) use ($statusFilter) {
@@ -1656,30 +1662,46 @@ class ActivityController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function enAtencionHoy()
+    public function enAtencionHoy(Request $request)
     {
-        $activities = \App\Models\Activity::with(['statuses', 'analistas'])
+        $clienteId = $request->query('cliente_id');
+
+        $activities = \App\Models\Activity::with(['statuses', 'analistas', 'cliente'])
             ->whereHas('statuses', function ($subQ) {
                 $subQ->whereIn('name', ['en_ejecucion', 'atendiendo_hoy']);
             })
+            ->when($clienteId, function ($query) use ($clienteId) {
+                $query->where('cliente_id', $clienteId);
+            })
             ->get();
 
-        return view('activities.hoy', compact('activities'));
+        $clientes = \App\Models\Cliente::orderBy('nombre')->get();
+
+        return view('activities.hoy', compact('activities', 'clientes'));
     }
 
 
 
 
-    public function enEsperaInsumos()
+
+    public function enEsperaInsumos(Request $request)
     {
-        $activities = \App\Models\Activity::with(['statuses'])
+        $clienteId = $request->query('cliente_id');
+
+        $activities = \App\Models\Activity::with(['statuses', 'cliente'])
             ->whereHas('statuses', function ($query) {
                 $query->where('name', 'en_espera_de_insumos');
+            })
+            ->when($clienteId, function ($query) use ($clienteId) {
+                $query->where('cliente_id', $clienteId);
             })
             ->withMax('requirements as last_requirement_update', 'updated_at')
             ->orderByDesc('last_requirement_update')
             ->get();
 
-        return view('activities.insumos', compact('activities'));
+        // Para el selector de clientes
+        $clientes = \App\Models\Cliente::orderBy('nombre')->get();
+
+        return view('activities.insumos', compact('activities', 'clientes'));
     }
 }
