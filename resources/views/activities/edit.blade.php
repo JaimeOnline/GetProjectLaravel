@@ -90,10 +90,10 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="caso">
-                                        <i class="fas fa-hashtag text-primary"></i> Caso <span class="text-danger">*</span>
+                                        <i class="fas fa-hashtag text-primary"></i> Caso
                                     </label>
                                     <input type="text" class="form-control" id="caso" name="caso"
-                                        value="{{ $activity->caso }}" required>
+                                        value="{{ $activity->caso }}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="name">
@@ -329,7 +329,65 @@
                                         style="position: absolute; z-index: 1000; width: 100%; display: none; max-height: 200px; overflow-y: auto;">
                                     </div>
                                     <script>
-                                        // ... (el script de búsqueda de actividad padre permanece igual)
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            // Prepara el array de actividades para búsqueda rápida
+                                            const activities = [
+                                                @foreach ($activities as $parentActivity)
+                                                    {
+                                                        id: {{ $parentActivity->id }},
+                                                        name: @json($parentActivity->name),
+                                                        caso: @json($parentActivity->caso)
+                                                    },
+                                                @endforeach
+                                            ];
+                                            const searchInput = document.getElementById('parent_id_search');
+                                            const resultsDiv = document.getElementById('parent_id_results');
+                                            const hiddenInput = document.getElementById('parent_id');
+
+                                            // Si ya hay un valor seleccionado, muestra el nombre
+                                            @if ($activity->parent_id)
+                                                const selected = activities.find(a => a.id == {{ $activity->parent_id }});
+                                                if (selected) searchInput.value = selected.name;
+                                            @endif
+
+                                            searchInput.addEventListener('input', function() {
+                                                const query = this.value.trim().toLowerCase();
+                                                resultsDiv.innerHTML = '';
+                                                if (query.length === 0) {
+                                                    resultsDiv.style.display = 'none';
+                                                    hiddenInput.value = '';
+                                                    return;
+                                                }
+                                                const matches = activities.filter(a =>
+                                                    (a.name && a.name.toLowerCase().includes(query)) ||
+                                                    (a.caso && a.caso.toLowerCase().includes(query))
+                                                );
+                                                if (matches.length === 0) {
+                                                    resultsDiv.style.display = 'none';
+                                                    return;
+                                                }
+                                                matches.slice(0, 20).forEach(a => {
+                                                    const item = document.createElement('button');
+                                                    item.type = 'button';
+                                                    item.className = 'list-group-item list-group-item-action';
+                                                    item.textContent = (a.caso ? a.caso + ' - ' : '') + a.name;
+                                                    item.onclick = function() {
+                                                        searchInput.value = (a.caso ? a.caso + ' - ' : '') + a.name;
+                                                        hiddenInput.value = a.id;
+                                                        resultsDiv.style.display = 'none';
+                                                    };
+                                                    resultsDiv.appendChild(item);
+                                                });
+                                                resultsDiv.style.display = 'block';
+                                            });
+
+                                            // Oculta la lista si se hace click fuera
+                                            document.addEventListener('click', function(e) {
+                                                if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                                                    resultsDiv.style.display = 'none';
+                                                }
+                                            });
+                                        });
                                     </script>
                                 </div>
                                 <div class="col-md-6 mb-3">
@@ -339,6 +397,14 @@
                                     <input type="date" class="form-control" id="fecha_recepcion"
                                         name="fecha_recepcion"
                                         value="{{ $activity->fecha_recepcion ? $activity->fecha_recepcion->format('Y-m-d') : '' }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="fecha_estimacion_entrega">
+                                        <i class="fas fa-calendar-check text-primary"></i> Estimación de entrega
+                                    </label>
+                                    <input type="date" class="form-control" id="fecha_estimacion_entrega"
+                                        name="fecha_estimacion_entrega"
+                                        value="{{ old('fecha_estimacion_entrega', $activity->fecha_estimacion_entrega ? \Carbon\Carbon::parse($activity->fecha_estimacion_entrega)->format('Y-m-d') : '') }}">
                                 </div>
                             </div>
 
@@ -510,7 +576,7 @@
                                                 <tr>
                                                     <td>
                                                         <div>
-                                                            {{ Str::limit($requirement->description, 1000) }}
+                                                            {!! nl2br(e(Str::limit($requirement->description, 1000))) !!}
                                                             @if ($requirement->notas)
                                                                 <br><small class="text-muted">
                                                                     <i class="fas fa-sticky-note"></i>

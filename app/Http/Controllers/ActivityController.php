@@ -526,13 +526,21 @@ class ActivityController extends Controller
             'proyecto_id' => 'nullable|exists:proyectos,id',
             'categoria' => 'nullable|array',
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
+            'fecha_estimacion_entrega' => 'nullable|date',
+
         ];
 
-        // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
+        // Permitir vacío en 'caso' para todas las actividades.
+        // Si se coloca un valor en 'caso' y es actividad principal, debe ser único.
         if (is_null($request->input('parent_id'))) {
-            $rules['caso'] = 'required|unique:activities,caso';
+            $rules['caso'] = [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('activities', 'caso')->whereNull('parent_id')
+            ];
         } else {
-            $rules['caso'] = 'required';
+            $rules['caso'] = 'nullable|string|max:255';
         }
 
         $request->validate($rules);
@@ -764,12 +772,14 @@ class ActivityController extends Controller
             'proyecto_id' => 'nullable|exists:proyectos,id',
             'categoria' => 'nullable|array',
             'categoria.*' => 'in:proyecto,incidencia,mejora_continua',
+            'fecha_estimacion_entrega' => 'nullable|date',
         ];
 
-        // Solo exigir unicidad de 'caso' si es actividad principal (sin parent_id)
+        // Permitir vacío en 'caso' para todas las actividades.
+        // Si se coloca un valor en 'caso' y es actividad principal, debe ser único.
         if (is_null($request->input('parent_id'))) {
             $rules['caso'] = [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
                 Rule::unique('activities', 'caso')
@@ -777,7 +787,7 @@ class ActivityController extends Controller
                     ->ignore($activity->id)
             ];
         } else {
-            $rules['caso'] = 'required|string|max:255';
+            $rules['caso'] = 'nullable|string|max:255';
         }
         $request->validate($rules);
 
@@ -796,13 +806,13 @@ class ActivityController extends Controller
             $activity->cliente_id = $request->input('cliente_id');
             $activity->tipo_producto_id = $request->input('tipo_producto_id');
             $activity->proyecto_id = $request->input('proyecto_id');
+            $activity->fecha_estimacion_entrega = $request->input('fecha_estimacion_entrega');
 
             // Log para verificar antes de guardar
             Log::info('ANTES DE GUARDAR ACTIVITY', [
                 'prioridad' => $activity->prioridad,
                 'orden_analista' => $activity->orden_analista
             ]);
-
             // Guardar el valor anterior de estatus operacional antes de actualizar
             $oldEstatusOperacional = $activity->getOriginal('estatus_operacional');
 
@@ -1065,17 +1075,22 @@ class ActivityController extends Controller
                 // Eliminar imágenes del HTML
                 $html = preg_replace('/<img[^>]*>/i', '', $request->content);
 
-                // Reemplazar <br> y <br/> por saltos de línea
+                // Reemplazar <li> por guion y espacio
+                $html = preg_replace('/<li[^>]*>/i', "- ", $html);
+                // Reemplazar </li> por salto de línea
+                $html = preg_replace('/<\/li>/i', "\n", $html);
+
+                // Reemplazar <br> y <br/> por salto de línea
                 $html = preg_replace('/<br\s*\/?>/i', "\n", $html);
 
-                // Reemplazar </p> y </div> por saltos de línea
-                $html = preg_replace('/<\/(p|div)>/i', "\n", $html);
+                // Reemplazar </p> y </div> por doble salto de línea (párrafo)
+                $html = preg_replace('/<\/(p|div)>/i', "\n\n", $html);
 
                 // Quitar el resto de etiquetas HTML
                 $plainText = trim(strip_tags($html));
 
-                // Normalizar saltos de línea múltiples a uno solo
-                $plainText = preg_replace("/\n{2,}/", "\n\n", $plainText);
+                // Normalizar saltos de línea múltiples a dos (párrafos)
+                $plainText = preg_replace("/\n{3,}/", "\n\n", $plainText);
 
                 if (!empty($plainText)) {
                     \App\Models\Requirement::create([
@@ -1144,9 +1159,9 @@ class ActivityController extends Controller
     }
 
     /**
-     * Mostrar todos los correos de una actividad padre y sus subactividades
+     * Mostrar todos los correos de una actividad padre y sus subactividades, con filtro por tipo
      */
-    public function showEmails(Activity $activity)
+    public function showEmails(Request $request, Activity $activity)
     {
         // Obtener todos los IDs de actividades relacionadas (padre + subactividades)
         $activityIds = [$activity->id];
@@ -1164,13 +1179,43 @@ class ActivityController extends Controller
             $activity = $parentActivity; // Para mostrar el nombre correcto en la vista
         }
 
-        // Obtener todos los correos de las actividades relacionadas, ordenados por fecha
-        $emails = Email::whereIn('activity_id', $activityIds)
+        // Filtro por tipo de correo
+        $type = $request->input('type');
+        $emailsQuery = Email::whereIn('activity_id', $activityIds)
             ->with('activity')
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+        if ($type === 'sent' || $type === 'received') {
+            $emailsQuery->where('type', $type);
+        }
+        $emails = $emailsQuery->get();
 
-        return view('activities.emails', compact('activity', 'emails'));
+        return view('activities.emails', compact('activity', 'emails', 'type'));
+    }
+
+    /**
+     * Mostrar el histórico de correos de todas las actividades, con filtro por tipo y actividad
+     */
+    public function showAllEmails(Request $request)
+    {
+        $type = $request->input('type');
+        $activityId = $request->input('activity_id');
+
+        $emailsQuery = Email::with('activity')->orderBy('created_at', 'desc');
+        if ($type === 'sent' || $type === 'received') {
+            $emailsQuery->where('type', $type);
+        }
+        if ($activityId) {
+            $emailsQuery->where('activity_id', $activityId);
+            $activity = Activity::find($activityId);
+        } else {
+            $activity = null;
+        }
+        $emails = $emailsQuery->get();
+
+        // Para el filtro de actividades en el select
+        $activities = Activity::orderBy('name')->get();
+
+        return view('activities.emails', compact('emails', 'type', 'activity', 'activities'));
     }
 
     /**
@@ -1564,5 +1609,116 @@ class ActivityController extends Controller
     {
         $activity->load(['statuses', 'analistas', 'comments', 'emails', 'requirements', 'subactivities']);
         return response()->json($activity);
+    }
+
+    // --- Vistas para el menú desplegable de Actividades ---
+
+    public function porAnalistas(Request $request)
+    {
+        $statuses = \App\Models\Status::orderBy('order')->get();
+
+        // Buscar el id del estado "En Ejecución"
+        $enEjecucionStatus = $statuses->first(function ($s) {
+            return stripos($s->label, 'ejecucion') !== false;
+        });
+
+        // Si no hay filtro, preselecciona "En Ejecución"
+        $statusFilter = $request->query('status', null);
+        if (
+            (is_null($statusFilter) || $statusFilter === [] || $statusFilter === '' || (is_array($statusFilter) && count($statusFilter) === 0))
+            && $enEjecucionStatus
+        ) {
+            $statusFilter = [$enEjecucionStatus->id];
+            // Forzar el parámetro en la request para la vista (para que los checkboxes lo vean)
+            request()->merge(['status' => [$enEjecucionStatus->id]]);
+        }
+
+        $analistas = \App\Models\Analista::orderBy('name')->get();
+
+        return view('activities.analistas', compact('analistas', 'statuses', 'statusFilter'));
+    }
+
+
+    // Nueva función para AJAX
+    public function actividadesPorAnalista(Request $request, $analistaId)
+    {
+        $statusFilter = $request->query('status');
+        $page = $request->query('page', 1);
+        $activityId = $request->query('activity_id');
+
+        $query = \App\Models\Activity::with('statuses')
+            ->whereHas('analistas', function ($q) use ($analistaId) {
+                $q->where('analistas.id', $analistaId);
+            });
+
+        if ($statusFilter) {
+            $query->whereHas('statuses', function ($subQ) use ($statusFilter) {
+                $subQ->whereIn('statuses.id', (array)$statusFilter);
+            });
+        }
+
+        // Siempre cargar los statuses para la vista parcial
+        $statuses = \App\Models\Status::orderBy('order')->get();
+
+        // Si se solicita solo una actividad (para recarga individual)
+        if ($activityId) {
+            $activities = $query->where('id', $activityId)->get();
+            return response()->json([
+                'html' => view('activities.partials.analista_activities_table', [
+                    'activities' => $activities,
+                    'statuses' => $statuses,
+                    'analistaId' => $analistaId,
+                ])->render(),
+                'next_page' => null
+            ]);
+        }
+
+        $activities = $query->orderBy('fecha_recepcion', 'desc')->paginate(10);
+
+        return response()->json([
+            'html' => view('activities.partials.analista_activities_table', [
+                'activities' => $activities,
+                'statuses' => $statuses,
+                'analistaId' => $analistaId,
+            ])->render(),
+            'next_page' => $activities->nextPageUrl()
+        ]);
+    }
+
+    /*** Reordenar actividades por analista (drag & drop)*/
+    public function reorder(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        foreach ($ids as $index => $id) {
+            \App\Models\Activity::where('id', $id)->update(['orden_analista' => $index + 1]);
+        }
+        return response()->json(['success' => true]);
+    }
+
+    public function enAtencionHoy()
+    {
+        $activities = \App\Models\Activity::with(['statuses', 'analistas'])
+            ->whereHas('statuses', function ($subQ) {
+                $subQ->whereIn('name', ['en_ejecucion', 'atendiendo_hoy']);
+            })
+            ->get();
+
+        return view('activities.hoy', compact('activities'));
+    }
+
+
+
+
+    public function enEsperaInsumos()
+    {
+        $activities = \App\Models\Activity::with(['statuses'])
+            ->whereHas('statuses', function ($query) {
+                $query->where('name', 'en_espera_de_insumos');
+            })
+            ->withMax('requirements as last_requirement_update', 'updated_at')
+            ->orderByDesc('last_requirement_update')
+            ->get();
+
+        return view('activities.insumos', compact('activities'));
     }
 }

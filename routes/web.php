@@ -15,9 +15,12 @@ Route::get('activities/excel-template', [ActivityController::class, 'downloadExc
 Route::post('activities/import-excel', [ActivityController::class, 'importExcel'])->name('activities.importExcel');
 Route::get('/activities/export-word', [ActivityController::class, 'exportWord'])->name('activities.exportWord');
 Route::put('activities/{activity}/analysts', [ActivityController::class, 'updateAnalysts'])->name('activities.updateAnalysts');
+Route::get('/activities/analistas', [ActivityController::class, 'porAnalistas'])->name('activities.analistas');
+Route::get('/activities/analistas/{analista}/actividades', [ActivityController::class, 'actividadesPorAnalista'])->name('activities.analistas.actividades');
+Route::get('/activities/hoy', [ActivityController::class, 'enAtencionHoy'])->name('activities.hoy');
+Route::get('/activities/insumos', [ActivityController::class, 'enEsperaInsumos'])->name('activities.insumos');
+
 Route::resource('activities', ActivityController::class);
-
-
 // Rutas para gestión de estados múltiples
 Route::put('activities/{activity}/statuses', [ActivityController::class, 'updateStatuses'])->name('activities.statuses.update');
 Route::get('statuses', [ActivityController::class, 'getStatuses'])->name('statuses.index');
@@ -38,6 +41,7 @@ Route::get('activities/{activity}/emails', [ActivityController::class, 'showEmai
 Route::post('activities/{activity}/emails', [ActivityController::class, 'storeEmail'])->name('activities.emails.store');
 Route::delete('emails/{email}', [ActivityController::class, 'destroyEmail'])->name('emails.destroy');
 Route::get('emails/{email}/attachment/{fileIndex}', [ActivityController::class, 'downloadAttachment'])->name('emails.download');
+Route::get('/emails/historico', [ActivityController::class, 'showAllEmails'])->name('emails.historico');
 
 // Rutas para gestión completa de requerimientos
 Route::get('requirements-report', [RequirementController::class, 'report'])->name('requirements.report');
@@ -56,3 +60,6 @@ Route::get('/proyectos/crear', [ProyectoController::class, 'create'])->name('pro
 Route::post('/proyectos', [ProyectoController::class, 'store'])->name('projects.store');
 
 Route::get('/activities/{activity}/json', [ActivityController::class, 'showJson']);
+
+// Ruta para reordenar actividades por analista (drag & drop)
+Route::post('/activities/reorder', [ActivityController::class, 'reorder'])->name('activities.reorder');

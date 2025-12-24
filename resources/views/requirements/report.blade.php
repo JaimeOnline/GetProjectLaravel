@@ -311,7 +311,7 @@
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
                                             <div class="mb-2">
-                                                <strong>{{ $requirement->description }}</strong>
+                                                <strong>{!! nl2br(e($requirement->description)) !!}</strong>
                                             </div>
                                             <div class="d-flex align-items-center text-muted">
                                                 <small class="mr-3">

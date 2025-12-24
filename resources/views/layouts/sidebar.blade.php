@@ -6,10 +6,25 @@
         </div> --}}
     </div>
     <nav class="sidebar-nav">
-        <a class="{{ request()->routeIs('activities.*') ? 'activo' : '' }}"
-            href="{{ route('activities.index') }}">Actividades</a>
         <div class="sidebar-dropdown">
-            <a href="#" class="sidebar-dropdown-toggle {{ request()->routeIs('requirements.*') ? 'activo' : '' }}">
+            <a href="#" class="sidebar-dropdown-toggle {{ request()->routeIs('activities.*') ? 'activo' : '' }}">
+                Actividades
+                <span style="float:right;"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="sidebar-dropdown-menu">
+                <a class="{{ request()->routeIs('activities.index') ? 'activo' : '' }}"
+                    href="{{ route('activities.index') }}">Actividades generales</a>
+                <a class="{{ request()->routeIs('activities.analistas') ? 'activo' : '' }}"
+                    href="{{ route('activities.analistas') }}">Por Analistas</a>
+                <a class="{{ request()->routeIs('activities.hoy') ? 'activo' : '' }}"
+                    href="{{ route('activities.hoy') }}">En atención hoy</a>
+                <a class="{{ request()->routeIs('activities.insumos') ? 'activo' : '' }}"
+                    href="{{ route('activities.insumos') }}">En espera de insumos</a>
+            </div>
+        </div>
+        <div class="sidebar-dropdown">
+            <a href="#"
+                class="sidebar-dropdown-toggle {{ request()->routeIs('requirements.*') ? 'activo' : '' }}">
                 Requerimientos
                 <span style="float:right;"><i class="fas fa-chevron-down"></i></span>
             </a>
@@ -33,6 +48,12 @@
                 <a class="{{ request()->routeIs('projects.create') ? 'activo' : '' }}"
                     href="{{ route('projects.create') }}">Crear Proyecto</a>
             </div>
+        </div>
+        <div class="sidebar-dropdown">
+            <a href="{{ route('emails.historico') }}"
+                class="{{ request()->routeIs('emails.historico') ? 'activo' : '' }}">
+                <i class="fas fa-envelope-open-text"></i> Histórico de Correos
+            </a>
         </div>
     </nav>
     <div class="cerrar-sesion-mobile">
