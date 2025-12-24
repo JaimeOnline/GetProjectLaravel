@@ -22,9 +22,11 @@ document.addEventListener('DOMContentLoaded', function () {
     let activeFilters = {
         status: [],
         analistas: [],
+        clientes: [],
         fechaDesde: null,
         fechaHasta: null
     };
+
 
     // Formatear etiquetas de estado al cargar
     formatStatusLabels();
@@ -511,6 +513,42 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
         });
+
+        // ---------------- Filtro de CLIENTES ----------------
+        document.querySelectorAll('.cliente-filter').forEach(cb => {
+            cb.addEventListener('change', function () {
+                const value = this.value;
+
+                if (value === '') {
+                    // Opción "Todos"
+                    if (this.checked) {
+                        activeFilters.clientes = [];
+                        document.querySelectorAll('.cliente-filter').forEach(other => {
+                            if (other !== this) other.checked = false;
+                        });
+                    }
+                } else {
+                    // Desmarcar "Todos"
+                    const allCb = document.getElementById('cliente-all');
+                    if (allCb) allCb.checked = false;
+
+                    if (this.checked) {
+                        if (!activeFilters.clientes.includes(value)) {
+                            activeFilters.clientes.push(value);
+                        }
+                    } else {
+                        activeFilters.clientes = activeFilters.clientes.filter(v => v !== value);
+                        // Si quitaste todos, marca "Todos"
+                        if (activeFilters.clientes.length === 0 && allCb) {
+                            allCb.checked = true;
+                        }
+                    }
+                }
+
+                applyFilters();
+                updateFilterIndicators();
+            });
+        });
     }
 
 
@@ -843,6 +881,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!analistaMatch) shouldShow = false;
                 }
 
+                // Filtro por CLIENTE (columna 4)
+                if (shouldShow && activeFilters.clientes && activeFilters.clientes.length > 0 && cells[4]) {
+                    const clienteText = cells[4].textContent.trim().toLowerCase();
+
+                    const clienteMatch = activeFilters.clientes.some(clienteId => {
+                        // Label del checkbox de ese cliente
+                        const clienteLabel = document.querySelector(`.cliente-filter[value="${clienteId}"] + label`);
+                        if (!clienteLabel) return false;
+                        const nombreCliente = clienteLabel.textContent.trim().toLowerCase();
+                        return clienteText.includes(nombreCliente);
+                    });
+
+                    if (!clienteMatch) shouldShow = false;
+                }
+
                 // Filtro por prioridad (columna 2)
                 const prioridadFilterCheckboxes = document.querySelectorAll('.prioridad-filter:checked');
                 const prioridadValues = Array.from(prioridadFilterCheckboxes)
@@ -975,6 +1028,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        // Indicador para filtro de CLIENTE
+        const clienteFilterBtn = document.querySelector('[data-filter="clientes"]');
+        if (clienteFilterBtn) {
+            if (activeFilters.clientes && activeFilters.clientes.length > 0) {
+                clienteFilterBtn.classList.add('active', 'btn-primary');
+                clienteFilterBtn.classList.remove('btn-outline-secondary');
+            } else {
+                clienteFilterBtn.classList.remove('active', 'btn-primary');
+                clienteFilterBtn.classList.add('btn-outline-secondary');
+            }
+        }
+
         // Indicador para filtro de fecha
         const fechaFilterBtn = document.querySelector('[data-filter="fecha"]');
         if (fechaFilterBtn) {
@@ -993,8 +1058,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Filtros de columna
             let hasActiveFilters = activeFilters.status.length > 0 ||
                 activeFilters.analistas.length > 0 ||
+                (activeFilters.clientes && activeFilters.clientes.length > 0) ||
                 activeFilters.fechaDesde ||
                 activeFilters.fechaHasta;
+
 
             // Filtros de prioridad y orden
             const prioridadChecked = Array.from(document.querySelectorAll('.prioridad-filter')).some(cb => cb.checked && cb.value !== '');
@@ -1031,6 +1098,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Limpiar filtros de analistas
         document.querySelectorAll('.analista-filter').forEach(cb => {
+            cb.checked = cb.value === '';
+        });
+
+        // Limpiar filtros de CLIENTES
+        document.querySelectorAll('.cliente-filter').forEach(cb => {
             cb.checked = cb.value === '';
         });
 
@@ -1074,6 +1146,7 @@ document.addEventListener('DOMContentLoaded', function () {
         activeFilters = {
             status: [],
             analistas: [],
+            clientes: [],
             fechaDesde: null,
             fechaHasta: null
         };
@@ -1185,9 +1258,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return {
             status: activeFilters.status,
             analista_id: activeFilters.analistas, // Enviar el array completo
+            cliente_id: activeFilters.clientes,   // Nuevo: array de clientes
             fecha_desde: activeFilters.fechaDesde,
             fecha_hasta: activeFilters.fechaHasta
         };
+
     }
 
     function performSearch(query, filters = {}) {
