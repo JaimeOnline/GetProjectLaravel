@@ -294,6 +294,9 @@ class ActivityController extends Controller
         // Proyectos para el filtro
         $proyectos = \App\Models\Proyecto::all();
 
+        // Clientes para el filtro
+        $clientes = Cliente::all();
+
         // Filtros de estado (array asociativo para la tabla)
         $statusLabels = [
             'no_iniciada' => 'No Iniciada',
@@ -327,6 +330,7 @@ class ActivityController extends Controller
             'activities',
             'analistas',
             'proyectos',
+            'clientes',
             'statusLabels',
             'statusColors',
             'statuses'
@@ -414,6 +418,7 @@ class ActivityController extends Controller
 
         // Variables necesarias para el partial
         $analistas = Analista::all();
+        $clientes = Cliente::all();
         $statusLabels = [
             'no_iniciada' => 'No Iniciada',
             'en_ejecucion' => 'En Ejecución',
@@ -443,6 +448,8 @@ class ActivityController extends Controller
             'statusLabels' => $statusLabels,
             'statusColors' => $statusColors,
             'analistas' => $analistas,
+            'clientes' => $clientes,
+
         ]);
     }
     public function create(Request $request)
@@ -1331,7 +1338,7 @@ class ActivityController extends Controller
 
 
     /**
-     * Exportar actividades filtradas
+     * Exportar actividades filtradas (Excel)
      */
     public function export(Request $request)
     {
@@ -1340,83 +1347,23 @@ class ActivityController extends Controller
         if (is_string($statusFilter) && str_contains($statusFilter, ',')) {
             $statusFilter = explode(',', $statusFilter);
         }
+
         $analistaFilter = $request->get('analista_column') ?: $request->get('analista_id');
         if (is_string($analistaFilter) && str_contains($analistaFilter, ',')) {
             $analistaFilter = explode(',', $analistaFilter);
         }
+
         $fechaDesde = $request->get('fecha_desde_column') ?: $request->get('fecha_desde');
         $fechaHasta = $request->get('fecha_hasta_column') ?: $request->get('fecha_hasta');
 
-        // Aplica los mismos filtros que en el método index o search
-        // Filtros para actividades principales
-        $mainQuery = Activity::with(['analistas', 'statuses'])
-            ->whereNull('parent_id');
-        // Filtros para subactividades
-        $subQuery = Activity::with(['analistas', 'statuses'])
-            ->whereNotNull('parent_id');
-
-        // Filtro por estado
-        if (!is_null($statusFilter) && $statusFilter !== '') {
-            if (is_array($statusFilter)) {
-                $mainQuery->where(function ($q) use ($statusFilter) {
-                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
-                        $subQ->whereIn('name', $statusFilter);
-                    })
-                        ->orWhereIn('status', $statusFilter);
-                });
-                $subQuery->where(function ($q) use ($statusFilter) {
-                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
-                        $subQ->whereIn('name', $statusFilter);
-                    })
-                        ->orWhereIn('status', $statusFilter);
-                });
-            } else {
-                $mainQuery->where(function ($q) use ($statusFilter) {
-                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
-                        $subQ->where('name', $statusFilter);
-                    })
-                        ->orWhere('status', $statusFilter);
-                });
-                $subQuery->where(function ($q) use ($statusFilter) {
-                    $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
-                        $subQ->where('name', $statusFilter);
-                    })
-                        ->orWhere('status', $statusFilter);
-                });
-            }
+        // Filtro de cliente desde columna (ids separados por coma)
+        $clienteFilter = null;
+        if ($request->filled('cliente_column')) {
+            $clienteFilter = array_filter(explode(',', $request->get('cliente_column')));
         }
 
-        // Filtro por analista
-        if (!is_null($analistaFilter) && $analistaFilter !== '') {
-            $mainQuery->whereHas('analistas', function ($q) use ($analistaFilter) {
-                $q->whereIn('analistas.id', (array)$analistaFilter);
-            });
-            $subQuery->whereHas('analistas', function ($q) use ($analistaFilter) {
-                $q->whereIn('analistas.id', (array)$analistaFilter);
-            });
-        }
-
-        // Filtro por fecha desde
-        if (!is_null($fechaDesde) && $fechaDesde !== '') {
-            $mainQuery->where('fecha_recepcion', '>=', $fechaDesde);
-            $subQuery->where('fecha_recepcion', '>=', $fechaDesde);
-        }
-
-        // Filtro por fecha hasta
-        if (!is_null($fechaHasta) && $fechaHasta !== '') {
-            $mainQuery->where('fecha_recepcion', '<=', $fechaHasta);
-            $subQuery->where('fecha_recepcion', '<=', $fechaHasta);
-        }
-
-        // Filtro por caso
-        $caso = $request->get('caso');
-        if (!is_null($caso) && $caso !== '') {
-            $mainQuery->where('caso', 'LIKE', "%{$caso}%");
-            $subQuery->where('caso', 'LIKE', "%{$caso}%");
-        }
-
-        // Obtener todas las actividades (padres y subactividades) con filtros y relaciones
-        $filteredActivities = Activity::with(['statuses', 'analistas'])
+        // Obtener todas las actividades con filtros y relaciones
+        $filteredActivities = Activity::with(['statuses', 'analistas', 'cliente'])
             ->when($request->get('query'), function ($queryBuilder, $query) {
                 $queryBuilder->where(function ($q) use ($query) {
                     $q->where('name', 'LIKE', "%{$query}%")
@@ -1433,7 +1380,11 @@ class ActivityController extends Controller
                         });
                 });
             })
-            // Filtro por estado: si tiene estados en la relación, filtra por la relación; si no, por el campo antiguo
+            // Filtro por cliente
+            ->when($clienteFilter, function ($query) use ($clienteFilter) {
+                $query->whereIn('cliente_id', (array)$clienteFilter);
+            })
+            // Filtro por estado
             ->when($statusFilter, function ($query) use ($statusFilter) {
                 $query->where(function ($q) use ($statusFilter) {
                     $q->whereHas('statuses', function ($subQ) use ($statusFilter) {
@@ -1455,17 +1406,17 @@ class ActivityController extends Controller
                         });
                 });
             })
-            // Filtro por analista (usando $analistaFilter procesado)
+            // Filtro por analista
             ->when($analistaFilter, function ($query) use ($analistaFilter) {
                 $query->whereHas('analistas', function ($q) use ($analistaFilter) {
                     $q->whereIn('analistas.id', (array)$analistaFilter);
                 });
             })
-            // Filtro por fecha desde (usando $fechaDesde procesado)
+            // Filtro por fecha desde
             ->when($fechaDesde, function ($query) use ($fechaDesde) {
                 $query->where('fecha_recepcion', '>=', $fechaDesde);
             })
-            // Filtro por fecha hasta (usando $fechaHasta procesado)
+            // Filtro por fecha hasta
             ->when($fechaHasta, function ($query) use ($fechaHasta) {
                 $query->where('fecha_recepcion', '<=', $fechaHasta);
             })
@@ -1502,7 +1453,13 @@ class ActivityController extends Controller
         $fechaDesde = $request->get('fecha_desde_column') ?: $request->get('fecha_desde');
         $fechaHasta = $request->get('fecha_hasta_column') ?: $request->get('fecha_hasta');
 
-        $filteredActivities = Activity::with(['statuses', 'analistas'])
+        // Filtro de cliente desde columna (ids separados por coma)
+        $clienteFilter = null;
+        if ($request->filled('cliente_column')) {
+            $clienteFilter = array_filter(explode(',', $request->get('cliente_column')));
+        }
+
+        $filteredActivities = Activity::with(['statuses', 'analistas', 'cliente'])
             ->when($request->get('query'), function ($queryBuilder, $query) {
                 $queryBuilder->where(function ($q) use ($query) {
                     $q->where('name', 'LIKE', "%{$query}%")
@@ -1518,6 +1475,10 @@ class ActivityController extends Controller
                                 ->orWhere('label', 'LIKE', "%{$query}%");
                         });
                 });
+            })
+            // Filtro por cliente
+            ->when($clienteFilter, function ($query) use ($clienteFilter) {
+                $query->whereIn('cliente_id', (array)$clienteFilter);
             })
             // Filtro por estado: si tiene estados en la relación, filtra por la relación; si no, por el campo antiguo
             ->when($statusFilter, function ($query) use ($statusFilter) {

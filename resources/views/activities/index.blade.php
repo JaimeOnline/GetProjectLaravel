@@ -62,6 +62,7 @@
                         <input type="hidden" name="analista_column" id="exportAnalistaColumn">
                         <input type="hidden" name="fecha_desde_column" id="exportFechaDesdeColumn">
                         <input type="hidden" name="fecha_hasta_column" id="exportFechaHastaColumn">
+                        <input type="hidden" name="cliente_column" id="exportClienteColumn">
                         <button type="submit" class="btn btn-outline-success">
                             <i class="fas fa-file-excel"></i> Exportar
                         </button>
@@ -99,40 +100,58 @@
 
                                 // Fechas columna
                                 document.getElementById('exportFechaDesdeColumn').value = document.getElementById(
-                                    'fecha-desde-filter').value;
+                                    'filterFechaDesde').value;
                                 document.getElementById('exportFechaHastaColumn').value = document.getElementById(
-                                    'fecha-hasta-filter').value;
+                                    'filterFechaHasta').value;
+
+                                // Cliente columna
+                                let clientesChecked = Array.from(document.querySelectorAll('.cliente-filter:checked'))
+                                    .filter(el => el.value !== "")
+                                    .map(el => el.value);
+                                document.getElementById('exportClienteColumn').value = clientesChecked.join(',');
                             });
                         });
                     </script>
                 </div>
                 </script>
                 <script>
-                    document.getElementById('exportWordBtn').addEventListener('click', function() {
-                        // Toma los mismos valores que el submit de Excel
-                        const params = new URLSearchParams();
-                        params.set('status', document.getElementById('filterStatus').value);
-                        params.set('analista_id', document.getElementById('filterAnalista').value);
-                        params.set('fecha_desde', document.getElementById('filterFechaDesde').value);
-                        params.set('fecha_hasta', document.getElementById('filterFechaHasta').value);
-                        params.set('query', document.getElementById('searchInput').value);
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const exportWordBtn = document.getElementById('exportWordBtn');
+                        if (!exportWordBtn) return;
 
-                        // Filtros de columna
-                        let statusChecked = Array.from(document.querySelectorAll('.status-filter:checked'))
-                            .filter(el => el.value !== "")
-                            .map(el => el.value);
-                        params.set('status_column', statusChecked.join(','));
+                        exportWordBtn.addEventListener('click', function() {
+                            const params = new URLSearchParams();
 
-                        let analistaChecked = Array.from(document.querySelectorAll('.analista-filter:checked'))
-                            .filter(el => el.value !== "")
-                            .map(el => el.value);
-                        params.set('analista_column', analistaChecked.join(','));
+                            // Filtros avanzados
+                            params.set('status', document.getElementById('filterStatus').value);
+                            params.set('analista_id', document.getElementById('filterAnalista').value);
+                            params.set('fecha_desde', document.getElementById('filterFechaDesde').value);
+                            params.set('fecha_hasta', document.getElementById('filterFechaHasta').value);
+                            params.set('query', document.getElementById('searchInput').value);
 
-                        params.set('fecha_desde_column', document.getElementById('fecha-desde-filter').value);
-                        params.set('fecha_hasta_column', document.getElementById('fecha-hasta-filter').value);
+                            // Filtros de columna
+                            let statusChecked = Array.from(document.querySelectorAll('.status-filter:checked'))
+                                .filter(el => el.value !== "")
+                                .map(el => el.value);
+                            params.set('status_column', statusChecked.join(','));
 
-                        // Redirige a la ruta de exportación Word con los filtros
-                        window.open("{{ route('activities.exportWord') }}?" + params.toString(), "_blank");
+                            let analistaChecked = Array.from(document.querySelectorAll('.analista-filter:checked'))
+                                .filter(el => el.value !== "")
+                                .map(el => el.value);
+                            params.set('analista_column', analistaChecked.join(','));
+
+                            params.set('fecha_desde_column', document.getElementById('fecha-desde-filter').value);
+                            params.set('fecha_hasta_column', document.getElementById('fecha-hasta-filter').value);
+
+                            // Cliente columna
+                            let clientesChecked = Array.from(document.querySelectorAll('.cliente-filter:checked'))
+                                .filter(el => el.value !== "")
+                                .map(el => el.value);
+                            params.set('cliente_column', clientesChecked.join(','));
+
+                            // Abrir exportación Word con filtros
+                            window.open("{{ route('activities.exportWord') }}?" + params.toString(), "_blank");
+                        });
                     });
                 </script>
             </div>
@@ -811,7 +830,7 @@
         text-align: center;
     }
 
-        /* Sticky header para la tabla de actividades */
+    /* Sticky header para la tabla de actividades */
     .sticky-thead th {
         position: sticky;
         top: 0;

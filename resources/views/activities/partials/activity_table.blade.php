@@ -98,7 +98,40 @@
                 </div>
             </th>
             <th class="border-0">
-                <i class="fas fa-user-tie text-primary"></i> Cliente
+                <div class="d-flex align-items-center justify-content-between">
+                    <span>
+                        <i class="fas fa-user-tie text-primary"></i> Cliente
+                    </span>
+                    <div class="custom-dropdown">
+                        <button class="btn btn-sm btn-outline-secondary filter-toggle" type="button"
+                            data-filter="clientes" style="padding: 2px 6px;">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <div class="custom-dropdown-menu" id="clientes-filter-menu"
+                            style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px;">
+                            <h6 class="dropdown-header"
+                                style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; margin: 0; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: 600;">
+                                Filtrar por Cliente
+                            </h6>
+                            <div class="px-3 py-2">
+                                <div class="form-check">
+                                    <input class="form-check-input cliente-filter" type="checkbox" value=""
+                                        id="cliente-all" checked>
+                                    <label class="form-check-label" for="cliente-all">Todos</label>
+                                </div>
+                                @foreach ($clientes ?? [] as $cliente)
+                                    <div class="form-check">
+                                        <input class="form-check-input cliente-filter" type="checkbox"
+                                            value="{{ $cliente->id }}" id="cliente-{{ $cliente->id }}">
+                                        <label class="form-check-label" for="cliente-{{ $cliente->id }}">
+                                            {{ \Illuminate\Support\Str::before($cliente->nombre, ' ') }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </th>
             <th class="border-0">
                 <i class="fas fa-tasks text-primary"></i> Estado Operacional
