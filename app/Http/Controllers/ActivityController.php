@@ -1313,6 +1313,39 @@ class ActivityController extends Controller
     }
 
     /**
+     * Editar estatus_operacional en línea (insumos, hoy, etc.)
+     */
+    public function inlineUpdateEstatus(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'estatus_operacional' => 'nullable|string|max:1000',
+        ]);
+
+        $activity->estatus_operacional = $request->estatus_operacional;
+        $activity->save();
+
+        // Crear comentario igual que en update() si no existe aún
+        $nuevoEstatus = $activity->estatus_operacional;
+        if (!empty($nuevoEstatus)) {
+            $existeComentario = $activity->comments()
+                ->where('comment', $nuevoEstatus)
+                ->exists();
+
+            if (!$existeComentario) {
+                Comment::create([
+                    'activity_id' => $activity->id,
+                    'comment' => $nuevoEstatus,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'estatus_operacional' => $activity->estatus_operacional,
+        ]);
+    }
+
+    /**
      * Editar solo analista en la tabla subactividades
      */
     public function updateAnalysts(Request $request, Activity $activity)
@@ -1699,9 +1732,17 @@ class ActivityController extends Controller
             ->orderByDesc('last_requirement_update')
             ->get();
 
-        // Para el selector de clientes
         $clientes = \App\Models\Cliente::orderBy('nombre')->get();
 
         return view('activities.insumos', compact('activities', 'clientes'));
+    }
+
+    // Devolver solo un item de insumo para recarga vía AJAX
+    public function insumoItem(Activity $activity)
+    {
+        return response()->view('activities.partials.insumo_activity_item', [
+            'activity' => $activity,
+            'index' => 1, // el índice no es crítico al recargar una sola actividad
+        ]);
     }
 }

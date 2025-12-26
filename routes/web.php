@@ -19,6 +19,7 @@ Route::get('/activities/analistas', [ActivityController::class, 'porAnalistas'])
 Route::get('/activities/analistas/{analista}/actividades', [ActivityController::class, 'actividadesPorAnalista'])->name('activities.analistas.actividades');
 Route::get('/activities/hoy', [ActivityController::class, 'enAtencionHoy'])->name('activities.hoy');
 Route::get('/activities/insumos', [ActivityController::class, 'enEsperaInsumos'])->name('activities.insumos');
+Route::get('/activities/insumos/{activity}', [ActivityController::class, 'insumoItem'])->name('activities.insumos.item');
 
 Route::resource('activities', ActivityController::class);
 // Rutas para gestión de estados múltiples
@@ -53,6 +54,10 @@ Route::patch('requirements/{requirement}/mark-pending', [RequirementController::
 // Rutas para actualización en linea de Orden y Prioridad
 Route::patch('/activities/{activity}/inline-update', [App\Http\Controllers\ActivityController::class, 'inlineUpdate'])
     ->name('activities.inline-update');
+
+// Ruta para actualización en línea de estatus_operacional
+Route::patch('/activities/{activity}/inline-estatus', [App\Http\Controllers\ActivityController::class, 'inlineUpdateEstatus'])
+    ->name('activities.inline-estatus');
 
 // Rutas Proyectos
 Route::get('/proyectos', [ProyectoController::class, 'index'])->name('projects.index');
