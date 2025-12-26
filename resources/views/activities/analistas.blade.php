@@ -184,37 +184,6 @@
                             } else {
                                 loadMoreDiv.innerHTML = '';
                             }
-
-                            // --- Activar recarga individual tras editar ---
-                            setTimeout(function() {
-                                document.querySelectorAll('.edit-activity-link').forEach(function(
-                                    link) {
-                                    link.addEventListener('click', function(e) {
-                                        // Marcar el botón de recarga como visible para esta actividad
-                                        const btn = this.closest('td').querySelector(
-                                            '.reload-activity-btn');
-                                        if (btn) {
-                                            btn.style.display = 'inline-block';
-                                            // Guardar el ID de la actividad en localStorage para saber cuál recargar
-                                            localStorage.setItem('reload_activity_id',
-                                                btn
-                                                .dataset.activityId);
-                                            localStorage.setItem('reload_analista_id',
-                                                analistaId);
-                                        }
-                                    });
-                                });
-                                document.querySelectorAll('.reload-activity-btn').forEach(function(
-                                    btn) {
-                                    btn.addEventListener('click', function() {
-                                        // Recargar solo la fila de la actividad editada
-                                        const activityId = this.dataset.activityId;
-                                        const analistaId = analistaIdFromBtn(this);
-                                        reloadSingleActivity(analistaId, activityId,
-                                            this);
-                                    });
-                                });
-                            }, 200);
                         });
                 }
 
@@ -289,11 +258,13 @@
                                     oldRow.replaceWith(newRow);
                                 }
                             }
+
                             if (btn) btn.style.display = 'none';
                             // Limpiar el localStorage
                             localStorage.removeItem('reload_activity_id');
                             localStorage.removeItem('reload_analista_id');
                         });
+
                 }
 
                 function analistaIdFromBtn(btn) {
@@ -310,6 +281,34 @@
                     }
                     return null;
                 }
+
+                // Delegación de eventos para enlaces de editar y botones de recarga
+                const analistasAccordion = document.getElementById('analistasAccordion');
+                if (analistasAccordion) {
+                    analistasAccordion.addEventListener('click', function(e) {
+                        const editLink = e.target.closest('.edit-activity-link');
+                        if (editLink) {
+                            const row = editLink.closest('tr[data-activity-id]');
+                            const activityId = row ? row.getAttribute('data-activity-id') : null;
+                            const analistaId = analistaIdFromBtn(editLink);
+                            if (activityId && analistaId) {
+                                localStorage.setItem('reload_activity_id', activityId);
+                                localStorage.setItem('reload_analista_id', analistaId);
+                            }
+                            return; // dejamos que el link abra la pestaña normalmente
+                        }
+
+                        const reloadBtn = e.target.closest('.reload-activity-btn');
+                        if (reloadBtn) {
+                            const activityId = reloadBtn.dataset.activityId;
+                            const analistaId = analistaIdFromBtn(reloadBtn);
+                            if (activityId && analistaId) {
+                                reloadSingleActivity(analistaId, activityId, reloadBtn);
+                            }
+                        }
+                    });
+                }
+
 
                 // Al abrir un acordeón, cargar actividades si no se han cargado
                 document.querySelectorAll('.card-header .btn[data-toggle="collapse"]').forEach(function(btn) {
@@ -376,17 +375,30 @@
                     });
                 }
 
-                // --- Al volver de editar, mostrar botón de recarga ---
+                // --- Al volver de editar, recargar automáticamente la actividad ---
                 window.addEventListener('focus', function() {
                     const activityId = localStorage.getItem('reload_activity_id');
                     const analistaId = localStorage.getItem('reload_analista_id');
                     if (activityId && analistaId) {
-                        // Mostrar el botón de recarga solo para esa actividad
+                        // Busca el botón de recarga y llama a reloadSingleActivity
                         const tableDiv = document.getElementById('activities-table-' + analistaId);
                         if (tableDiv) {
                             const btn = tableDiv.querySelector('.reload-activity-btn[data-activity-id="' +
                                 activityId + '"]');
-                            if (btn) btn.style.display = 'inline-block';
+                            if (btn) {
+                                reloadSingleActivity(analistaId, activityId, btn);
+                            } else {
+                                // Si por alguna razón no está el botón, recargamos todo el acordeón
+                                const collapseDiv = document.getElementById('collapse-' + analistaId);
+                                if (collapseDiv) {
+                                    collapseDiv.classList.remove('loaded');
+                                    loadActivities(analistaId);
+                                    collapseDiv.classList.add('show');
+                                }
+                                // Limpiamos localStorage igualmente
+                                localStorage.removeItem('reload_activity_id');
+                                localStorage.removeItem('reload_analista_id');
+                            }
                         }
                     }
                 });
