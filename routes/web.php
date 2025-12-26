@@ -18,6 +18,7 @@ Route::put('activities/{activity}/analysts', [ActivityController::class, 'update
 Route::get('/activities/analistas', [ActivityController::class, 'porAnalistas'])->name('activities.analistas');
 Route::get('/activities/analistas/{analista}/actividades', [ActivityController::class, 'actividadesPorAnalista'])->name('activities.analistas.actividades');
 Route::get('/activities/hoy', [ActivityController::class, 'enAtencionHoy'])->name('activities.hoy');
+Route::get('/activities/hoy/{activity}', [ActivityController::class, 'hoyItem'])->name('activities.hoy.item');
 Route::get('/activities/insumos', [ActivityController::class, 'enEsperaInsumos'])->name('activities.insumos');
 Route::get('/activities/insumos/{activity}', [ActivityController::class, 'insumoItem'])->name('activities.insumos.item');
 
@@ -58,6 +59,10 @@ Route::patch('/activities/{activity}/inline-update', [App\Http\Controllers\Activ
 // Ruta para actualización en línea de estatus_operacional
 Route::patch('/activities/{activity}/inline-estatus', [App\Http\Controllers\ActivityController::class, 'inlineUpdateEstatus'])
     ->name('activities.inline-estatus');
+
+// Ruta para actualización en línea de fecha estimación
+Route::patch('/activities/{activity}/inline-fecha-estimacion', [App\Http\Controllers\ActivityController::class, 'inlineUpdateFechaEstimacion'])
+    ->name('activities.inline-fecha-estimacion');
 
 // Rutas Proyectos
 Route::get('/proyectos', [ProyectoController::class, 'index'])->name('projects.index');

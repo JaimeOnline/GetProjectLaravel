@@ -1346,26 +1346,63 @@ class ActivityController extends Controller
     }
 
     /**
-     * Editar solo analista en la tabla subactividades
+     * Editar fecha_estimacion_entrega en línea (hoy, etc.)
+     */
+    public function inlineUpdateFechaEstimacion(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'fecha_estimacion_entrega' => 'nullable|date',
+        ]);
+
+        $activity->fecha_estimacion_entrega = $request->fecha_estimacion_entrega;
+        $activity->save();
+
+        return response()->json([
+            'success' => true,
+            'fecha_estimacion_entrega' => $activity->fecha_estimacion_entrega,
+        ]);
+    }
+
+    /**
+     * Editar analistas en la actividad (subactividades, hoy, etc.)
      */
     public function updateAnalysts(Request $request, Activity $activity)
     {
-        $request->validate([
-            'analista_id' => 'required|array|min:1',
-            'analista_id.*' => 'exists:analistas,id',
-        ]);
-
-        $activity->analistas()->sync($request->analista_id);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            $analistas = $activity->analistas()->get(['analistas.id', 'analistas.name']);
-            return response()->json([
-                'success' => true,
-                'analistas' => $analistas
+        try {
+            $request->validate([
+                'analista_id'   => 'nullable|array',
+                'analista_id.*' => 'exists:analistas,id',
             ]);
-        }
 
-        return back()->with('success', 'Analistas actualizados correctamente.');
+            $ids = $request->analista_id ?? [];
+            $activity->analistas()->sync($ids);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                $analistas = $activity->analistas()->get(['analistas.id', 'analistas.name']);
+                return response()->json([
+                    'success'   => true,
+                    'analistas' => $analistas,
+                ]);
+            }
+
+            return back()->with('success', 'Analistas actualizados correctamente.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'errors'  => $e->errors(),
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al actualizar analistas: ' . $e->getMessage(),
+                ], 500);
+            }
+            return back()->withErrors(['error' => 'Error al actualizar analistas: ' . $e->getMessage()]);
+        }
     }
 
 
@@ -1708,10 +1745,12 @@ class ActivityController extends Controller
             })
             ->get();
 
-        $clientes = \App\Models\Cliente::orderBy('nombre')->get();
+        $clientes  = \App\Models\Cliente::orderBy('nombre')->get();
+        $analistas = \App\Models\Analista::orderBy('name')->get();
 
-        return view('activities.hoy', compact('activities', 'clientes'));
+        return view('activities.hoy', compact('activities', 'clientes', 'analistas'));
     }
+
 
 
 
@@ -1742,7 +1781,19 @@ class ActivityController extends Controller
     {
         return response()->view('activities.partials.insumo_activity_item', [
             'activity' => $activity,
-            'index' => 1, // el índice no es crítico al recargar una sola actividad
+            'index' => 1,
+        ]);
+    }
+
+    // Devolver solo un item de HOY para recarga vía AJAX
+    public function hoyItem(Activity $activity)
+    {
+        $analistas = \App\Models\Analista::orderBy('name')->get();
+
+        return response()->view('activities.partials.hoy_activity_item', [
+            'activity' => $activity,
+            'index'    => 1,
+            'analistas' => $analistas,
         ]);
     }
 }
