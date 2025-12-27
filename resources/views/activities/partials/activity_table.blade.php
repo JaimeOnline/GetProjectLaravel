@@ -15,7 +15,7 @@
     }
 @endphp
 
-<table id="main-activities-table" class="table table-hover mb-0 modern-table" style="min-width: 1100px;">
+<table id="main-activities-table" class="table table-hover mb-0 modern-table">
     <thead class="thead-light sticky-thead">
         <tr>
             <th class="border-0">
@@ -66,7 +66,7 @@
                     </div>
                 </div>
             </th>
-            <th class="border-0 sortable" data-sort="orden_analista" style="cursor: pointer;">
+            <th class="border-0 sortable col-orden" data-sort="orden_analista" style="cursor: pointer;">
                 <i class="fas fa-sort-numeric-up text-primary"></i> Orden
                 <i class="fas fa-sort sort-icon text-muted ml-1"></i>
                 <div class="custom-dropdown">
@@ -136,7 +136,7 @@
             <th class="border-0">
                 <i class="fas fa-tasks text-primary"></i> Estado Operacional
             </th>
-            <th class="border-0">
+            <th class="border-0 col-avance">
                 <i class="fas fa-percentage text-primary"></i> % Avance
             </th>
             <th class="border-0">
@@ -218,7 +218,7 @@
                     </div>
                 </div>
             </th>
-            <th class="border-0">
+            <th class="border-0 col-requerimientos">
                 <i class="fas fa-clipboard-list text-primary"></i> Requerimientos
             </th>
             <th class="border-0">
@@ -325,7 +325,7 @@
                     <input type="number" class="form-control form-control-sm editable-input"
                         value="{{ $activity->prioridad ?? 1 }}" style="display:none; width: 70px;" min="1">
                 </td>
-                <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
+                <td class="align-middle editable-cell col-orden" data-activity-id="{{ $activity->id }}"
                     data-field="orden_analista" data-sort-value="{{ $activity->orden_analista ?? 0 }}">
                     <span
                         class="badge badge-outline-secondary editable-value">{{ $activity->orden_analista ?? '-' }}</span>
@@ -345,7 +345,7 @@
                         </span>
                     @endif
                 </td>
-                <td class="align-middle editable-cell" data-activity-id="{{ $activity->id }}"
+                <td class="align-middle editable-cell col-avance" data-activity-id="{{ $activity->id }}"
                     data-field="porcentaje_avance" data-sort-value="{{ $activity->porcentaje_avance ?? 0 }}">
                     <span class="badge editable-value"
                         style="background-color: {{ heatmap_color($activity->porcentaje_avance ?? 0) }}; color: #fff;">
@@ -423,7 +423,7 @@
                         </button>
                     </div>
                 </td>
-                <td class="align-middle">
+                <td class="align-middle col-requerimientos">
                     @if ($activity->requirements->count() > 0)
                         <div class="requirements-info">
                             <a href="{{ route('requirements.index', ['activity_id' => $activity->id]) }}"

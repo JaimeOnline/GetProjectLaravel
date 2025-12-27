@@ -4,52 +4,79 @@
     <div class="container">
         <h1>Actividades por Analista</h1>
 
+        <!-- Botón para mostrar/ocultar filtros en móvil -->
+        <div class="d-flex justify-content-between align-items-center mb-2 d-md-none">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="toggleFiltersAnalistas">
+                <i class="fas fa-filter"></i> Mostrar filtros
+            </button>
+        </div>
+
         <div id="sticky-filter"
             style="position:sticky;top:0;z-index:20;background:#fff;padding-top:1rem;padding-bottom:0.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-            <form method="GET" class="mb-0" id="status-filter-form" autocomplete="off" onsubmit="return false;">
-                <div class="row align-items-end">
-                    <div class="col-md-7">
-                        <label class="font-weight-bold mb-1 d-block">Filtrar por Estado:</label>
-                        <div class="btn-group btn-group-toggle flex-wrap" data-toggle="buttons" id="status-btn-group">
-                            @foreach ($statuses as $status)
-                                <label class="btn btn-outline-primary mb-2 mr-2"
-                                    style="min-width: 120px; font-weight: 500;">
-                                    <input type="checkbox" name="status[]" value="{{ $status->id }}" autocomplete="off">
-                                    <span class="badge"
-                                        style="background: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
-                                        {{ $status->label }}
-                                    </span>
-                                </label>
-                            @endforeach
+            <div id="sticky-filter-inner">
+                <form method="GET" class="mb-0" id="status-filter-form" autocomplete="off" onsubmit="return false;">
+                    <div class="row align-items-end">
+                        <div class="col-md-7">
+                            <label class="font-weight-bold mb-1 d-block">Filtrar por Estado:</label>
+                            <div class="btn-group btn-group-toggle flex-wrap" data-toggle="buttons" id="status-btn-group">
+                                @foreach ($statuses as $status)
+                                    <label class="btn btn-outline-primary mb-2 mr-2"
+                                        style="min-width: 120px; font-weight: 500;">
+                                        <input type="checkbox" name="status[]" value="{{ $status->id }}"
+                                            autocomplete="off">
+                                        <span class="badge"
+                                            style="background: {{ $status->color }}; color: {{ $status->getContrastColor() }};">
+                                            {{ $status->label }}
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <small class="text-muted d-block mt-1">Haz clic en los botones para seleccionar/deseleccionar
+                                estados.</small>
                         </div>
-                        <small class="text-muted d-block mt-1">Haz clic en los botones para seleccionar/deseleccionar
-                            estados.</small>
-                    </div>
 
-                    <div class="col-md-3">
-                        <label class="font-weight-bold mb-1 d-block">Cliente:</label>
-                        <select id="filterCliente" class="form-control form-control-sm">
-                            <option value="">Todos</option>
-                            @foreach ($clientes ?? [] as $cliente)
-                                <option value="{{ $cliente->id }}">
-                                    {{ \Illuminate\Support\Str::before($cliente->nombre, ' ') }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted d-block mt-1">Aplica a todas las actividades cargadas.</small>
-                    </div>
+                        <div class="col-md-3">
+                            <label class="font-weight-bold mb-1 d-block">Cliente:</label>
+                            <select id="filterCliente" class="form-control form-control-sm">
+                                <option value="">Todos</option>
+                                @foreach ($clientes ?? [] as $cliente)
+                                    <option value="{{ $cliente->id }}">
+                                        {{ \Illuminate\Support\Str::before($cliente->nombre, ' ') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted d-block mt-1">Aplica a todas las actividades cargadas.</small>
+                        </div>
 
-                    <div class="col-md-2">
-                        <a href="{{ route('activities.analistas') }}" class="btn btn-secondary mb-2 ml-2">
-                            Limpiar
-                        </a>
+                        <div class="col-md-2">
+                            <a href="{{ route('activities.analistas') }}" class="btn btn-secondary mb-2 ml-2">
+                                Limpiar
+                            </a>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+                // Toggle filtros en móvil
+                const toggleBtn = document.getElementById('toggleFiltersAnalistas');
+                const filterInner = document.getElementById('sticky-filter-inner');
+                if (toggleBtn && filterInner) {
+                    // Ocultar por defecto en pantallas pequeñas
+                    if (window.innerWidth <= 768) {
+                        filterInner.style.display = 'none';
+                    }
+
+                    toggleBtn.addEventListener('click', function() {
+                        const isHidden = filterInner.style.display === 'none';
+                        filterInner.style.display = isHidden ? 'block' : 'none';
+                        this.innerHTML = isHidden ?
+                            '<i class="fas fa-filter"></i> Ocultar filtros' :
+                            '<i class="fas fa-filter"></i> Mostrar filtros';
+                    });
+                }
                 // --- Preseleccionar "En Ejecución" en el front si no hay filtro ---
                 const statusCheckboxes = document.querySelectorAll('input[type="checkbox"][name="status[]"]');
                 const hasAnyChecked = Array.from(statusCheckboxes).some(cb => cb.checked);
@@ -221,7 +248,7 @@
                     <div id="collapse-{{ $analista->id }}" class="collapse" aria-labelledby="heading-{{ $analista->id }}"
                         data-parent="#analistasAccordion">
                         <div class="card-body bg-light">
-                            <div class="table-responsive" id="activities-table-{{ $analista->id }}">
+                            <div class="table-responsive analyst-table-wrapper" id="activities-table-{{ $analista->id }}">
                                 <div class="text-center text-muted py-3">Cargando actividades...</div>
                             </div>
                             <div class="text-center mt-2" id="load-more-{{ $analista->id }}"></div>

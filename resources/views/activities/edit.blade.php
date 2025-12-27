@@ -426,7 +426,6 @@
                 </form>
 
                 <!-- Tabla de actividad principal y subactividades (igual que en index) -->
-                <!-- Tabla de actividad principal y subactividades (igual que en index) -->
                 <div class="card mt-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>
@@ -436,20 +435,18 @@
                     </div>
                     <div class="card-body p-0">
                         <!-- Scroll horizontal superior opcional -->
-                        <div id="top-scroll" style="overflow-x: auto; width: 100%;">
-                            <div style="width: 1800px; height: 1px;"></div>
+                        <div id="top-scroll">
+                            <div id="top-scroll-inner"></div>
                         </div>
                         <!-- Contenedor con scroll horizontal siempre visible -->
-                        <div id="subactivitiesTableContainer" style="overflow-x: auto; width: 100%;">
-                            <div style="min-width: 1800px;">
-                                @include('activities.partials.activity_table', [
-                                    'activities' => collect([$activity])->merge($activity->subactivities),
-                                    'statusLabels' => $statusLabels,
-                                    'statusColors' => $statusColors,
-                                    'analistas' => $analistas,
-                                    'editMode' => true,
-                                ])
-                            </div>
+                        <div id="subactivitiesTableContainer">
+                            @include('activities.partials.activity_table', [
+                                'activities' => collect([$activity])->merge($activity->subactivities),
+                                'statusLabels' => $statusLabels,
+                                'statusColors' => $statusColors,
+                                'analistas' => $analistas,
+                                'editMode' => true,
+                            ])
                         </div>
 
                     </div>
@@ -458,8 +455,16 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var topScroll = document.getElementById('top-scroll');
+                    var topScrollInner = document.getElementById('top-scroll-inner');
                     var tableScroll = document.getElementById('subactivitiesTableContainer');
-                    if (topScroll && tableScroll) {
+
+                    if (topScroll && topScrollInner && tableScroll) {
+                        // Ajusta el ancho del top-scroll al de la tabla
+                        var table = tableScroll.querySelector('table');
+                        if (table) {
+                            topScrollInner.style.width = table.scrollWidth + 'px';
+                        }
+
                         // Cuando haces scroll en la barra superior, mueve la tabla
                         topScroll.addEventListener('scroll', function() {
                             tableScroll.scrollLeft = topScroll.scrollLeft;

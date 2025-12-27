@@ -15,8 +15,13 @@
 <body>
     @include('layouts.sidebar')
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" style="margin-left:250px;">
-        <div class="container">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm main-navbar">
+        <div class="container-fluid">
+            <!-- Botón para abrir/cerrar sidebar en móviles -->
+            <button class="btn btn-link text-white d-lg-none mr-2" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
             <a class="navbar-brand" href="{{ route('activities.index') }}">
                 <i class="fas fa-tasks"></i> Gestión de Actividades
             </a>
@@ -71,11 +76,23 @@
         </div>
     </main>
 
-           
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Toggle del sidebar en móviles
+        document.addEventListener('DOMContentLoaded', function() {
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('sidebar-open');
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

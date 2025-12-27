@@ -2,15 +2,16 @@
 
 @section('content')
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <button class="btn btn-primary" onclick="copiarReporte()">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+            <button class="btn btn-primary mb-2 mb-md-0" onclick="copiarReporte()">
                 <i class="fas fa-copy"></i> Copiar reporte
             </button>
 
             {{-- Filtro de cliente --}}
             <form method="GET" action="{{ route('activities.hoy') }}" class="form-inline">
-                <label for="cliente_id" class="mr-2 mb-0">Cliente:</label>
-                <select name="cliente_id" id="cliente_id" class="form-control" onchange="this.form.submit()">
+                <label for="cliente_id" class="mr-2 mb-1 mb-md-0">Cliente:</label>
+                <select name="cliente_id" id="cliente_id" class="form-control form-control-sm"
+                    onchange="this.form.submit()">
                     <option value="">Todos</option>
                     @foreach ($clientes ?? [] as $cliente)
                         <option value="{{ $cliente->id }}" {{ request('cliente_id') == $cliente->id ? 'selected' : '' }}>

@@ -5,14 +5,15 @@
 @endif
 
 @if ($activities->count())
-    <table class="table table-sm table-hover bg-white rounded" id="activities-table-{{ $analistaId ?? '' }}">
+    <table class="table table-sm table-hover bg-white rounded analyst-table"
+        id="activities-table-{{ $analistaId ?? '' }}">
         <thead class="thead-light">
             <tr>
                 <th>Orden</th>
                 <th>Caso</th>
                 <th>Nombre</th>
                 <th>Estados</th>
-                <th>Estatus Operacional</th>
+                <th class="col-estatus-op">Estatus Operacional</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -38,7 +39,7 @@
                                 class="badge badge-secondary">{{ $activity->status_label ?? $activity->status }}</span>
                         @endif
                     </td>
-                    <td style="white-space: pre-line;">{{ $activity->estatus_operacional }}</td>
+                    <td class="col-estatus-op" style="white-space: pre-line;">{{ $activity->estatus_operacional }}</td>
                     <td>
                         <a href="{{ route('activities.edit', $activity) }}"
                             class="btn btn-sm btn-outline-primary edit-activity-link" target="_blank"
