@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Gestión de Actividades</title>
+
     <link rel="stylesheet" href="{{ asset('css/custom-styles.css') }}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -13,8 +14,7 @@
 </head>
 
 <body>
-    @include('layouts.sidebar')
-    <!-- Navigation Bar -->
+    @include('layouts.sidebar') <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm main-navbar">
         <div class="container-fluid">
             <!-- Botón para abrir/cerrar sidebar en móviles -->
@@ -65,6 +65,11 @@
                             </a>
                         </div>
                     </li>
+                    <li class="nav-item">
+                        <button type="button" class="btn btn-sm btn-outline-light ml-2" id="darkModeToggle">
+                            <i class="fas fa-moon"></i> Modo oscuro
+                        </button>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -83,14 +88,81 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
-        // Toggle del sidebar en móviles
+        // Toggle del sidebar y actualización del botón de modo oscuro
         document.addEventListener('DOMContentLoaded', function() {
+            // Desactivar transiciones durante el arranque para evitar flashes visibles
+            document.body.classList.add('notransition');
+
+            // Aplicar modo oscuro según preferencia guardada en localStorage
+            try {
+                var savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark') {
+                    document.body.classList.add('dark-mode');
+                }
+            } catch (e) {
+                // Si localStorage falla, no pasa nada
+            }
+
             var sidebarToggle = document.getElementById('sidebarToggle');
+            var darkModeToggle = document.getElementById('darkModeToggle');
+
+            function isDesktop() {
+                return window.innerWidth >= 992;
+            }
+
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
-                    document.body.classList.toggle('sidebar-open');
+                    if (isDesktop()) {
+                        document.body.classList.toggle('sidebar-open');
+                    } else {
+                        document.body.classList.toggle('sidebar-open');
+                    }
                 });
             }
+
+            function hasDarkMode() {
+                return document.body.classList.contains('dark-mode');
+            }
+
+            function setDarkMode(enabled) {
+                if (enabled) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+
+            function updateDarkModeButton() {
+                if (!darkModeToggle) return;
+                if (hasDarkMode()) {
+                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i> Modo claro';
+                } else {
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i> Modo oscuro';
+                }
+            }
+
+            // Actualizar el texto del botón según el estado actual
+            updateDarkModeButton();
+
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', function() {
+                    var enabled = !hasDarkMode();
+                    setDarkMode(enabled);
+                    updateDarkModeButton();
+                });
+            }
+
+            // Si cambias el tamaño de la ventana, puedes limpiar estados del sidebar aquí si lo necesitas
+            window.addEventListener('resize', function() {
+                // lógica opcional para sidebar
+            });
+
+            // Rehabilitar transiciones después de un pequeño tiempo
+            setTimeout(function() {
+                document.body.classList.remove('notransition');
+            }, 100);
         });
     </script>
 </body>

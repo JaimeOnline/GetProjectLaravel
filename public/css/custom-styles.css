@@ -13,6 +13,17 @@
     --border-radius: 8px;
     --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
+
+    /* Colores base de fondo/texto */
+    --bg-color: #f8f9fa;
+    --bg-secondary: #ffffff;
+    --text-color: #212529;
+    --border-color-soft: #e9ecef;
+}
+
+/* Desactivar transiciones mientras se aplica el tema para evitar parpadeos */
+.notransition * {
+    transition: none !important;
 }
 
 /* ===== MEJORAS GENERALES ===== */
@@ -447,7 +458,7 @@ select.form-control option:hover {
     color: rgba(255, 255, 255, 0.8);
 }
 
-/* Encabezado con gradiente azul (requirements/create) */
+/* Encabezado con gradiente azul (requirements/create, import Excel) */
 .bg-primary-gradient {
     background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
@@ -455,6 +466,11 @@ select.form-control option:hover {
 
 .bg-primary-gradient i {
     color: rgba(255, 255, 255, 0.8);
+}
+
+/* En modo oscuro, mantener un azul oscuro coherente */
+body.dark-mode .bg-primary-gradient {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
 }
 
 /* ===== REQUERIMIENTO SHOW (requirements/show.blade) ===== */
@@ -592,6 +608,12 @@ select.form-control option:hover {
     transition: transform 0.2s ease;
 }
 
+/* Stat cards de reporte en modo oscuro */
+body.dark-mode .stat-card {
+    background: linear-gradient(135deg, #111827, #020617);
+    border-color: #1f2937;
+}
+
 .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -622,6 +644,23 @@ select.form-control option:hover {
     color: white;
     padding: 15px 20px;
     font-weight: 600;
+}
+
+/* activity-header en modo oscuro: asegurar buen contraste */
+body.dark-mode .activity-header {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    color: #e5e7eb;
+}
+
+/* Enlaces dentro del activity-header */
+body.dark-mode .activity-header a {
+    color: #bfdbfe !important;
+}
+
+/* Badge claro dentro del activity-header (caso y contador) */
+body.dark-mode .activity-header .badge.badge-light {
+    background-color: #111827;
+    color: #e5e7eb;
 }
 
 .requirement-item {
@@ -672,6 +711,7 @@ select.form-control option:hover {
 }
 
 /* ===== COMENTARIOS (vista comments.blade) ===== */
+/* ===== COMENTARIOS (vista comments.blade) ===== */
 .comment-item {
     background-color: #f8f9fa;
     border-radius: 5px;
@@ -694,6 +734,15 @@ select.form-control option:hover {
     border-left: 4px solid #007bff !important;
 }
 
+/* Comentarios en modo oscuro (incluye los de edit.blade) */
+body.dark-mode .comment-item {
+    background-color: #020617;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #1f2937;
+}
+
 /* Ajustes en móvil para comentarios */
 @media (max-width: 576px) {
     .comment-item {
@@ -705,6 +754,274 @@ select.form-control option:hover {
     }
 }
 
+/* ===== MODO OSCURO ===== */
+body.dark-mode {
+    background-color: #121212;
+    color: #e9ecef;
+}
+
+/* Fondo general y tarjetas */
+body.dark-mode .contenido-principal,
+body.dark-mode .container {
+    background-color: #121212;
+}
+
+/* Filtro sticky en vista por analistas */
+body.dark-mode #sticky-filter {
+    background-color: #020617 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode #sticky-filter-inner {
+    background-color: transparent;
+}
+
+/* ===== Correos en pestaña de edición (tab "Correos" de activities/edit) ===== */
+
+/* Card interna que envuelve cada correo existente */
+body.dark-mode .tab-pane#emails .card .card-body .border.rounded.p-3.mb-3 {
+    background-color: #020617;
+    border-color: #1f2937;
+    color: #e5e7eb;
+}
+
+/* Contenedor de contenido del correo (bg-light) */
+/* En pestaña de edición */
+body.dark-mode .tab-pane#emails .bg-light,
+/* En vista de emails.blade (contenido de correo histórico/actividad) */
+body.dark-mode .container .bg-light {
+    background-color: #0f172a !important;
+    color: #e5e7eb;
+}
+
+/* Área de drag & drop de archivos adjuntos */
+body.dark-mode #drop-area {
+    background-color: #020617 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb;
+}
+
+body.dark-mode .action-bar {
+    background-color: #111827;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .card {
+    background-color: #1e1e1e;
+    color: #e9ecef;
+    border-color: #2a2a2a;
+}
+
+/* Bloque de acciones en formularios (requirements create/edit) en modo oscuro */
+body.dark-mode .form-actions {
+    background-color: #020617;
+    border-radius: 8px;
+    border: 1px solid #1f2937;
+}
+
+
+/* Cabecera de cada analista (bg-white en claro) */
+body.dark-mode #analistasAccordion .card-header.bg-white {
+    background-color: #111827 !important;
+    border-bottom-color: #1f2937;
+}
+
+/* Texto y avatar de analista en modo oscuro: asegurar contraste */
+body.dark-mode #analistasAccordion .card-header.bg-white span.font-weight-bold {
+    color: #e5e7eb !important;
+}
+
+body.dark-mode #analistasAccordion .card-header.bg-white>.d-flex>div[style*="background: #007bff"] {
+    /* avatar círculo: mantenemos azul pero aseguramos contraste del texto */
+    color: #0f172a !important;
+}
+
+body.dark-mode .card-header {
+    background: linear-gradient(135deg, #1f2933, #323f4b);
+    color: #e9ecef;
+}
+
+/* Tablas */
+body.dark-mode .table {
+    background-color: #1e1e1e;
+    color: #e9ecef;
+}
+
+/* Tabla por analista dentro del acordeón */
+body.dark-mode .analyst-table {
+    background-color: #020617;
+}
+
+body.dark-mode .table thead th {
+    background: #252525;
+    border-bottom-color: #333;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.08);
+}
+
+/* Formularios */
+body.dark-mode .form-control,
+body.dark-mode .form-control:focus,
+body.dark-mode select.form-control {
+    background-color: #1f2933;
+    color: #e9ecef;
+    border-color: #3d4852;
+}
+
+body.dark-mode select.form-control option {
+    background-color: #111827;
+    color: #e5e7eb;
+}
+
+body.dark-mode .form-control::placeholder {
+    color: #9ca3af;
+}
+
+/* Sidebar y navbar */
+body.dark-mode .sidebar {
+    background: #0f172a;
+    /* un poco más oscuro pero en la misma línea */
+}
+
+body.dark-mode .sidebar-dropdown-menu {
+    background: #020617;
+    border-color: #1f2937;
+}
+
+body.dark-mode .sidebar-dropdown-menu a {
+    color: #e5e7eb;
+}
+
+body.dark-mode .sidebar-dropdown-menu a.activo,
+body.dark-mode .sidebar-dropdown-menu a:hover {
+    background: #22c55e;
+    color: #0f172a;
+}
+
+body.dark-mode .navbar.bg-primary {
+    background-color: #111827 !important;
+}
+
+/* Fondo de página y cards secundarias */
+body.dark-mode .page-header {
+    background: linear-gradient(135deg, #111827 0%, #1f2933 100%);
+}
+
+body.dark-mode .breadcrumb-container {
+    background: #111827;
+    border-bottom-color: #374151;
+}
+
+/* Textos */
+body.dark-mode .text-muted {
+    color: #9ca3af !important;
+}
+
+/* Inputs de fecha y select */
+body.dark-mode input[type="date"],
+body.dark-mode input[type="datetime-local"] {
+    background-color: #1f2933;
+    color: #e9ecef;
+    border-color: #3d4852;
+}
+
+/* Dropdowns y menús */
+body.dark-mode .dropdown-menu,
+body.dark-mode .custom-dropdown-menu {
+    background-color: #1f2933;
+    color: #e9ecef;
+    border-color: #374151;
+}
+
+body.dark-mode .dropdown-item {
+    color: #e9ecef;
+}
+
+body.dark-mode .dropdown-item:hover {
+    background-color: #111827;
+}
+
+/* Scroll containers */
+body.dark-mode #main-table-scroll,
+body.dark-mode #subactivitiesTableContainer,
+body.dark-mode .analyst-table-wrapper {
+    border-bottom-color: #374151;
+}
+
+/* Cuerpo de card de analista (bg-light en claro) */
+body.dark-mode #analistasAccordion .card-body.bg-light {
+    background-color: #020617 !important;
+}
+
+/* Filtros reporte / emails */
+body.dark-mode .filter-section {
+    background: #111827;
+    border-color: #374151;
+}
+
+body.dark-mode .export-section {
+    background: linear-gradient(135deg, #15803d, #16a34a);
+}
+
+/* Formularios */
+body.dark-mode .form-control,
+body.dark-mode .form-control:focus,
+body.dark-mode select.form-control {
+    background-color: #1f2933 !important;
+    color: #e9ecef !important;
+    border-color: #3d4852 !important;
+}
+
+/* En concreto, selects múltiples (como status_ids) */
+body.dark-mode select.form-control[multiple] {
+    background-color: #1f2933 !important;
+    color: #e5e7eb !important;
+}
+
+/* Opciones del select (dropdown) */
+body.dark-mode select.form-control option {
+    background-color: #111827 !important;
+    color: #e5e7eb !important;
+}
+
+/* Placeholder de inputs */
+body.dark-mode .form-control::placeholder {
+    color: #9ca3af !important;
+}
+
+/* Labels y textos de ayuda en formularios */
+body.dark-mode .form-label {
+    color: #e5e7eb !important;
+}
+
+body.dark-mode .form-text {
+    color: #9ca3af !important;
+}
+
+/* Alerts */
+body.dark-mode .alert-success {
+    background-color: rgba(22, 163, 74, 0.1);
+    color: #bbf7d0;
+}
+
+body.dark-mode .alert-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #bfdbfe;
+}
+
+body.dark-mode .alert-warning {
+    background-color: rgba(234, 179, 8, 0.08);
+    color: #facc15;
+}
+
+body.dark-mode .alert-danger {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: #fecaca;
+}
+
 /* ===== UTILIDADES ===== */
 .text-gradient {
     background: linear-gradient(135deg, var(--primary-color), var(--info-color));
@@ -712,6 +1029,13 @@ select.form-control option:hover {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-weight: bold;
+}
+
+/* En modo oscuro, usar texto claro simple para títulos */
+body.dark-mode .text-gradient {
+    background: none;
+    -webkit-text-fill-color: #e5e7eb;
+    color: #e5e7eb;
 }
 
 .shadow-sm {
@@ -773,6 +1097,19 @@ select.form-control option:hover {
     max-height: 60vh;
     width: 100%;
     border-bottom: 1px solid #ccc;
+}
+
+/* Scroll horizontal superior vinculado a la tabla */
+#top-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
+    height: 20px;
+    background: #f8f9fa;
+}
+
+#top-scroll-inner {
+    height: 1px;
 }
 
 /* Ancho mínimo de la tabla de actividades para escritorio */
@@ -1045,12 +1382,6 @@ select.form-control option:hover {
         width: 100%;
     }
 
-    /* Ajustes para la vista "hoy" en móvil */
-    .activity-hoy .card-header,
-    .activity-hoy .card-body {
-        padding: 0.75rem 0.85rem;
-    }
-
     /* Ajuste del filtro sticky en la vista por analistas */
     #sticky-filter {
         position: static;
@@ -1142,6 +1473,29 @@ select.form-control option:hover {
         display: none;
         /* Ocultar iconos de ordenamiento en móviles */
     }
+}
+
+/* Overrides de modo oscuro para selector de analistas (al final para ganar prioridad) */
+body.dark-mode .analysts-selector {
+    background-color: #020617;
+    border-color: #1f2937;
+}
+
+body.dark-mode .analyst-card {
+    background: #0f172a;
+    border-color: #1f2937;
+    color: #e5e7eb;
+}
+
+body.dark-mode .analyst-card.selected {
+    background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+    border-color: #38bdf8;
+    color: #0f172a;
+}
+
+body.dark-mode .analyst-avatar {
+    background: #38bdf8;
+    color: #0f172a;
 }
 
 /* ===== SISTEMA DE ESTADOS MÚLTIPLES ===== */
@@ -1253,6 +1607,17 @@ select.form-control option:hover {
 .status-management-container:hover {
     border-color: #007bff;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.1);
+}
+
+/* Modo oscuro para el contenedor de gestión de estados */
+body.dark-mode .status-management-container {
+    background-color: #020617;
+    border-color: #1f2937;
+}
+
+body.dark-mode .status-management-container:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
 }
 
 .current-statuses {
@@ -1454,6 +1819,40 @@ select.form-control option:hover {
 
 .stats-card.bg-dark {
     background: linear-gradient(135deg, #343a40, #23272b);
+}
+
+/* Stats en modo oscuro: bajar un poco el brillo de los fondos */
+body.dark-mode .stats-card {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .stats-card.bg-primary {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+body.dark-mode .stats-card.bg-secondary {
+    background: linear-gradient(135deg, #4b5563, #374151);
+}
+
+body.dark-mode .stats-card.bg-success {
+    background: linear-gradient(135deg, #15803d, #166534);
+}
+
+body.dark-mode .stats-card.bg-danger {
+    background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+}
+
+body.dark-mode .stats-card.bg-warning {
+    background: linear-gradient(135deg, #ca8a04, #854d0e);
+    color: #fef9c3;
+}
+
+body.dark-mode .stats-card.bg-info {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+}
+
+body.dark-mode .stats-card.bg-dark {
+    background: linear-gradient(135deg, #020617, #0f172a);
 }
 
 /* Responsive para tarjetas de estadísticas */
@@ -1939,6 +2338,15 @@ select.form-control option:hover {
     font-weight: 500;
 }
 
+/* Modo oscuro: texto de proyectos sin resultados */
+body.dark-mode .no-proyectos {
+    color: #e5e7eb;
+}
+
+body.dark-mode .no-proyectos a {
+    color: #6ee7b7;
+}
+
 .listado-proyectos {
     list-style: none;
     padding: 0;
@@ -1973,6 +2381,15 @@ select.form-control option:hover {
 
 .proyecto:hover {
     background-color: #2d3748;
+}
+
+/* Proyectos en modo oscuro: integrar mejor con el tema */
+body.dark-mode .proyecto {
+    background-color: #1e293b;
+}
+
+body.dark-mode .proyecto:hover {
+    background-color: #0f172a;
 }
 
 .proyecto a {

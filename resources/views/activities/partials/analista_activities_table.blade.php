@@ -5,8 +5,7 @@
 @endif
 
 @if ($activities->count())
-    <table class="table table-sm table-hover bg-white rounded analyst-table"
-        id="activities-table-{{ $analistaId ?? '' }}">
+    <table class="table table-sm table-hover rounded analyst-table" id="activities-table-{{ $analistaId ?? '' }}">
         <thead class="thead-light">
             <tr>
                 <th>Orden</th>

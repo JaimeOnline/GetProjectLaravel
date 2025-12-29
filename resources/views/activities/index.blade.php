@@ -113,7 +113,6 @@
                         });
                     </script>
                 </div>
-                </script>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         const exportWordBtn = document.getElementById('exportWordBtn');
@@ -545,8 +544,8 @@
         </div>
         <div class="card-body p-0">
             <!-- Scroll horizontal superior opcional -->
-            <div id="top-scroll" style="overflow-x: auto; width: 100%; height: 20px; background: #f8f9fa;">
-                <div id="top-scroll-inner" style="height: 1px; width: 2000px;"></div>
+            <div id="top-scroll">
+                <div id="top-scroll-inner"></div>
             </div>
             <div id="main-table-scroll">
 
