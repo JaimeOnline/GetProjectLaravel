@@ -1104,25 +1104,34 @@
                                     <script>
                                         let selectedFiles = [];
 
-                                        document.getElementById('addFileBtn').addEventListener('click', function() {
+                                        // Botón "Agregar archivo(s)": abrir solo el input, sin propagar al dropArea
+                                        document.getElementById('addFileBtn').addEventListener('click', function(e) {
+                                            e.stopPropagation(); // evita que el click llegue al dropArea
                                             document.getElementById('attachments').click();
                                         });
 
+                                        // Cambio en el input de archivos
                                         document.getElementById('attachments').addEventListener('change', function(e) {
-                                            handleFiles(e.target.files);
-                                            e.target.value = '';
+                                            if (e.target.files && e.target.files.length > 0) {
+                                                handleFiles(e.target.files);
+                                                // Limpiamos el valor para permitir volver a seleccionar el mismo archivo más tarde
+                                                e.target.value = '';
+                                            }
                                         });
 
                                         // Drag & Drop
                                         const dropArea = document.getElementById('drop-area');
+
                                         dropArea.addEventListener('dragover', function(e) {
                                             e.preventDefault();
                                             dropArea.style.background = '#e2e6ea';
                                         });
+
                                         dropArea.addEventListener('dragleave', function(e) {
                                             e.preventDefault();
                                             dropArea.style.background = '#f8f9fa';
                                         });
+
                                         dropArea.addEventListener('drop', function(e) {
                                             e.preventDefault();
                                             dropArea.style.background = '#f8f9fa';
@@ -1130,11 +1139,16 @@
                                                 handleFiles(e.dataTransfer.files);
                                             }
                                         });
+
+                                        // Click en el área de drop: abrir input solo si no se hizo click en el botón ni en un botón de eliminar
                                         dropArea.addEventListener('click', function(e) {
-                                            // Solo abrir el input si no se hizo click en el botón eliminar
-                                            if (!e.target.closest('.btn-danger')) {
-                                                document.getElementById('attachments').click();
+                                            const clickedRemoveBtn = e.target.closest('.btn-danger');
+                                            const clickedAddBtn = e.target.closest('#addFileBtn');
+                                            if (clickedRemoveBtn || clickedAddBtn) {
+                                                // ya gestionado por sus propios listeners
+                                                return;
                                             }
+                                            document.getElementById('attachments').click();
                                         });
 
                                         function handleFiles(fileList) {
