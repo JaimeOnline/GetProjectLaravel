@@ -7,10 +7,11 @@
                 <i class="fas fa-copy"></i> Copiar reporte
             </button>
 
-            {{-- Filtro de cliente --}}
+            {{-- Filtros --}}
             <form method="GET" action="{{ route('activities.hoy') }}" class="form-inline">
+                {{-- Filtro de cliente --}}
                 <label for="cliente_id" class="mr-2 mb-1 mb-md-0">Cliente:</label>
-                <select name="cliente_id" id="cliente_id" class="form-control form-control-sm"
+                <select name="cliente_id" id="cliente_id" class="form-control form-control-sm mr-2"
                     onchange="this.form.submit()">
                     <option value="">Todos</option>
                     @foreach ($clientes ?? [] as $cliente)
@@ -18,6 +19,21 @@
                             {{ \Illuminate\Support\Str::before($cliente->nombre, ' ') }}
                         </option>
                     @endforeach
+                </select>
+
+                {{-- Filtro de estado (en_ejecucion / atendiendo_hoy / ambos) --}}
+                @php
+                    $currentStatusFilter = $statusFilter ?? request('status_filter', 'both');
+                @endphp
+                <label for="status_filter" class="mr-2 mb-1 mb-md-0">Estado:</label>
+                <select name="status_filter" id="status_filter" class="form-control form-control-sm"
+                    onchange="this.form.submit()">
+                    <option value="both" {{ $currentStatusFilter === 'both' ? 'selected' : '' }}>En ejecución y atendiendo
+                        hoy</option>
+                    <option value="en_ejecucion" {{ $currentStatusFilter === 'en_ejecucion' ? 'selected' : '' }}>Solo en
+                        ejecución</option>
+                    <option value="atendiendo_hoy" {{ $currentStatusFilter === 'atendiendo_hoy' ? 'selected' : '' }}>Solo
+                        atendiendo hoy</option>
                 </select>
             </form>
         </div>
@@ -71,6 +87,42 @@ No hay actividades atendiendo hoy.
             function attachHoyHandlers(container) {
                 const activityId = container.getAttribute('data-activity-id');
                 if (!activityId) return;
+
+                // --- Checkboxes de estatus de flujo (en_ejecucion / atendiendo_hoy) ---
+                const statusCheckboxes = container.querySelectorAll('.hoy-status-checkbox');
+                statusCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', function() {
+                        const statusName = cb.getAttribute('data-status-name');
+                        const checked = cb.checked;
+
+                        fetch(`/activities/${activityId}/hoy-status-toggle`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector(
+                                        'meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify({
+                                    status: statusName,
+                                    checked: checked
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (!data.success) {
+                                    alert(data.message ||
+                                        'Error al actualizar el estado de flujo');
+                                    // revertir visualmente si hubo error
+                                    cb.checked = !checked;
+                                }
+                            })
+                            .catch(() => {
+                                alert('Error al actualizar el estado de flujo');
+                                cb.checked = !checked;
+                            });
+                    });
+                });
 
                 // Guardar id al hacer clic en Ver/Editar
                 const editLink = container.querySelector('.hoy-edit-link');

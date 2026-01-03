@@ -63,6 +63,35 @@
                 style="display:none; max-width: 200px; margin-top: 4px;">
         </p>
 
+        @php
+            $hasEnEjecucion = $activity->statuses->contains(function ($s) {
+                return $s->name === 'en_ejecucion';
+            });
+            $hasAtendiendo = $activity->statuses->contains(function ($s) {
+                return $s->name === 'atendiendo_hoy';
+            });
+        @endphp
+
+        <div class="mt-2">
+            <small class="text-muted d-block mb-1">Estatus de flujo (solo pantalla y filtros):</small>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input hoy-status-checkbox" type="checkbox"
+                    id="hoy_en_ejecucion_{{ $activity->id }}" data-status-name="en_ejecucion"
+                    {{ $hasEnEjecucion ? 'checked' : '' }}>
+                <label class="form-check-label" for="hoy_en_ejecucion_{{ $activity->id }}">
+                    En ejecución
+                </label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input hoy-status-checkbox" type="checkbox"
+                    id="hoy_atendiendo_{{ $activity->id }}" data-status-name="atendiendo_hoy"
+                    {{ $hasAtendiendo ? 'checked' : '' }}>
+                <label class="form-check-label" for="hoy_atendiendo_{{ $activity->id }}">
+                    Atendiendo hoy
+                </label>
+            </div>
+        </div>
+
         <div class="mt-2">
             <a href="{{ route('activities.edit', $activity) }}" class="btn btn-sm btn-outline-primary hoy-edit-link"
                 target="_blank">
