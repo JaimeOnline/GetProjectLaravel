@@ -642,9 +642,11 @@ document.addEventListener('DOMContentLoaded', function () {
             'pases_enviados': 'Pases Enviados',
             'culminada': 'Culminada',
             'pausada': 'Pausada',
+            'cancelada': 'Cancelada',
             'reiterar': 'Reiterar',
             'atendiendo_hoy': 'Atendiendo hoy'
         };
+
 
         // Actualizar texto de la etiqueta si existe en el mapeo
         if (statusMap[checkbox.value]) {
@@ -861,6 +863,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 return badgeTexts.some(text => text.includes('culminada') || text.includes('completada'));
                             case 'pausada':
                                 return badgeTexts.some(text => text.includes('pausada'));
+                            case 'cancelada':
+                                return badgeTexts.some(text => text.includes('cancelada'));
                             default:
                                 return badgeTexts.some(text => text.includes(status.replace(/_/g, ' ').toLowerCase()));
                         }

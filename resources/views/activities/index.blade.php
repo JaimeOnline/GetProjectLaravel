@@ -366,7 +366,7 @@
                 </div>
             </div>
             <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card bg-danger" data-status="cancelada" style="cursor:pointer;">
+                <div class="stats-card bg-danger stats-filter-card" data-status="cancelada" style="cursor:pointer;">
 
                     <div class="stats-icon">
                         <i class="fas fa-times-circle"></i>

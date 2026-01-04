@@ -307,7 +307,9 @@ class ActivityController extends Controller
             'culminada' => 'Culminada',
             'pausada' => 'Pausada',
             'reiterar' => 'Reiterar',
-            'atendiendo_hoy' => 'Atendiendo hoy'
+            'atendiendo_hoy' => 'Atendiendo hoy',
+            'cancelada' => 'Cancelada',
+
         ];
 
         // Colores de estado para los filtros
@@ -655,7 +657,8 @@ class ActivityController extends Controller
             'culminada' => 'Culminada',
             'pausada' => 'Pausada',
             'reiterar' => 'Reiterar',
-            'atendiendo_hoy' => 'Atendiendo hoy'
+            'atendiendo_hoy' => 'Atendiendo hoy',
+            'cancelada' => 'Cancelada',
         ];
 
         // Colores de estado para los filtros
@@ -668,7 +671,8 @@ class ActivityController extends Controller
             'culminada' => '#28a745',
             'pausada' => '#343a40',
             'reiterar' => '#ff5722',
-            'atendiendo_hoy' => '#007bff'
+            'atendiendo_hoy' => '#007bff',
+            'cancelada' => '#dc3545',
         ];
 
         // Pasar las variables a la vista
