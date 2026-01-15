@@ -192,7 +192,8 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-envelope"></i> Correos Relacionados ({{ $emails->count() }})
+                        <i class="fas fa-envelope"></i> Correos Relacionados
+                        ({{ method_exists($emails, 'total') ? $emails->total() : $emails->count() }})
                     </h5>
                     <small class="text-muted">
                         @if (isset($activity))
@@ -308,6 +309,13 @@
                             </div>
                         </div>
                     @endforeach
+
+                    {{-- Paginación --}}
+                    @if (method_exists($emails, 'links'))
+                        <div class="d-flex justify-content-center mt-3">
+                            {{ $emails->appends(request()->query())->links() }}
+                        </div>
+                    @endif
                 </div>
             </div>
         @else
