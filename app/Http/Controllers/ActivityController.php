@@ -1190,11 +1190,14 @@ class ActivityController extends Controller
         $type = $request->input('type');
         $emailsQuery = Email::whereIn('activity_id', $activityIds)
             ->with('activity')
-            ->orderBy('created_at', 'desc');
+            ->orderByDesc('created_at');
+
         if ($type === 'sent' || $type === 'received') {
             $emailsQuery->where('type', $type);
         }
-        $emails = $emailsQuery->get();
+
+        // Paginar para no cargar todos los correos en memoria
+        $emails = $emailsQuery->paginate(25);
 
         return view('activities.emails', compact('activity', 'emails', 'type'));
     }
@@ -1207,17 +1210,21 @@ class ActivityController extends Controller
         $type = $request->input('type');
         $activityId = $request->input('activity_id');
 
-        $emailsQuery = Email::with('activity')->orderBy('created_at', 'desc');
+        $emailsQuery = Email::with('activity')->orderByDesc('created_at');
+
         if ($type === 'sent' || $type === 'received') {
             $emailsQuery->where('type', $type);
         }
+
         if ($activityId) {
             $emailsQuery->where('activity_id', $activityId);
             $activity = Activity::find($activityId);
         } else {
             $activity = null;
         }
-        $emails = $emailsQuery->get();
+
+        // Paginar para evitar cargar todo el histórico en memoria
+        $emails = $emailsQuery->paginate(25);
 
         // Para el filtro de actividades en el select
         $activities = Activity::orderBy('name')->get();
