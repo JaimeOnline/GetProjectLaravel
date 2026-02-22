@@ -64,6 +64,10 @@ Route::patch('/activities/{activity}/inline-estatus', [App\Http\Controllers\Acti
 Route::patch('/activities/{activity}/inline-fecha-estimacion', [App\Http\Controllers\ActivityController::class, 'inlineUpdateFechaEstimacion'])
     ->name('activities.inline-fecha-estimacion');
 
+// Ruta para marcar/desmarcar estados de flujo (en_ejecucion / atendiendo_hoy) en HOY
+Route::patch('/activities/{activity}/hoy-status-toggle', [ActivityController::class, 'toggleHoyStatus'])
+    ->name('activities.hoy-status-toggle');
+
 // Rutas Proyectos
 Route::get('/proyectos', [ProyectoController::class, 'index'])->name('projects.index');
 Route::get('/proyectos/crear', [ProyectoController::class, 'create'])->name('projects.create');

@@ -24,7 +24,7 @@
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ route('activities.index') }}">Actividades</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Histórico de Correos</li>
+                        <li class="breadcrumb-item active" aria-current="page">+</li>
                     </ol>
                 </nav>
             </div>

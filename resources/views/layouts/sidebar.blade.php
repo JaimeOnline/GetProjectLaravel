@@ -1,3 +1,5 @@
+<div class="sidebar-overlay d-lg-none"></div>
+
 <aside class="sidebar">
     <div class="contenedor-sidebar">
         <h2>GetProject</h2>
@@ -74,5 +76,13 @@
                 menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
             });
         });
+
+        // Cerrar sidebar al hacer click en el overlay en móviles
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                document.body.classList.remove('sidebar-open');
+            });
+        }
     });
 </script>

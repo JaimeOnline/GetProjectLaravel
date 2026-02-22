@@ -426,7 +426,6 @@
                 </form>
 
                 <!-- Tabla de actividad principal y subactividades (igual que en index) -->
-                <!-- Tabla de actividad principal y subactividades (igual que en index) -->
                 <div class="card mt-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>
@@ -436,20 +435,18 @@
                     </div>
                     <div class="card-body p-0">
                         <!-- Scroll horizontal superior opcional -->
-                        <div id="top-scroll" style="overflow-x: auto; width: 100%;">
-                            <div style="width: 1800px; height: 1px;"></div>
+                        <div id="top-scroll">
+                            <div id="top-scroll-inner"></div>
                         </div>
                         <!-- Contenedor con scroll horizontal siempre visible -->
-                        <div id="subactivitiesTableContainer" style="overflow-x: auto; width: 100%;">
-                            <div style="min-width: 1800px;">
-                                @include('activities.partials.activity_table', [
-                                    'activities' => collect([$activity])->merge($activity->subactivities),
-                                    'statusLabels' => $statusLabels,
-                                    'statusColors' => $statusColors,
-                                    'analistas' => $analistas,
-                                    'editMode' => true,
-                                ])
-                            </div>
+                        <div id="subactivitiesTableContainer">
+                            @include('activities.partials.activity_table', [
+                                'activities' => collect([$activity])->merge($activity->subactivities),
+                                'statusLabels' => $statusLabels,
+                                'statusColors' => $statusColors,
+                                'analistas' => $analistas,
+                                'editMode' => true,
+                            ])
                         </div>
 
                     </div>
@@ -458,8 +455,16 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var topScroll = document.getElementById('top-scroll');
+                    var topScrollInner = document.getElementById('top-scroll-inner');
                     var tableScroll = document.getElementById('subactivitiesTableContainer');
-                    if (topScroll && tableScroll) {
+
+                    if (topScroll && topScrollInner && tableScroll) {
+                        // Ajusta el ancho del top-scroll al de la tabla
+                        var table = tableScroll.querySelector('table');
+                        if (table) {
+                            topScrollInner.style.width = table.scrollWidth + 'px';
+                        }
+
                         // Cuando haces scroll en la barra superior, mueve la tabla
                         topScroll.addEventListener('scroll', function() {
                             tableScroll.scrollLeft = topScroll.scrollLeft;
@@ -1099,25 +1104,34 @@
                                     <script>
                                         let selectedFiles = [];
 
-                                        document.getElementById('addFileBtn').addEventListener('click', function() {
+                                        // Botón "Agregar archivo(s)": abrir solo el input, sin propagar al dropArea
+                                        document.getElementById('addFileBtn').addEventListener('click', function(e) {
+                                            e.stopPropagation(); // evita que el click llegue al dropArea
                                             document.getElementById('attachments').click();
                                         });
 
+                                        // Cambio en el input de archivos
                                         document.getElementById('attachments').addEventListener('change', function(e) {
-                                            handleFiles(e.target.files);
-                                            e.target.value = '';
+                                            if (e.target.files && e.target.files.length > 0) {
+                                                handleFiles(e.target.files);
+                                                // Limpiamos el valor para permitir volver a seleccionar el mismo archivo más tarde
+                                                e.target.value = '';
+                                            }
                                         });
 
                                         // Drag & Drop
                                         const dropArea = document.getElementById('drop-area');
+
                                         dropArea.addEventListener('dragover', function(e) {
                                             e.preventDefault();
                                             dropArea.style.background = '#e2e6ea';
                                         });
+
                                         dropArea.addEventListener('dragleave', function(e) {
                                             e.preventDefault();
                                             dropArea.style.background = '#f8f9fa';
                                         });
+
                                         dropArea.addEventListener('drop', function(e) {
                                             e.preventDefault();
                                             dropArea.style.background = '#f8f9fa';
@@ -1125,11 +1139,16 @@
                                                 handleFiles(e.dataTransfer.files);
                                             }
                                         });
+
+                                        // Click en el área de drop: abrir input solo si no se hizo click en el botón ni en un botón de eliminar
                                         dropArea.addEventListener('click', function(e) {
-                                            // Solo abrir el input si no se hizo click en el botón eliminar
-                                            if (!e.target.closest('.btn-danger')) {
-                                                document.getElementById('attachments').click();
+                                            const clickedRemoveBtn = e.target.closest('.btn-danger');
+                                            const clickedAddBtn = e.target.closest('#addFileBtn');
+                                            if (clickedRemoveBtn || clickedAddBtn) {
+                                                // ya gestionado por sus propios listeners
+                                                return;
                                             }
+                                            document.getElementById('attachments').click();
                                         });
 
                                         function handleFiles(fileList) {

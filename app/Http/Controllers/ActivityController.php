@@ -307,7 +307,9 @@ class ActivityController extends Controller
             'culminada' => 'Culminada',
             'pausada' => 'Pausada',
             'reiterar' => 'Reiterar',
-            'atendiendo_hoy' => 'Atendiendo hoy'
+            'atendiendo_hoy' => 'Atendiendo hoy',
+            'cancelada' => 'Cancelada',
+
         ];
 
         // Colores de estado para los filtros
@@ -655,7 +657,8 @@ class ActivityController extends Controller
             'culminada' => 'Culminada',
             'pausada' => 'Pausada',
             'reiterar' => 'Reiterar',
-            'atendiendo_hoy' => 'Atendiendo hoy'
+            'atendiendo_hoy' => 'Atendiendo hoy',
+            'cancelada' => 'Cancelada',
         ];
 
         // Colores de estado para los filtros
@@ -668,7 +671,8 @@ class ActivityController extends Controller
             'culminada' => '#28a745',
             'pausada' => '#343a40',
             'reiterar' => '#ff5722',
-            'atendiendo_hoy' => '#007bff'
+            'atendiendo_hoy' => '#007bff',
+            'cancelada' => '#dc3545',
         ];
 
         // Pasar las variables a la vista
@@ -1741,11 +1745,19 @@ class ActivityController extends Controller
 
     public function enAtencionHoy(Request $request)
     {
-        $clienteId = $request->query('cliente_id');
+        $clienteId    = $request->query('cliente_id');
+        $statusFilter = $request->query('status_filter', 'both'); // both | en_ejecucion | atendiendo_hoy
+
+        // Determinar qué estados incluir según el filtro
+        $statusNames = match ($statusFilter) {
+            'en_ejecucion'   => ['en_ejecucion'],
+            'atendiendo_hoy' => ['atendiendo_hoy'],
+            default          => ['en_ejecucion', 'atendiendo_hoy'],
+        };
 
         $activities = \App\Models\Activity::with(['statuses', 'analistas', 'cliente'])
-            ->whereHas('statuses', function ($subQ) {
-                $subQ->whereIn('name', ['en_ejecucion', 'atendiendo_hoy']);
+            ->whereHas('statuses', function ($subQ) use ($statusNames) {
+                $subQ->whereIn('name', $statusNames);
             })
             ->when($clienteId, function ($query) use ($clienteId) {
                 $query->where('cliente_id', $clienteId);
@@ -1755,7 +1767,7 @@ class ActivityController extends Controller
         $clientes  = \App\Models\Cliente::orderBy('nombre')->get();
         $analistas = \App\Models\Analista::orderBy('name')->get();
 
-        return view('activities.hoy', compact('activities', 'clientes', 'analistas'));
+        return view('activities.hoy', compact('activities', 'clientes', 'analistas', 'statusFilter'));
     }
 
 
@@ -1798,9 +1810,44 @@ class ActivityController extends Controller
         $analistas = \App\Models\Analista::orderBy('name')->get();
 
         return response()->view('activities.partials.hoy_activity_item', [
-            'activity' => $activity,
-            'index'    => 1,
+            'activity'  => $activity,
+            'index'     => 1,
             'analistas' => $analistas,
+        ]);
+    }
+
+    /**
+     * Marcar o desmarcar un status de flujo (en_ejecucion / atendiendo_hoy) para una actividad.
+     * No afecta estatus_operacional, solo la relación statuses.
+     */
+    public function toggleHoyStatus(Request $request, Activity $activity)
+    {
+        $data = $request->validate([
+            'status'   => 'required|in:en_ejecucion,atendiendo_hoy',
+            'checked'  => 'required|boolean',
+        ]);
+
+        $status = \App\Models\Status::where('name', $data['status'])->first();
+
+        if (!$status) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El status solicitado no existe: ' . $data['status'],
+            ], 422);
+        }
+
+        if ($data['checked']) {
+            // Asegurar que esté asociado
+            $activity->statuses()->syncWithoutDetaching([$status->id]);
+        } else {
+            // Quitar la asociación
+            $activity->statuses()->detach($status->id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'status'  => $data['status'],
+            'checked' => $data['checked'],
         ]);
     }
 }

@@ -179,7 +179,7 @@
                                     <th class="border-0">
                                         <i class="fas fa-calendar text-primary"></i> Fecha Creación
                                     </th>
-                                    <th class="border-0">
+                                    <th class="border-0 col-fecha-rec">
                                         <i class="fas fa-calendar-check text-primary"></i> Fecha Recepción
                                     </th>
                                     <th class="border-0">

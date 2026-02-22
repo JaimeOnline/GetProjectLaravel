@@ -68,7 +68,7 @@
                 class="mb-4">
                 @csrf
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header bg-primary-gradient">
                         <h5 class="mb-0"><i class="fas fa-file-upload"></i> Cargar Actividades desde Excel</h5>
                     </div>
                     <div class="card-body">

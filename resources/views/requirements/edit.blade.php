@@ -31,7 +31,7 @@
 
         <!-- Form Card -->
         <div class="card shadow-sm">
-            <div class="card-header">
+            <div class="card-header bg-warning-gradient">
                 <h5 class="mb-0">
                     <i class="fas fa-edit text-primary"></i> Información del Requerimiento
                 </h5>
@@ -213,31 +213,4 @@
             statusSelect.addEventListener('change', toggleFechaRecepcion);
         });
     </script>
-
-    <style>
-        .required::after {
-            content: " *";
-            color: #dc3545;
-        }
-
-        .form-actions {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, #ffc107, #e0a800);
-            color: white;
-        }
-
-        .card-header h5 {
-            margin: 0;
-        }
-
-        .card-header i {
-            color: rgba(255, 255, 255, 0.8);
-        }
-    </style>
 @endsection

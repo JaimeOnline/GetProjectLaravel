@@ -113,7 +113,6 @@
                         });
                     </script>
                 </div>
-                </script>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         const exportWordBtn = document.getElementById('exportWordBtn');
@@ -367,7 +366,7 @@
                 </div>
             </div>
             <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 mb-3">
-                <div class="stats-card bg-danger" data-status="cancelada" style="cursor:pointer;">
+                <div class="stats-card bg-danger stats-filter-card" data-status="cancelada" style="cursor:pointer;">
 
                     <div class="stats-icon">
                         <i class="fas fa-times-circle"></i>
@@ -545,11 +544,11 @@
         </div>
         <div class="card-body p-0">
             <!-- Scroll horizontal superior opcional -->
-            <div id="top-scroll" style="overflow-x: auto; width: 100%; height: 20px; background: #f8f9fa;">
-                <div id="top-scroll-inner" style="height: 1px; width: 2000px;"></div>
+            <div id="top-scroll">
+                <div id="top-scroll-inner"></div>
             </div>
-            <div id="main-table-scroll"
-                style="overflow-x: auto; overflow-y: auto; max-height: 60vh; width: 100%; border-bottom: 1px solid #ccc;">
+            <div id="main-table-scroll">
+
                 <div id="tableContainer">
                     @include('activities.partials.activity_table', [
                         'activities' => $activities,
@@ -844,6 +843,12 @@
         max-height: 60vh;
         width: 100%;
         border-bottom: 1px solid #ccc;
+    }
+
+    @media (max-width: 768px) {
+        #main-table-scroll {
+            max-height: 50vh;
+        }
     }
 
     /* Subactividades */

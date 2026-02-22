@@ -70,8 +70,8 @@
             <input type="number" class="form-control form-control-sm editable-input"
                 value="{{ $subactivity->prioridad ?? 1 }}" style="display:none; width: 70px;" min="1">
         </td>
-        <td class="align-middle editable-cell" data-activity-id="{{ $subactivity->id }}" data-field="orden_analista"
-            data-sort-value="{{ $subactivity->orden_analista ?? 0 }}">
+        <td class="align-middle editable-cell col-orden" data-activity-id="{{ $subactivity->id }}"
+            data-field="orden_analista" data-sort-value="{{ $subactivity->orden_analista ?? 0 }}">
             <span class="badge badge-outline-secondary editable-value">
                 {{ $subactivity->orden_analista ?? '-' }}
             </span>
@@ -89,8 +89,8 @@
                 </span>
             @endif
         </td>
-        <td class="align-middle editable-cell" data-activity-id="{{ $subactivity->id }}" data-field="porcentaje_avance"
-            data-sort-value="{{ $subactivity->porcentaje_avance ?? 0 }}">
+        <td class="align-middle editable-cell col-avance" data-activity-id="{{ $subactivity->id }}"
+            data-field="porcentaje_avance" data-sort-value="{{ $subactivity->porcentaje_avance ?? 0 }}">
             <span class="badge editable-value"
                 style="background-color: {{ heatmap_color($subactivity->porcentaje_avance ?? 0) }}; color: #fff;">
                 {{ $subactivity->porcentaje_avance ?? 0 }}%
@@ -172,7 +172,7 @@
                 </div>
             @endif
         </td>
-        <td class="align-middle">
+        <td class="align-middle col-requerimientos">
             @if ($subactivity->requirements->count() > 0)
                 <div class="requirements-info">
                     <a href="{{ route('requirements.index', ['activity_id' => $subactivity->id]) }}"
