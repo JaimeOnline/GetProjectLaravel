@@ -619,6 +619,9 @@ class ActivityController extends Controller
     }
     public function edit(Activity $activity)
     {
+        // Orden de comentarios: desc por defecto (más recientes primero)
+        $order = request('order', 'desc');
+
         // Obtener todos los analistas
         $analistas = Analista::all();
         // Obtener todas las actividades para el campo de actividad padre (excluyendo la actividad actual)
@@ -628,9 +631,9 @@ class ActivityController extends Controller
         // Obtener todos los clientes y tipos de productos
         $clientes = Cliente::all();
         $tipos_productos = TipoProducto::all();
+
         // Cargar la actividad con subactividades y todas sus relaciones recursivas
         $activity->load([
-            'comments',
             'emails',
             'analistas',
             'requirements',
@@ -644,7 +647,10 @@ class ActivityController extends Controller
             'subactivities.subactivities.comments',
             'subactivities.subactivities.emails',
             'subactivities.subactivities.requirements',
-            'subactivities.subactivities.statuses'
+            'subactivities.subactivities.statuses',
+            'comments' => function ($q) use ($order) {
+                $q->orderBy('created_at', $order);
+            },
         ]);
 
         // Filtros de estado (array asociativo para la tabla)
@@ -684,7 +690,8 @@ class ActivityController extends Controller
             'statusLabels',
             'statusColors',
             'clientes',
-            'tipos_productos'
+            'tipos_productos',
+            'order'
         ));
     }
 
@@ -917,8 +924,15 @@ class ActivityController extends Controller
 
     public function showComments(Activity $activity)
     {
-        $activity->load('comments');
-        return view('activities.comments', compact('activity'));
+        $order = request('order', 'desc');
+
+        $activity->load([
+            'comments' => function ($q) use ($order) {
+                $q->orderBy('created_at', $order);
+            },
+        ]);
+
+        return view('activities.comments', compact('activity', 'order'));
     }
 
     public function storeComment(Request $request, Activity $activity)

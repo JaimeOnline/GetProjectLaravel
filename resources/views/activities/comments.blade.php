@@ -37,7 +37,6 @@
                 </div>
             </div>
         </div>
-
         {{-- Mensajes de éxito --}}
         @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -119,14 +118,18 @@
         {{-- Lista de comentarios --}}
         @if ($activity->comments->count() > 0)
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-comments"></i>
                         Historial de Comentarios ({{ $activity->comments->count() }})
                     </h5>
+                    <button type="button" id="toggle-order-btn" class="btn btn-sm btn-light text-dark mr-2"
+                        data-order="desc">
+                        Ordenar por fecha: Más recientes primero
+                    </button>
                 </div>
-                <div class="card-body">
-                    @foreach ($activity->comments->sortByDesc('created_at') as $comment)
+                <div class="card-body" id="comments-list">
+                    @foreach ($activity->comments as $comment)
                         <div class="comment-item border-left border-primary pl-3 mb-3">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="comment-content flex-grow-1">
@@ -178,5 +181,59 @@
         </div>
     </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('toggle-order-btn');
+            var list = document.getElementById('comments-list');
+            if (!btn || !list) return;
+
+            btn.addEventListener('click', function() {
+                var currentOrder = btn.getAttribute('data-order') || 'desc';
+                var newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
+
+                var items = Array.from(list.querySelectorAll('.comment-item'));
+                if (items.length === 0) return;
+
+                // Ordenar por fecha de creación: usamos el texto del small con formato d/m/Y H:i:s
+                items.sort(function(a, b) {
+                    var textA = a.querySelector('.comment-meta small').textContent;
+                    var textB = b.querySelector('.comment-meta small').textContent;
+
+                    var dateA = extractDate(textA);
+                    var dateB = extractDate(textB);
+
+                    if (!dateA || !dateB) return 0;
+
+                    return newOrder === 'desc' ? dateB - dateA : dateA - dateB;
+                });
+
+                // Quitar todos los items y volver a agregarlos en el nuevo orden
+                items.forEach(function(item) {
+                    list.appendChild(item.parentNode && item.nextElementSibling && item
+                        .nextElementSibling.tagName === 'HR' ?
+                        item.nextElementSibling : document.createTextNode(''));
+                    list.appendChild(item);
+                });
+
+                btn.setAttribute('data-order', newOrder);
+                btn.textContent = 'Ordenar por fecha: ' + (newOrder === 'desc' ? 'Más recientes primero' :
+                    'Más antiguos primero');
+            });
+
+            function extractDate(text) {
+                // Busca algo como 31/01/2026 14:30:00
+                var match = text.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+                if (!match) return null;
+                var d = parseInt(match[1], 10);
+                var m = parseInt(match[2], 10) - 1;
+                var y = parseInt(match[3], 10);
+                var hh = parseInt(match[4], 10);
+                var mm = parseInt(match[5], 10);
+                var ss = parseInt(match[6], 10);
+                return new Date(y, m, d, hh, mm, ss);
+            }
+        });
+    </script>
 
 @endsection
