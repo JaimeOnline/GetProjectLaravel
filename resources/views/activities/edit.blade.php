@@ -722,8 +722,17 @@
             <!-- Pestaña: Comentarios -->
             <div class="tab-pane fade" id="comments" role="tabpanel">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-comments"></i> Gestión de Comentarios</h5>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-comments"></i>
+                            Gestión de Comentarios
+                        </h5>
+                        @if ($activity->comments->count() > 0)
+                            <button type="button" id="tab-toggle-order-btn" class="btn btn-sm btn-light"
+                                data-order="desc">
+                                Ordenar por fecha: Más recientes primero
+                            </button>
+                        @endif
                     </div>
                     <div class="card-body">
                         {{-- Mostrar comentarios existentes --}}
@@ -731,7 +740,7 @@
                             <div class="form-group">
                                 <label>Comentarios Existentes</label>
                                 <div class="card">
-                                    <div class="card-body">
+                                    <div class="card-body" id="tab-comments-list">
                                         @foreach ($activity->comments as $comment)
                                             <div
                                                 class="border-bottom pb-2 mb-2 d-flex justify-content-between align-items-start">
@@ -1225,6 +1234,59 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 console.log('Edit form JavaScript loaded');
+
+                // Ordenar comentarios en pestaña "Comentarios" sin recargar
+                (function() {
+                    var btn = document.getElementById('tab-toggle-order-btn');
+                    var list = document.getElementById('tab-comments-list');
+                    if (!btn || !list) return;
+
+                    btn.addEventListener('click', function() {
+                        var currentOrder = btn.getAttribute('data-order') || 'desc';
+                        var newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
+
+                        var items = Array.from(list.querySelectorAll('.border-bottom.pb-2.mb-2.d-flex'));
+                        if (items.length === 0) return;
+
+                        items.sort(function(a, b) {
+                            var textA = a.querySelector('small.text-muted').textContent;
+                            var textB = b.querySelector('small.text-muted').textContent;
+
+                            var dateA = extractDate(textA);
+                            var dateB = extractDate(textB);
+
+                            if (!dateA || !dateB) return 0;
+                            return newOrder === 'desc' ? dateB - dateA : dateA - dateB;
+                        });
+
+                        items.forEach(function(item) {
+                            // mover el bloque completo (div + hr) manteniendo el hr siguiente si existe
+                            var hr = item.nextElementSibling && item.nextElementSibling.tagName ===
+                                'HR' ?
+                                item.nextElementSibling :
+                                null;
+                            list.appendChild(item);
+                            if (hr) list.appendChild(hr);
+                        });
+
+                        btn.setAttribute('data-order', newOrder);
+                        btn.textContent = 'Ordenar por fecha: ' + (newOrder === 'desc' ?
+                            'Más recientes primero' :
+                            'Más antiguos primero');
+                    });
+
+                    function extractDate(text) {
+                        var match = text.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+                        if (!match) return null;
+                        var d = parseInt(match[1], 10);
+                        var m = parseInt(match[2], 10) - 1;
+                        var y = parseInt(match[3], 10);
+                        var hh = parseInt(match[4], 10);
+                        var mm = parseInt(match[5], 10);
+                        var ss = parseInt(match[6], 10);
+                        return new Date(y, m, d, hh, mm, ss);
+                    }
+                })();
 
                 // Activar pestaña específica si viene desde una redirección
                 @if (session('active_tab'))
