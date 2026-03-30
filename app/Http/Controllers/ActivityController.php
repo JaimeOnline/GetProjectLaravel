@@ -636,7 +636,16 @@ class ActivityController extends Controller
         $activity->load([
             'emails',
             'analistas',
-            'requirements',
+            'requirements' => function ($q) {
+                // Primero pendientes, luego recibidos, luego el resto; dentro de cada grupo, más recientes primero
+                $q->orderByRaw("
+                    CASE
+                        WHEN status = 'pendiente' THEN 1
+                        WHEN status = 'recibido' THEN 2
+                        ELSE 3
+                    END
+                ")->orderBy('created_at', 'desc');
+            },
             'statuses',
             'subactivities.analistas',
             'subactivities.comments',

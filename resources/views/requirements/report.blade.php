@@ -61,10 +61,16 @@
                                 <i class="fas fa-flag text-primary"></i> Estado
                             </label>
                             <select class="form-control" id="status" name="status">
-                                <option value="">Todos los estados</option>
-                                <option value="pendiente" {{ request('status') === 'pendiente' ? 'selected' : '' }}>
-                                    Pendiente</option>
-                                <option value="recibido" {{ request('status') === 'recibido' ? 'selected' : '' }}>Recibido
+                                <option value=""
+                                    {{ request()->has('status') && request('status') === '' ? 'selected' : '' }}>
+                                    Todos los estados
+                                </option>
+                                <option value="pendiente"
+                                    {{ request('status', 'pendiente') === 'pendiente' ? 'selected' : '' }}>
+                                    Pendiente
+                                </option>
+                                <option value="recibido" {{ request('status') === 'recibido' ? 'selected' : '' }}>
+                                    Recibido
                                 </option>
                             </select>
                         </div>
