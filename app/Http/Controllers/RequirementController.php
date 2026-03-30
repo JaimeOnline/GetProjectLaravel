@@ -36,7 +36,16 @@ class RequirementController extends Controller
             });
         }
 
-        $requirements = $query->orderBy('created_at', 'desc')->paginate(15);
+        $requirements = $query
+            ->orderByRaw("
+                CASE
+                    WHEN status = 'pendiente' THEN 1
+                    WHEN status = 'recibido' THEN 2
+                    ELSE 3
+                END
+            ")
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
         $activities = Activity::orderBy('name')->get();
 
         // Estadísticas
@@ -265,6 +274,12 @@ class RequirementController extends Controller
         $query = Requirement::with(['activity', 'activity.parent']);
 
         // Filtros para el reporte
+
+        // Estado por defecto: 'pendiente' si no se envía ninguno
+        if (!$request->filled('status')) {
+            $request->merge(['status' => 'pendiente']);
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -289,12 +304,26 @@ class RequirementController extends Controller
             $query->whereDate('fecha_recepcion', '<=', $request->fecha_recepcion_hasta);
         }
 
-        // Ordenamiento
+        // Ordenamiento: primero pendientes, luego recibidos, luego el resto;
+        // dentro de cada grupo se respeta sort_by / sort_order
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
-        $query->orderBy($sortBy, $sortOrder);
+
+        $query->orderByRaw("
+            CASE
+                WHEN status = 'pendiente' THEN 1
+                WHEN status = 'recibido' THEN 2
+                ELSE 3
+            END
+        ");
+
+        // Aplicar orden secundario solo si la columna es válida
+        if (in_array($sortBy, ['created_at', 'fecha_recepcion', 'status'])) {
+            $query->orderBy($sortBy, $sortOrder);
+        }
 
         $requirements = $query->get();
+
         $activities = Activity::orderBy('name')->get();
 
         // Estadísticas del reporte
@@ -366,7 +395,18 @@ class RequirementController extends Controller
             $query->whereDate('created_at', '<=', $request->fecha_hasta);
         }
 
-        $requirements = $query->orderBy('created_at', 'desc')->get();
+        // Mismo orden que en el reporte: primero pendientes, luego recibidos, luego el resto
+        $requirements = $query
+            ->orderByRaw("
+                CASE
+                    WHEN status = 'pendiente' THEN 1
+                    WHEN status = 'recibido' THEN 2
+                    ELSE 3
+                END
+            ")
+            ->orderBy('created_at', 'desc')
+            ->get();
+
 
         $filename = 'reporte_requerimientos_' . now()->format('Y-m-d_H-i-s') . '.csv';
 
