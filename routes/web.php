@@ -47,7 +47,10 @@ Route::get('/emails/historico', [ActivityController::class, 'showAllEmails'])->n
 
 // Rutas para gestión completa de requerimientos
 Route::get('requirements-report', [RequirementController::class, 'report'])->name('requirements.report');
-Route::get('requirements-report/export', [RequirementController::class, 'exportReport'])->name('requirements.report.export');
+Route::get('requirements-report/export-excel', [RequirementController::class, 'exportReportExcel'])->name('requirements.report.export_excel');
+Route::post('requirements-report/export-excel-selected', [RequirementController::class, 'exportReportExcelSelected'])->name('requirements.report.export_excel_selected');
+// Route::get('requirements-report/export', [RequirementController::class, 'exportReport'])->name('requirements.report.export');
+
 Route::resource('requirements', RequirementController::class);
 Route::patch('requirements/{requirement}/mark-received', [RequirementController::class, 'markAsReceived'])->name('requirements.mark-received');
 Route::patch('requirements/{requirement}/mark-pending', [RequirementController::class, 'markAsPending'])->name('requirements.mark-pending');
