@@ -271,7 +271,7 @@ class RequirementController extends Controller
      */
     public function report(Request $request)
     {
-        $query = Requirement::with(['activity', 'activity.parent']);
+        $query = Requirement::with(['activity', 'activity.parent', 'activity.cliente']);
 
         // Filtros para el reporte
 
@@ -286,6 +286,12 @@ class RequirementController extends Controller
 
         if ($request->filled('activity_id')) {
             $query->where('activity_id', $request->activity_id);
+        }
+
+        if ($request->filled('cliente_id')) {
+            $query->whereHas('activity', function ($q) use ($request) {
+                $q->where('cliente_id', $request->cliente_id);
+            });
         }
 
         if ($request->filled('fecha_desde')) {
@@ -325,6 +331,7 @@ class RequirementController extends Controller
         $requirements = $query->get();
 
         $activities = Activity::orderBy('name')->get();
+        $clientes = \App\Models\Cliente::orderBy('nombre')->get();
 
         // Estadísticas del reporte
         $stats = [
@@ -349,6 +356,7 @@ class RequirementController extends Controller
         return view('requirements.report', compact(
             'requirements',
             'activities',
+            'clientes',
             'stats',
             'requirementsByActivity',
             'requirementsByMonth'
@@ -458,5 +466,231 @@ class RequirementController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Exportar reporte a Excel (XLSX)
+     */
+    public function exportReportExcel(Request $request)
+    {
+        // Mantener esta ruta para compatibilidad (por si la usas en otro lado)
+        // Se comporta igual que antes: todos según filtros
+        $query = Requirement::with(['activity', 'activity.parent']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('activity_id')) {
+            $query->where('activity_id', $request->activity_id);
+        }
+
+        if ($request->filled('cliente_id')) {
+            $query->whereHas('activity', function ($q) use ($request) {
+                $q->where('cliente_id', $request->cliente_id);
+            });
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('created_at', '>=', $request->fecha_desde);
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('created_at', '<=', $request->fecha_hasta);
+        }
+
+        $requirements = $query
+            ->orderByRaw("
+                CASE
+                    WHEN status = 'pendiente' THEN 1
+                    WHEN status = 'recibido' THEN 2
+                    ELSE 3
+                END
+            ")
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return $this->buildExcelFromRequirements($requirements);
+    }
+
+    public function exportReportExcelSelected(Request $request)
+    {
+        $query = Requirement::with(['activity', 'activity.parent']);
+
+        // Si vienen IDs seleccionados, filtramos por ellos
+        $selectedIds = $request->input('selected_ids', []);
+        if (!empty($selectedIds)) {
+            $query->whereIn('id', $selectedIds);
+        } else {
+            // Si no hay selección, aplicar mismos filtros que en report()
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('activity_id')) {
+                $query->where('activity_id', $request->activity_id);
+            }
+
+            if ($request->filled('cliente_id')) {
+                $query->whereHas('activity', function ($q) use ($request) {
+                    $q->where('cliente_id', $request->cliente_id);
+                });
+            }
+
+            if ($request->filled('fecha_desde')) {
+                $query->whereDate('created_at', '>=', $request->fecha_desde);
+            }
+
+            if ($request->filled('fecha_hasta')) {
+                $query->whereDate('created_at', '<=', $request->fecha_hasta);
+            }
+        }
+
+        // Mismo orden que en el reporte
+        $requirements = $query
+            ->orderByRaw("
+                CASE
+                    WHEN status = 'pendiente' THEN 1
+                    WHEN status = 'recibido' THEN 2
+                    ELSE 3
+                END
+            ")
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return $this->buildExcelFromRequirements($requirements);
+
+
+        return $this->buildExcelFromRequirements($requirements);
+    }
+
+    /**
+     * Construye y devuelve el Excel a partir de una colección de requerimientos
+     */
+    private function buildExcelFromRequirements($requirements)
+    {
+        $filename = 'reporte_requerimientos_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Requerimientos');
+
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'color' => ['rgb' => '0070C0'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ];
+
+        $activityHeaderStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => '000000']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'color' => ['rgb' => 'D9E1F2'],
+            ],
+        ];
+
+        // Encabezados (fila 1) - sin columna ID
+        $headers = [
+            'A1' => 'Caso',
+            'B1' => 'Actividad',
+            'C1' => 'Actividad Padre',
+            'D1' => 'Descripción',
+            'E1' => 'Estado',
+            'F1' => 'Fecha Creación',
+            'G1' => 'Fecha Recepción',
+            'H1' => 'Días Transcurridos',
+            'I1' => 'Notas',
+        ];
+        foreach ($headers as $cell => $text) {
+            $sheet->setCellValue($cell, $text);
+        }
+        $sheet->getStyle('A1:I1')->applyFromArray($headerStyle);
+        $sheet->getRowDimension(1)->setRowHeight(25);
+
+        // Agrupar por actividad (igual que en la vista)
+        $grouped = $requirements->groupBy(function ($req) {
+            return $req->activity ? $req->activity->name : 'Sin actividad';
+        });
+
+        $row = 2;
+        foreach ($grouped as $activityName => $activityRequirements) {
+            $first = $activityRequirements->first();
+            $caso = $first->activity->caso ?? '';
+            $parentName = $first->activity->parent->name ?? '';
+
+            // Fila de cabecera de actividad (merge de columnas A-I)
+            $sheet->mergeCells("A{$row}:I{$row}");
+            $sheet->setCellValue("A{$row}", trim(($caso ? "{$caso} " : '') . $activityName));
+            $sheet->getStyle("A{$row}:I{$row}")->applyFromArray($activityHeaderStyle);
+            $row++;
+
+            // Filas de requerimientos de esa actividad
+            foreach ($activityRequirements as $requirement) {
+                $diasTranscurridos = $requirement->status === 'recibido' && $requirement->fecha_recepcion
+                    ? $requirement->created_at->diffInDays($requirement->fecha_recepcion)
+                    : $requirement->created_at->diffInDays(now());
+
+                $sheet->setCellValue("A{$row}", $requirement->activity->caso ?? '');
+                $sheet->setCellValue("B{$row}", $requirement->activity->name ?? '');
+                $sheet->setCellValue("C{$row}", $parentName);
+                $sheet->setCellValue("D{$row}", $requirement->description);
+                $sheet->setCellValue("E{$row}", $requirement->status_label);
+                $sheet->setCellValue("F{$row}", $requirement->created_at->format('d/m/Y H:i:s'));
+                $sheet->setCellValue("G{$row}", $requirement->fecha_recepcion ? $requirement->fecha_recepcion->format('d/m/Y H:i:s') : '');
+                $sheet->setCellValue("H{$row}", $diasTranscurridos);
+                $sheet->setCellValue("I{$row}", $requirement->notas ?? '');
+
+                // Colorear estado
+                if ($requirement->status === 'pendiente') {
+                    $sheet->getStyle("E{$row}")->getFont()->getColor()->setRGB('FFC000');
+                } else {
+                    $sheet->getStyle("E{$row}")->getFont()->getColor()->setRGB('00B050');
+                }
+
+                // Resaltar vencidos
+                if ($requirement->status === 'pendiente' && $diasTranscurridos > 7) {
+                    $sheet->getStyle("H{$row}")->getFont()->getColor()->setRGB('FF0000');
+                }
+
+                $row++;
+            }
+
+            // Línea en blanco entre actividades
+            $row++;
+        }
+
+        // Ajustar anchos de columnas y envoltura de texto
+        $sheet->getColumnDimension('A')->setWidth(14);
+        $sheet->getColumnDimension('B')->setWidth(35);
+        $sheet->getColumnDimension('C')->setWidth(30);
+        $sheet->getColumnDimension('D')->setWidth(50);
+        $sheet->getColumnDimension('E')->setWidth(14);
+        $sheet->getColumnDimension('F')->setWidth(20);
+        $sheet->getColumnDimension('G')->setWidth(20);
+        $sheet->getColumnDimension('H')->setWidth(18);
+        $sheet->getColumnDimension('I')->setWidth(40);
+
+        $lastRow = $row > 2 ? $row - 1 : 2;
+        $sheet->getStyle("A1:I{$lastRow}")->getAlignment()->setWrapText(true);
+        $sheet->getStyle("A2:I{$lastRow}")->getAlignment()->setVertical(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+        );
+
+        $sheet->setAutoFilter("A1:I1");
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }
