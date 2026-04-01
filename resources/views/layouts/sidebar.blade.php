@@ -57,6 +57,32 @@
                 <i class="fas fa-envelope-open-text"></i> Histórico de Correos
             </a>
         </div>
+
+        <div class="sidebar-dropdown">
+            <a href="#"
+                class="sidebar-dropdown-toggle
+                {{ request()->routeIs('admin.analistas.*') ? 'activo' : '' }}
+                {{ request()->routeIs('admin.clientes.*') ? 'activo' : '' }}
+                {{ request()->routeIs('admin.tipos-productos.*') ? 'activo' : '' }}
+            ">
+                Administración
+                <span style="float:right;"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="sidebar-dropdown-menu">
+                <a class="{{ request()->routeIs('admin.analistas.*') ? 'activo' : '' }}"
+                    href="{{ route('admin.analistas.index') }}">
+                    Analistas
+                </a>
+                <a class="{{ request()->routeIs('admin.clientes.*') ? 'activo' : '' }}"
+                    href="{{ route('admin.clientes.index') }}">
+                    Clientes
+                </a>
+                <a class="{{ request()->routeIs('admin.tipos-productos.*') ? 'activo' : '' }}"
+                    href="{{ route('admin.tipos-productos.index') }}">
+                    Tipos de Producto
+                </a>
+            </div>
+        </div>
     </nav>
     <div class="cerrar-sesion-mobile">
         <form method="POST" action="{{ url('/logout') }}">
