@@ -80,3 +80,18 @@ Route::get('/activities/{activity}/json', [ActivityController::class, 'showJson'
 
 // Ruta para reordenar actividades por analista (drag & drop)
 Route::post('/activities/reorder', [ActivityController::class, 'reorder'])->name('activities.reorder');
+
+// =========================
+//  RUTAS DE ADMINISTRACIÓN
+// =========================
+use App\Http\Controllers\Admin\AnalistaController as AdminAnalistaController;
+use App\Http\Controllers\Admin\ClienteController as AdminClienteController;
+use App\Http\Controllers\Admin\TipoProductoController as AdminTipoProductoController;
+use App\Http\Controllers\Admin\CategoriaController as AdminCategoriaController;
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::resource('analistas', AdminAnalistaController::class)->names('analistas');
+    Route::resource('clientes', AdminClienteController::class)->names('clientes');
+    Route::resource('tipos-productos', AdminTipoProductoController::class)->names('tipos-productos');
+    Route::resource('categorias', AdminCategoriaController::class)->names('categorias')->except(['show']);
+});
